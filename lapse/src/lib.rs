@@ -5,6 +5,7 @@ use std::{
 };
 
 pub mod error;
+pub mod request;
 
 pub use error::{Error, Result};
 
@@ -42,5 +43,8 @@ impl Lapse {
   }
   pub fn open<P: Into<PathBuf>>(path: P) -> Self {
     Self { path: path.into() }
+  }
+  pub fn requests_path(&self) -> PathBuf {
+    self.path.join("requests")
   }
 }
