@@ -6,6 +6,7 @@ use std::{
 
 pub mod error;
 pub mod request;
+mod http;
 
 pub use error::{Error, Result};
 
@@ -17,6 +18,7 @@ pub struct Lapse {
 }
 
 impl Lapse {
+  // TODO: add proper error handling
   pub fn init<P: Into<PathBuf>>(path: P) -> crate::Result<Self> {
     let base_path: PathBuf = path.into();
 
