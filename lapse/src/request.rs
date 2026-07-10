@@ -51,6 +51,7 @@ impl Lapse {
           let relative_path = full_entry_path
             .strip_prefix(prefix)
             .unwrap()
+            .with_extension("")
             .to_str()
             .unwrap()
             .to_owned();
@@ -108,7 +109,7 @@ mod test {
 
     let collection = lapse.get_request_collection(None);
 
-    assert_eq!(entry_names(&collection), vec!["ping.md", "request.md"]);
+    assert_eq!(entry_names(&collection), vec!["ping", "request"]);
   }
 
   #[test]
@@ -133,7 +134,7 @@ mod test {
 
     assert_eq!(
       entry_names(users_collection),
-      vec!["users/create.md", "users/get.md"]
+      vec!["users/create", "users/get"]
     );
   }
 
@@ -148,6 +149,6 @@ mod test {
 
     let collection = lapse.get_request_collection(Some("users".to_owned()));
 
-    assert_eq!(entry_names(&collection), vec!["users/get.md"]);
+    assert_eq!(entry_names(&collection), vec!["users/get"]);
   }
 }
