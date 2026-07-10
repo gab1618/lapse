@@ -44,7 +44,15 @@ impl Lapse {
     Ok(Self { path: base_path })
   }
   pub fn open<P: Into<PathBuf>>(path: P) -> Self {
-    Self { path: path.into() }
+    let as_buf: PathBuf = path.into();
+
+    let space_dir_path = as_buf.join(".lapse");
+    if !space_dir_path.exists() {
+        let parent_path = as_buf.parent().unwrap();
+        return Self::open(parent_path);
+    }
+
+    Self { path: as_buf }
   }
   fn requests_path(&self) -> PathBuf {
     self.path.join("requests")
