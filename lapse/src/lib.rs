@@ -5,8 +5,8 @@ use std::{
 };
 
 pub mod error;
-pub mod request;
 mod http;
+pub mod request;
 
 pub use error::{Error, Result};
 

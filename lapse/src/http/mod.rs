@@ -6,63 +6,114 @@ use crate::request::RequestFile;
 impl RequestFile {
   // TODO: add proper error handling
   pub fn request(&self) -> Request<Vec<u8>> {
-    let mut lines = self.http.lines();
+    let mut lines = self.http.lines().skip_while(|line| line.is_empty());
 
-    // --- 1. Parse the Request-Line ---
     let request_line = lines.next().ok_or("Empty request").unwrap();
     let mut request_parts = request_line.split_whitespace();
     let method = request_parts.next().ok_or("Missing method").unwrap();
     let uri = request_parts.next().ok_or("Missing URI").unwrap();
-    let version = request_parts.next().ok_or("Missing HTTP version").unwrap();
 
     let method = Method::from_str(method).unwrap();
     let uri = Uri::from_str(uri).unwrap();
-    let version = match version {
-      "HTTP/1.1" => Version::HTTP_11,
-      "HTTP/1.0" => Version::HTTP_10,
-      _ => panic!("Unsupported HTTP version"),
-    };
 
-    // --- 2. Parse Headers and Body ---
+    let mut request_builder = Request::builder()
+      .method(method)
+      .uri(uri)
+      .version(Version::HTTP_11);
+
     let mut body_started = false;
-    let mut headers = vec![];
+    let mut body_lines = vec![];
 
-    for line in lines.clone() {
-      if !body_started && line.is_empty() {
-        // An empty line marks the end of the headers and the start of the body.
-        body_started = true;
-        continue;
-      }
-
+    for line in lines {
       if !body_started {
-        // Parse header line (e.g., "Header-Name: value")
-        if let Some((name, value)) = line.split_once(':') {
-          headers.push((name.trim(), value.trim()));
+        if line.is_empty() {
+          body_started = true;
+          continue;
         }
+
+        let (name, value) = line.split_once(':').ok_or("Invalid header line").unwrap();
+        request_builder = request_builder.header(name.trim(), value.trim());
       } else {
-        // For this example, we collect the entire remaining string as the body.
-        // A real implementation should handle the body as a stream.
-        break;
+        body_lines.push(line);
       }
     }
 
-    // Collect the remaining lines as the body (for simplicity)
-    let body_string = if body_started {
-      let body_lines = lines.collect::<Vec<&str>>();
-      body_lines.join("\r\n")
-    } else {
-      String::new()
-    };
+    request_builder
+      .body(body_lines.join("\n").into_bytes())
+      .unwrap()
+  }
+}
 
-    // --- 3. Build the hyper::Request ---
-    let mut request_builder = Request::builder().method(method).uri(uri).version(version);
+#[cfg(test)]
+mod test {
+  use http::Method;
 
-    for (name, value) in headers {
-      request_builder = request_builder.header(name, value);
+  use crate::request::RequestFile;
+
+  fn request_file(http: &str) -> RequestFile {
+    RequestFile {
+      markdown: String::new(),
+      http: http.to_owned(),
     }
+  }
 
-    let request = request_builder.body(body_string.into_bytes()).unwrap();
+  #[test]
+  fn test_parses_sample_request() {
+    let file = request_file(
+      include_str!("../../assets/request.md")
+        .split_once("---")
+        .unwrap()
+        .1,
+    );
 
-    request
+    let request = file.request();
+
+    assert_eq!(request.method(), Method::POST);
+    assert_eq!(request.uri(), "https://example.com/comments");
+    assert_eq!(
+      request.headers().get("content-type").unwrap(),
+      "application/json"
+    );
+    assert_eq!(
+      std::str::from_utf8(request.body()).unwrap(),
+      "{\n  \"name\": \"sample\"\n}"
+    );
+  }
+
+  #[test]
+  fn test_parses_request_without_body() {
+    let file = request_file("GET https://example.com/comments\ncontent-type: application/json\n");
+
+    let request = file.request();
+
+    assert_eq!(request.method(), Method::GET);
+    assert_eq!(request.uri(), "https://example.com/comments");
+    assert_eq!(
+      request.headers().get("content-type").unwrap(),
+      "application/json"
+    );
+    assert!(request.body().is_empty());
+  }
+
+  #[test]
+  fn test_parses_request_without_headers_or_body() {
+    let file = request_file("DELETE https://example.com/comments\n");
+
+    let request = file.request();
+
+    assert_eq!(request.method(), Method::DELETE);
+    assert_eq!(request.uri(), "https://example.com/comments");
+    assert!(request.headers().is_empty());
+    assert!(request.body().is_empty());
+  }
+
+  #[test]
+  fn test_ignores_leading_blank_lines() {
+    let file = request_file("\n\nPUT https://example.com/comments\n");
+
+    let request = file.request();
+
+    assert_eq!(request.method(), Method::PUT);
+    assert_eq!(request.uri(), "https://example.com/comments");
   }
 }
