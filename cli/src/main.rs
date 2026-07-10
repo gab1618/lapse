@@ -1,11 +1,12 @@
 mod cli;
+mod collection;
 
 use clap::Parser;
 use cli::Cli;
 
 use lapse::Lapse;
 
-use crate::cli::Command;
+use crate::{cli::Command, collection::output_requests_collection};
 
 fn main() {
   let args = Cli::parse();
@@ -15,6 +16,11 @@ fn main() {
     Command::Init => {
       Lapse::init(curr_dir).unwrap();
       println!("Initialized Lapse space");
+    }
+    Command::Ls => {
+      let lapse = Lapse::open(curr_dir);
+      let collection = lapse.get_request_collection(None);
+      output_requests_collection(0, &collection);
     }
   }
 }
