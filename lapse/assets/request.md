@@ -2,14 +2,13 @@
 
 Some description
 
-
-The request below will follow the RFC 2616 
+- [] Some other valid markdown
 
 ---
 
-POST https://example.com/comments HTTP/1.1
+POST https://example.com/comments
 content-type: application/json
 
 {
-    "name": "sample"
+  "name": "sample"
 }
