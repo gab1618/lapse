@@ -2,6 +2,8 @@ use std::{fs, path::Path};
 
 use crate::Lapse;
 
+pub mod http;
+
 pub struct RequestFile {
   pub markdown: String,
   pub http: String,

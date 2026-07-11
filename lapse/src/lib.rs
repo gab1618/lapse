@@ -7,7 +7,6 @@ use std::{
 use reqwest::{Client, Request, Response};
 
 pub mod error;
-mod http;
 pub mod request;
 
 pub use error::{Error, Result};
