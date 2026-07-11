@@ -48,8 +48,8 @@ impl Lapse {
 
     let space_dir_path = as_buf.join(".lapse");
     if !space_dir_path.exists() {
-        let parent_path = as_buf.parent().unwrap();
-        return Self::open(parent_path);
+      let parent_path = as_buf.parent().unwrap();
+      return Self::open(parent_path);
     }
 
     Self { path: as_buf }
