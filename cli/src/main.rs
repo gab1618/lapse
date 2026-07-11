@@ -27,8 +27,7 @@ async fn main() {
       let lapse = Lapse::open(curr_dir);
       let response = lapse.request(&request).await;
 
-      let body = response.text().await.unwrap();
-      println!("{}", body);
+      println!("{}", response.text);
     }
   }
 }

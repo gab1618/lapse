@@ -1,15 +1,19 @@
 use std::{
+  collections::HashMap,
   fs::{self, OpenOptions},
   io::Write,
   path::PathBuf,
 };
 
-use reqwest::{Client, Request, Response};
+use reqwest::{Client, Request};
 
 pub mod error;
+pub mod log;
 pub mod request;
 
 pub use error::{Error, Result};
+
+use crate::log::ResponseLog;
 
 #[cfg(test)]
 mod test;
@@ -58,8 +62,11 @@ impl Lapse {
   fn requests_path(&self) -> PathBuf {
     self.path.join("requests")
   }
+  fn logs_path(&self) -> PathBuf {
+    self.path.join(".lapse/log")
+  }
 
-  pub async fn request(&self, path: &str) -> Response {
+  pub async fn request(&self, path: &str) -> ResponseLog {
     let req_file = self.get_request_file(path);
     let client = Client::new();
     let request = req_file.request();
@@ -67,6 +74,25 @@ impl Lapse {
 
     let response = client.execute(parsed_request).await.unwrap();
 
-    response
+    let mut log_headers = HashMap::new();
+    response.headers().iter().for_each(|(name, value)| {
+      let str_value = value.to_str().unwrap().to_string();
+
+      log_headers.insert(name.to_string(), str_value);
+    });
+
+    let status_code = response.status().as_u16();
+    let response_body = response.text().await.unwrap();
+
+    let log = ResponseLog {
+      request: path.to_owned(),
+      text: response_body,
+      status: status_code,
+      headers: log_headers,
+    };
+
+    self.save_log(&log);
+
+    log
   }
 }

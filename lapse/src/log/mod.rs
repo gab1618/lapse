@@ -1,0 +1,54 @@
+use std::{
+  collections::HashMap,
+  fmt::Display,
+  fs::{self, OpenOptions},
+  io::Write,
+  time::{SystemTime, UNIX_EPOCH},
+};
+
+use crate::Lapse;
+
+pub struct ResponseLog {
+  pub request: String,
+  pub text: String,
+  pub status: u16,
+  pub headers: HashMap<String, String>,
+}
+
+impl Display for ResponseLog {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "{}", self.request)?;
+    writeln!(f, "{}", self.status)?;
+    for (header, value) in &self.headers {
+      writeln!(f, "{}: {}", header, value)?;
+    }
+    writeln!(f, "")?;
+    writeln!(f, "{}", self.text)
+  }
+}
+
+impl Lapse {
+  pub fn save_log(&self, log: &ResponseLog) {
+    let logs_path = self.logs_path();
+    let request_logs_path = logs_path.join(&log.request);
+
+    // Ensure logs path exists
+    fs::create_dir_all(&request_logs_path).unwrap();
+
+    let curr_time = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .expect("time should go forward");
+
+    let filename = format!("{}", curr_time.as_millis());
+
+    let full_file_path = request_logs_path.join(filename);
+
+    let mut f = OpenOptions::new()
+      .write(true)
+      .create(true)
+      .open(full_file_path)
+      .unwrap();
+
+    write!(f, "{log}").unwrap();
+  }
+}
