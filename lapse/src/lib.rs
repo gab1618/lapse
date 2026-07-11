@@ -4,6 +4,8 @@ use std::{
   path::PathBuf,
 };
 
+use reqwest::{Client, Request, Response};
+
 pub mod error;
 mod http;
 pub mod request;
@@ -56,5 +58,16 @@ impl Lapse {
   }
   fn requests_path(&self) -> PathBuf {
     self.path.join("requests")
+  }
+
+  pub async fn request(&self, path: &str) -> Response {
+    let req_file = self.get_request_file(path);
+    let client = Client::new();
+    let request = req_file.request();
+    let parsed_request: Request = request.try_into().unwrap();
+
+    let response = client.execute(parsed_request).await.unwrap();
+
+    response
   }
 }

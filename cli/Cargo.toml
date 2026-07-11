@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
 lapse = { workspace = true }
+tokio = { version = "1.52.3", features = ["full"] }
 
 [[bin]]
 name = "lapse"

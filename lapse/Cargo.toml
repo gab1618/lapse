@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 http = "1.4.2"
+reqwest = "0.13.4"
 thiserror = {workspace = true}
 
 [dev-dependencies]

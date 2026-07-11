@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 pub enum Command {
   Init,
   Ls,
+  Send { request: String },
 }
 
 #[derive(Parser)]
