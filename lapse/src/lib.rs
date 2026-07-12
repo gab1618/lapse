@@ -70,6 +70,9 @@ impl Lapse {
   fn state_path(&self) -> PathBuf {
     self.path.join(".lapse/state")
   }
+  fn env_path(&self) -> PathBuf {
+    self.path.join("env")
+  }
 
   pub async fn request(&self, path: &str) -> ResponseLog {
     let req_file = self.get_request_file(path);
