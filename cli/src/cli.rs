@@ -1,10 +1,13 @@
 use clap::{Parser, Subcommand};
 
+use crate::completion::CliCompletionShell;
+
 #[derive(Subcommand)]
 pub enum Command {
   Init,
   Ls,
   Send { request: Option<String> },
+  Completion { shell: CliCompletionShell },
 }
 
 #[derive(Parser)]

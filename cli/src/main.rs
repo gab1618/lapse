@@ -1,5 +1,8 @@
 mod cli;
 mod collection;
+mod completion;
+
+use std::io::stdout;
 
 use clap::Parser;
 use cli::Cli;
@@ -9,6 +12,7 @@ use lapse::Lapse;
 use crate::{
   cli::Command,
   collection::{get_requests_flatlist, output_requests_collection},
+  completion::generate_completion,
 };
 
 use inquire::Select;
@@ -46,6 +50,10 @@ async fn main() {
 
       let response = lapse.request(&req, selected_request).await;
       println!("{}", response.text);
+    }
+    Command::Completion { shell } => {
+      let mut out = stdout();
+      generate_completion(shell, &mut out);
     }
   }
 }
