@@ -1,4 +1,4 @@
-use lapse::request::{RequestCollection, RequestsCollectionEntry};
+use lapse::request::collection::{RequestCollection, RequestsCollectionEntry};
 
 pub fn output_requests_collection(level: usize, root: &RequestCollection) {
   let level_spacing = " ".repeat(level);
