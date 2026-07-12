@@ -18,9 +18,9 @@ fn test_switch_env() {
 
   lapse.set_env(&ex_env, "prod");
 
-  lapse.switch_env("prod");
+  lapse.switch_env("prod").unwrap();
 
-  assert_eq!(lapse.current_env(), "prod");
+  assert_eq!(lapse.current_env().unwrap(), "prod");
 }
 
 #[test]
