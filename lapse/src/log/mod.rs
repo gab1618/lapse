@@ -39,7 +39,7 @@ impl Lapse {
       .duration_since(UNIX_EPOCH)
       .expect("time should go forward");
 
-    let filename = format!("{}", curr_time.as_millis());
+    let filename = curr_time.as_millis().to_string();
 
     let full_file_path = request_logs_path.join(filename);
 
