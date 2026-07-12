@@ -11,6 +11,7 @@ pub mod env;
 pub mod error;
 pub mod log;
 pub mod request;
+pub mod state;
 
 pub use error::{Error, Result};
 

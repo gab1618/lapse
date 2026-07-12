@@ -1,4 +1,4 @@
-use crate::env::error::EnvError;
+use crate::{env::error::EnvError, state::error::StateError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -6,6 +6,8 @@ pub enum Error {
   CreateSpaceDir(String),
   #[error(transparent)]
   Env(#[from] EnvError),
+  #[error(transparent)]
+  State(#[from] StateError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
