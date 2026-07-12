@@ -16,3 +16,23 @@ pub fn output_requests_collection(level: usize, root: &RequestCollection) {
     }
   }
 }
+
+pub fn get_requests_flatlist(tree: Vec<RequestsCollectionEntry>) -> Vec<String> {
+  let mut requests: Vec<String> = vec![];
+
+  for entry in tree {
+    match entry {
+      RequestsCollectionEntry::Request(req) => {
+        requests.push(req);
+      }
+      RequestsCollectionEntry::Collection(_, items) => {
+        let sub_requests = get_requests_flatlist(*items);
+        for sub in sub_requests {
+          requests.push(sub);
+        }
+      }
+    }
+  }
+
+  requests
+}

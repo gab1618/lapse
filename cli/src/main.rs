@@ -4,9 +4,12 @@ mod collection;
 use clap::Parser;
 use cli::Cli;
 
-use lapse::{Lapse, request::collection::RequestsCollectionEntry};
+use lapse::Lapse;
 
-use crate::{cli::Command, collection::output_requests_collection};
+use crate::{
+  cli::Command,
+  collection::{get_requests_flatlist, output_requests_collection},
+};
 
 use inquire::Select;
 
@@ -35,33 +38,14 @@ async fn main() {
           let flat_requests = get_requests_flatlist(tree);
 
           let select = Select::new("Select the request", flat_requests);
-          let selected = select.prompt().unwrap();
-          selected
+          select.prompt().unwrap()
         }
       };
 
-      let response = lapse.request(&selected_request).await;
+      let req = lapse.get_request_file(&selected_request);
+
+      let response = lapse.request(&req, selected_request).await;
       println!("{}", response.text);
     }
   }
-}
-
-fn get_requests_flatlist(tree: Vec<RequestsCollectionEntry>) -> Vec<String> {
-  let mut requests: Vec<String> = vec![];
-
-  for entry in tree {
-    match entry {
-      RequestsCollectionEntry::Request(req) => {
-        requests.push(req);
-      }
-      RequestsCollectionEntry::Collection(_, items) => {
-        let sub_requests = get_requests_flatlist(*items);
-        for sub in sub_requests {
-          requests.push(sub);
-        }
-      }
-    }
-  }
-
-  requests
 }

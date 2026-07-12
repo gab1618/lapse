@@ -15,7 +15,7 @@ pub mod state;
 
 pub use error::{Error, Result};
 
-use crate::log::ResponseLog;
+use crate::{log::ResponseLog, request::RequestFile};
 
 #[cfg(test)]
 mod test;
@@ -75,10 +75,9 @@ impl Lapse {
     self.path.join("env")
   }
 
-  pub async fn request(&self, path: &str) -> ResponseLog {
-    let req_file = self.get_request_file(path);
+  pub async fn request(&self, req: &RequestFile, name: String) -> ResponseLog {
     let client = Client::new();
-    let request = req_file.request();
+    let request = req.request();
     let parsed_request: Request = request.try_into().unwrap();
 
     let response = client.execute(parsed_request).await.unwrap();
@@ -94,7 +93,7 @@ impl Lapse {
     let response_body = response.text().await.unwrap();
 
     let log = ResponseLog {
-      request: path.to_owned(),
+      request: name,
       text: response_body,
       status: status_code,
       headers: log_headers,
