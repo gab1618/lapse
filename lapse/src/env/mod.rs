@@ -1,8 +1,4 @@
-use std::{
-  collections::HashMap,
-  fs::{self, OpenOptions},
-  io::{BufReader, Read},
-};
+use std::{collections::HashMap, fs::OpenOptions};
 
 use crate::{Lapse, env::error::EnvError};
 

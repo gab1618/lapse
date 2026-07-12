@@ -46,9 +46,12 @@ impl Lapse {
 mod test {
   use std::fs;
 
-use tempfile::tempdir;
+  use tempfile::tempdir;
 
-use crate::{Lapse, request::collection::{RequestCollection, RequestsCollectionEntry}};
+  use crate::{
+    Lapse,
+    request::collection::{RequestCollection, RequestsCollectionEntry},
+  };
 
   fn entry_names(collection: &RequestCollection) -> Vec<String> {
     let mut names = collection
