@@ -12,6 +12,12 @@ fn test_switch_env() {
   let temp_dir = tempdir().unwrap();
   let lapse = Lapse::init(temp_dir.path()).unwrap();
 
+  let ex_env = Env {
+    variables: HashMap::default(),
+  };
+
+  lapse.set_env(&ex_env, "prod");
+
   lapse.switch_env("prod");
 
   assert_eq!(lapse.current_env(), "prod");
