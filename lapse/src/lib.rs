@@ -7,6 +7,7 @@ use std::{
 
 use reqwest::{Client, Request};
 
+pub mod env;
 pub mod error;
 pub mod log;
 pub mod request;
@@ -64,6 +65,9 @@ impl Lapse {
   }
   fn logs_path(&self) -> PathBuf {
     self.path.join(".lapse/log")
+  }
+  fn state_path(&self) -> PathBuf {
+    self.path.join(".lapse/state")
   }
 
   pub async fn request(&self, path: &str) -> ResponseLog {
