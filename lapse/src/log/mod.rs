@@ -22,7 +22,7 @@ impl Display for ResponseLog {
     for (header, value) in &self.headers {
       writeln!(f, "{}: {}", header, value)?;
     }
-    writeln!(f, "")?;
+    writeln!(f)?;
     writeln!(f, "{}", self.text)
   }
 }
@@ -46,6 +46,7 @@ impl Lapse {
     let mut f = OpenOptions::new()
       .write(true)
       .create(true)
+      .truncate(true)
       .open(full_file_path)
       .unwrap();
 

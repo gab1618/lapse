@@ -40,6 +40,7 @@ impl Lapse {
 
     let mut f = OpenOptions::new()
       .create(true)
+      .truncate(true)
       .write(true)
       .open(base_path.join("requests").join("request.md"))
       .unwrap();
