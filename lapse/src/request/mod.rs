@@ -21,9 +21,6 @@ impl Lapse {
       http: http.to_owned(),
     }
   }
-  pub fn resolve_request_file(&self, _req: RequestFile) -> RequestFile {
-    todo!()
-  }
   pub fn get_request_collection(&self, base: Option<String>) -> RequestCollection {
     let requests_path = self.requests_path();
 
