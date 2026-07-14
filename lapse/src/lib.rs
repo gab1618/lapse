@@ -13,6 +13,7 @@ pub mod log;
 pub mod request;
 pub mod state;
 pub mod parsing;
+pub mod eval;
 
 pub use error::{Error, Result};
 
