@@ -14,9 +14,9 @@ pub enum CliCompletionShell {
   Powershell,
 }
 
-impl Into<Shell> for CliCompletionShell {
-  fn into(self) -> Shell {
-    match self {
+impl From<CliCompletionShell> for Shell {
+  fn from(value: CliCompletionShell) -> Shell {
+    match value {
       CliCompletionShell::Bash => Shell::Bash,
       CliCompletionShell::Elvish => Shell::Elvish,
       CliCompletionShell::Zsh => Shell::Zsh,
