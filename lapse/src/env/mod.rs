@@ -51,7 +51,7 @@ impl Lapse {
     self.get_state("env")
   }
   pub fn get_env(&self, name: &str) -> Env {
-    let full_env_path = self.env_path().join(name);
+    let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new().read(true).open(full_env_path).unwrap();
 
@@ -59,7 +59,7 @@ impl Lapse {
     parsed
   }
   pub fn set_env(&self, env: &Env, name: &str) {
-    let full_env_path = self.env_path().join(name);
+    let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new()
       .write(true)
