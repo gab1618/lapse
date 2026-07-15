@@ -55,5 +55,11 @@ async fn main() {
       let mut out = stdout();
       generate_completion(shell, &mut out);
     }
+    Command::Env(env_command) => match env_command {
+      cli::EnvCommand::Switch { name } => {
+        let lapse = Lapse::open(curr_dir);
+        lapse.switch_env(&name).unwrap();
+      }
+    },
   }
 }

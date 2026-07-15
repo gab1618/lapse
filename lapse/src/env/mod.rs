@@ -37,7 +37,7 @@ impl From<f64> for EnvVariable {
 
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
-    let env_file_path = self.env_path().join(name);
+    let env_file_path = self.env_path().join(name).with_extension("json");
     if !env_file_path.exists() {
       return Err(EnvError::NonExistentEnv(name.to_string()).into());
     }
