@@ -5,7 +5,6 @@ use std::{
   path::PathBuf,
 };
 
-use http::Request;
 use reqwest::Client;
 
 pub mod env;
@@ -18,12 +17,7 @@ pub mod state;
 
 pub use error::{Error, Result};
 
-use crate::{
-  eval::EvalCtx,
-  log::ResponseLog,
-  parsing::RequestTokenizer,
-  request::{RequestFile, http::parse_request_http},
-};
+use crate::{log::ResponseLog, request::RequestFile};
 
 #[cfg(test)]
 mod test;
@@ -81,27 +75,6 @@ impl Lapse {
   }
   fn env_path(&self) -> PathBuf {
     self.path.join("env")
-  }
-
-  fn get_eval_ctx(&self) -> EvalCtx {
-    let variables = self
-      .current_env()
-      .ok()
-      .flatten()
-      .map(|name| self.get_env(&name).variables)
-      .unwrap_or_default();
-
-    EvalCtx::new(variables)
-  }
-
-  fn resolve_request(&self, req: &RequestFile) -> Request<Vec<u8>> {
-    let mut tokenizer = RequestTokenizer::new(&req.http);
-    let tokens = tokenizer.tokenize();
-
-    let ctx = self.get_eval_ctx();
-    let resolved_tokens = ctx.eval(tokens);
-
-    parse_request_http(resolved_tokens)
   }
 
   pub async fn request(&self, req: &RequestFile, name: String) -> ResponseLog {

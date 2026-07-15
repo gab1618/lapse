@@ -1,6 +1,8 @@
+pub mod request;
+
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
-use crate::{env::EnvVariable, parsing::RequestToken};
+use crate::{Lapse, env::EnvVariable, parsing::RequestToken};
 use mlua::{FromLua, IntoLua, Lua, Value};
 
 pub struct EvalCtx {
@@ -122,6 +124,19 @@ impl EvalCtx {
     }
 
     result
+  }
+}
+
+impl Lapse {
+  pub fn get_eval_ctx(&self) -> EvalCtx {
+    let variables = self
+      .current_env()
+      .ok()
+      .flatten()
+      .map(|name| self.get_env(&name).variables)
+      .unwrap_or_default();
+
+    EvalCtx::new(variables)
   }
 }
 
