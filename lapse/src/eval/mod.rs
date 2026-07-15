@@ -1,24 +1,14 @@
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
-use crate::parsing::RequestToken;
-use mlua::{FromLua, Lua, Value};
+use crate::{env::EnvVariable, parsing::RequestToken};
+use mlua::{FromLua, IntoLua, Lua, Value};
 
 pub struct EvalCtx {
-  variables: Rc<RefCell<HashMap<String, String>>>,
+  variables: Rc<RefCell<HashMap<String, EnvVariable>>>,
   runtime: Lua,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum EvalResult {
-  Null,
-  Boolean(bool),
-  Integer(i64),
-  Number(f64),
-  String(String),
-  Object(HashMap<String, EvalResult>),
-}
-
-impl FromLua for EvalResult {
+impl FromLua for EnvVariable {
   fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
     match value {
       Value::Nil => Ok(Self::Null),
@@ -37,16 +27,35 @@ impl FromLua for EvalResult {
       }
       other => Err(mlua::Error::FromLuaConversionError {
         from: other.type_name(),
-        to: "EvalResult".to_owned(),
+        to: "EnvVariable".to_owned(),
         message: None,
       }),
+    }
+  }
+}
+impl IntoLua for EnvVariable {
+  fn into_lua(self, lua: &Lua) -> mlua::prelude::LuaResult<Value> {
+    match self {
+      Self::Null => Ok(Value::Nil),
+      Self::Boolean(b) => Ok(Value::Boolean(b)),
+      Self::Integer(i) => Ok(Value::Integer(i)),
+      Self::Number(n) => Ok(Value::Number(n)),
+      Self::String(s) => Ok(Value::String(lua.create_string(s)?)),
+      Self::Object(fields) => {
+        let table = lua.create_table()?;
+        for (key, value) in fields {
+          table.set(key, value.into_lua(lua)?)?;
+        }
+
+        Ok(Value::Table(table))
+      }
     }
   }
 }
 
 // renders the result the same way it was written into the request body, e.g. a
 // Lua string becomes a quoted JSON string, a table becomes a JSON object
-impl fmt::Display for EvalResult {
+impl fmt::Display for EnvVariable {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Null => write!(f, "null"),
@@ -72,13 +81,17 @@ impl fmt::Display for EvalResult {
 }
 
 impl EvalCtx {
-  pub fn new(variables: HashMap<String, String>) -> Self {
+  pub fn new(variables: HashMap<String, EnvVariable>) -> Self {
     let variables = Rc::new(RefCell::new(variables));
     let runtime = Lua::new();
 
     let lookup = Rc::clone(&variables);
+
     let var_fn = runtime
-      .create_function(move |_, name: String| Ok(lookup.borrow().get(&name).cloned()))
+      .create_function(move |lua, name: String| match lookup.borrow().get(&name) {
+        Some(value) => value.clone().into_lua(lua),
+        None => Ok(Value::Nil),
+      })
       .unwrap();
 
     runtime.globals().set("var", var_fn).unwrap();
@@ -86,7 +99,7 @@ impl EvalCtx {
     Self { variables, runtime }
   }
 
-  pub fn set_variable(&self, name: impl Into<String>, value: impl Into<String>) {
+  pub fn set_variable(&self, name: impl Into<String>, value: impl Into<EnvVariable>) {
     self
       .variables
       .borrow_mut()
@@ -102,7 +115,7 @@ impl EvalCtx {
           result.push_str(&inner);
         }
         RequestToken::Expr(inner) => {
-          let value: EvalResult = self.runtime.load(inner).eval().unwrap();
+          let value: EnvVariable = self.runtime.load(inner).eval().unwrap();
           result.push_str(&value.to_string());
         }
       }
@@ -114,14 +127,14 @@ impl EvalCtx {
 
 #[cfg(test)]
 mod test {
-  use super::{EvalCtx, EvalResult};
-  use crate::parsing::RequestTokenizer;
+  use super::EvalCtx;
+  use crate::{env::EnvVariable, parsing::RequestTokenizer};
   use std::collections::HashMap;
 
   fn eval_ctx(variables: &[(&str, &str)]) -> EvalCtx {
     let variables = variables
       .iter()
-      .map(|(k, v)| (k.to_string(), v.to_string()))
+      .map(|(k, v)| (k.to_string(), EnvVariable::String(v.to_string())))
       .collect::<HashMap<_, _>>();
 
     EvalCtx::new(variables)
@@ -165,6 +178,27 @@ mod test {
   }
 
   #[test]
+  fn test_evaluates_number_var_expression() {
+    let ctx = EvalCtx::new(HashMap::from([(
+      "age".to_string(),
+      EnvVariable::Number(42.0),
+    )]));
+
+    assert_eq!(eval(&ctx, "${var(\"age\")}"), "42");
+  }
+
+  #[test]
+  fn test_evaluates_object_var_expression() {
+    let object = EnvVariable::Object(HashMap::from([(
+      "city".to_string(),
+      EnvVariable::String("NYC".to_string()),
+    )]));
+    let ctx = EvalCtx::new(HashMap::from([("address".to_string(), object)]));
+
+    assert_eq!(eval(&ctx, "${var(\"address\")}"), "{\"city\":\"NYC\"}");
+  }
+
+  #[test]
   fn test_evaluates_arithmetic_expression() {
     let ctx = eval_ctx(&[]);
 
@@ -189,10 +223,10 @@ mod test {
   }
 
   #[test]
-  fn test_eval_result_display() {
-    assert_eq!(EvalResult::Null.to_string(), "null");
-    assert_eq!(EvalResult::Boolean(true).to_string(), "true");
-    assert_eq!(EvalResult::Integer(42).to_string(), "42");
-    assert_eq!(EvalResult::String("hi".to_owned()).to_string(), "\"hi\"");
+  fn test_env_variable_display() {
+    assert_eq!(EnvVariable::Null.to_string(), "null");
+    assert_eq!(EnvVariable::Boolean(true).to_string(), "true");
+    assert_eq!(EnvVariable::Integer(42).to_string(), "42");
+    assert_eq!(EnvVariable::String("hi".to_owned()).to_string(), "\"hi\"");
   }
 }

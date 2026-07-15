@@ -12,10 +12,15 @@ pub struct Env {
   pub variables: HashMap<String, EnvVariable>,
 }
 
-#[derive(PartialEq, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
 pub enum EnvVariable {
-  String(String),
+  Null,
+  Boolean(bool),
+  Integer(i64),
   Number(f64),
+  String(String),
+  Object(HashMap<String, EnvVariable>),
 }
 
 impl From<String> for EnvVariable {

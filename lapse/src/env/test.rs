@@ -45,3 +45,16 @@ fn test_read_env() {
   let found_name = found_env.variables.get("name").unwrap();
   assert_eq!(found_name, &EnvVariable::String("John".into()));
 }
+
+#[test]
+fn test_parse_asset_env_json() {
+  let content =
+    std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/env.json")).unwrap();
+
+  let parsed: Env = serde_json::from_str(&content).unwrap();
+
+  assert_eq!(
+    parsed.variables.get("name").unwrap(),
+    &EnvVariable::String("John".into())
+  );
+}

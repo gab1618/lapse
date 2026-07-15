@@ -84,7 +84,14 @@ impl Lapse {
   }
 
   fn get_eval_ctx(&self) -> EvalCtx {
-    EvalCtx::new(Default::default())
+    let variables = self
+      .current_env()
+      .ok()
+      .flatten()
+      .map(|name| self.get_env(&name).variables)
+      .unwrap_or_default();
+
+    EvalCtx::new(variables)
   }
 
   fn resolve_request(&self, req: &RequestFile) -> Request<Vec<u8>> {
