@@ -5,19 +5,25 @@ use std::{
   path::PathBuf,
 };
 
-use reqwest::{Client, Request};
+use http::Request;
+use reqwest::Client;
 
 pub mod env;
 pub mod error;
+pub mod eval;
 pub mod log;
+pub mod parsing;
 pub mod request;
 pub mod state;
-pub mod parsing;
-pub mod eval;
 
 pub use error::{Error, Result};
 
-use crate::{log::ResponseLog, request::RequestFile};
+use crate::{
+  eval::EvalCtx,
+  log::ResponseLog,
+  parsing::RequestTokenizer,
+  request::{RequestFile, http::parse_request_http},
+};
 
 #[cfg(test)]
 mod test;
@@ -77,10 +83,25 @@ impl Lapse {
     self.path.join("env")
   }
 
+  fn get_eval_ctx(&self) -> EvalCtx {
+    EvalCtx::new(Default::default())
+  }
+
+  fn resolve_request(&self, req: &RequestFile) -> Request<Vec<u8>> {
+    let mut tokenizer = RequestTokenizer::new(&req.http);
+    let tokens = tokenizer.tokenize();
+
+    let ctx = self.get_eval_ctx();
+    let resolved_tokens = ctx.eval(tokens);
+
+    parse_request_http(resolved_tokens)
+  }
+
   pub async fn request(&self, req: &RequestFile, name: String) -> ResponseLog {
     let client = Client::new();
-    let request = req.request();
-    let parsed_request: Request = request.try_into().unwrap();
+
+    let request = self.resolve_request(req);
+    let parsed_request: reqwest::Request = request.try_into().unwrap();
 
     let response = client.execute(parsed_request).await.unwrap();
 
