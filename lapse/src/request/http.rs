@@ -58,7 +58,7 @@ mod test {
       include_str!("../../assets/request.md")
         .split_once("---")
         .unwrap()
-        .1,
+        .0,
     );
 
     let request = parse_request_http(file.http);
@@ -70,7 +70,7 @@ mod test {
       "application/json"
     );
     assert_eq!(
-      std::str::from_utf8(request.body()).unwrap(),
+      std::str::from_utf8(request.body()).unwrap().trim(),
       "{\n  \"name\": \"sample\"\n}"
     );
   }

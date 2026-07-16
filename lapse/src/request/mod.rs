@@ -5,8 +5,8 @@ pub mod collection;
 pub mod http;
 
 pub struct RequestFile {
-  pub markdown: String,
   pub http: String,
+  pub markdown: String,
 }
 
 impl Lapse {
@@ -14,7 +14,7 @@ impl Lapse {
     let file_path = self.requests_path().join(path).with_extension("md");
     let file_content = fs::read_to_string(file_path).unwrap();
 
-    let (markdown, http) = file_content.split_once("---").unwrap();
+    let (http, markdown) = file_content.split_once("---").unwrap();
 
     RequestFile {
       markdown: markdown.to_owned(),

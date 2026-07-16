@@ -145,7 +145,7 @@ mod test {
     let http = include_str!("../../assets/with-expr.md")
       .split_once("---")
       .unwrap()
-      .1
+      .0
       .trim_start_matches('\n');
 
     let tokens = tokenize(http);
@@ -158,7 +158,7 @@ mod test {
             .to_owned()
         ),
         RequestToken::Expr("var(\"name\")".to_owned()),
-        RequestToken::String("\n}\n".to_owned()),
+        RequestToken::String("\n}\n\n".to_owned()),
       ]
     );
   }
