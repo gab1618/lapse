@@ -11,10 +11,10 @@ pub mod env;
 pub mod error;
 pub mod eval;
 pub mod log;
+pub mod lua;
 pub mod parsing;
 pub mod request;
 pub mod state;
-pub mod lua;
 
 pub use error::{Error, Result};
 
@@ -78,10 +78,10 @@ impl Lapse {
     self.path.join("env")
   }
 
-  pub async fn request(&self, req: &RequestFile, name: String) -> ResponseLog {
+  pub async fn request(&self, req: &RequestFile, name: String) -> crate::Result<ResponseLog> {
     let client = Client::new();
 
-    let request = self.resolve_request(req);
+    let request = self.resolve_request(req)?;
     let parsed_request: reqwest::Request = request.try_into().unwrap();
 
     let response = client.execute(parsed_request).await.unwrap();
@@ -105,6 +105,6 @@ impl Lapse {
 
     self.save_log(&log);
 
-    log
+    Ok(log)
   }
 }

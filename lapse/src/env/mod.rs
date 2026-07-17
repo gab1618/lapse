@@ -55,13 +55,14 @@ impl Lapse {
   pub fn current_env(&self) -> crate::Result<Option<String>> {
     self.get_state("env")
   }
-  pub fn get_env(&self, name: &str) -> Env {
+  pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new().read(true).open(full_env_path).unwrap();
 
     let parsed: Env = serde_json::from_reader(f).unwrap();
-    parsed
+
+    Ok(parsed)
   }
   pub fn set_env(&self, env: &Env, name: &str) {
     let full_env_path = self.env_path().join(name).with_extension("json");

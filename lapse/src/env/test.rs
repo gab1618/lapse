@@ -40,7 +40,7 @@ fn test_read_env() {
 
   lapse.set_env(&ex_env, "env");
 
-  let found_env = lapse.get_env("env");
+  let found_env = lapse.get_env("env").unwrap();
 
   let found_name = found_env.variables.get("name").unwrap();
   assert_eq!(found_name, &EnvVariable::String("John".into()));
