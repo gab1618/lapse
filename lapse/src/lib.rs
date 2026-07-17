@@ -28,7 +28,7 @@ impl Lapse {
   pub fn init<P: Into<PathBuf>>(path: P) -> crate::Result<Self> {
     let base_path: PathBuf = path.into();
 
-    let space_dirs = ["requests", "env", ".lapse"];
+    let space_dirs = ["requests", "env", "scripts", ".lapse"];
 
     space_dirs
       .into_iter()
