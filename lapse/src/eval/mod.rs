@@ -64,7 +64,7 @@ impl fmt::Display for EnvVariable {
       Self::Boolean(b) => write!(f, "{b}"),
       Self::Integer(i) => write!(f, "{i}"),
       Self::Number(n) => write!(f, "{n}"),
-      Self::String(s) => write!(f, "{}", serde_json::to_string(s).unwrap()),
+      Self::String(s) => write!(f, "{}", s),
       Self::Object(fields) => {
         let mut keys: Vec<_> = fields.keys().collect();
         keys.sort();
@@ -173,7 +173,7 @@ mod test {
 
     assert_eq!(
       eval(&ctx, "{\n  \"name\": ${var(\"name\")}\n}"),
-      "{\n  \"name\": \"John\"\n}"
+      "{\n  \"name\": John\n}"
     );
   }
 
@@ -189,7 +189,7 @@ mod test {
     let ctx = eval_ctx(&[]);
     ctx.set_variable("name", "Jane");
 
-    assert_eq!(eval(&ctx, "${var(\"name\")}"), "\"Jane\"");
+    assert_eq!(eval(&ctx, "${var(\"name\")}"), "Jane");
   }
 
   #[test]
@@ -210,7 +210,7 @@ mod test {
     )]));
     let ctx = EvalCtx::new(HashMap::from([("address".to_string(), object)]));
 
-    assert_eq!(eval(&ctx, "${var(\"address\")}"), "{\"city\":\"NYC\"}");
+    assert_eq!(eval(&ctx, "${var(\"address\")}"), "{\"city\":NYC}");
   }
 
   #[test]
@@ -233,7 +233,7 @@ mod test {
 
     assert_eq!(
       eval(&ctx, "${ {a = 1, b = \"x\"} }"),
-      "{\"a\":1,\"b\":\"x\"}"
+      "{\"a\":1,\"b\":x}"
     );
   }
 
@@ -242,6 +242,6 @@ mod test {
     assert_eq!(EnvVariable::Null.to_string(), "null");
     assert_eq!(EnvVariable::Boolean(true).to_string(), "true");
     assert_eq!(EnvVariable::Integer(42).to_string(), "42");
-    assert_eq!(EnvVariable::String("hi".to_owned()).to_string(), "\"hi\"");
+    assert_eq!(EnvVariable::String("hi".to_owned()).to_string(), "hi");
   }
 }

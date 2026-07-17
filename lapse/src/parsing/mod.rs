@@ -154,11 +154,11 @@ mod test {
       tokens,
       vec![
         RequestToken::String(
-          "POST https://example.com/comments\ncontent-type: application/json\n\n{\n  \"name\": "
+          "POST https://example.com/comments\ncontent-type: application/json\n\n{\n  \"name\": \""
             .to_owned()
         ),
         RequestToken::Expr("var(\"name\")".to_owned()),
-        RequestToken::String("\n}\n\n".to_owned()),
+        RequestToken::String("\"\n}\n\n".to_owned()),
       ]
     );
   }

@@ -60,7 +60,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
   let ctx = lapse.get_eval_ctx();
   let tokens = RequestTokenizer::new("${var(\"name\")} is ${var(\"age\")}").tokenize();
 
-  assert_eq!(ctx.eval(tokens), "\"Jane\" is 30");
+  assert_eq!(ctx.eval(tokens), "Jane is 30");
 }
 
 #[test]
