@@ -1,3 +1,5 @@
+pub mod error;
+
 use std::{
   collections::HashMap,
   fmt::Display,
@@ -6,7 +8,7 @@ use std::{
   time::{SystemTime, UNIX_EPOCH},
 };
 
-use crate::Lapse;
+use crate::{Lapse, log::error::LogError};
 
 pub struct ResponseLog {
   pub request: String,
@@ -28,12 +30,12 @@ impl Display for ResponseLog {
 }
 
 impl Lapse {
-  pub fn save_log(&self, log: &ResponseLog) {
+  pub fn save_log(&self, log: &ResponseLog) -> crate::Result<()> {
     let logs_path = self.logs_path();
     let request_logs_path = logs_path.join(&log.request);
 
     // Ensure logs path exists
-    fs::create_dir_all(&request_logs_path).unwrap();
+    fs::create_dir_all(&request_logs_path).map_err(LogError::EnsureLogsDir)?;
 
     let curr_time = SystemTime::now()
       .duration_since(UNIX_EPOCH)
@@ -48,8 +50,10 @@ impl Lapse {
       .create(true)
       .truncate(true)
       .open(full_file_path)
-      .unwrap();
+      .map_err(LogError::SaveLogfile)?;
 
     write!(f, "{log}").unwrap();
+
+    Ok(())
   }
 }

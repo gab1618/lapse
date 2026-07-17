@@ -103,7 +103,7 @@ impl Lapse {
       headers: log_headers,
     };
 
-    self.save_log(&log);
+    self.save_log(&log)?;
 
     Ok(log)
   }
