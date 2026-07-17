@@ -14,6 +14,7 @@ pub mod log;
 pub mod parsing;
 pub mod request;
 pub mod state;
+pub mod lua;
 
 pub use error::{Error, Result};
 
