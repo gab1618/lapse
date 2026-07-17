@@ -12,10 +12,15 @@ pub struct Env {
   pub variables: HashMap<String, EnvVariable>,
 }
 
-#[derive(PartialEq, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
 pub enum EnvVariable {
-  String(String),
+  Null,
+  Boolean(bool),
+  Integer(i64),
   Number(f64),
+  String(String),
+  Object(HashMap<String, EnvVariable>),
 }
 
 impl From<String> for EnvVariable {
@@ -37,7 +42,7 @@ impl From<f64> for EnvVariable {
 
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
-    let env_file_path = self.env_path().join(name);
+    let env_file_path = self.env_path().join(name).with_extension("json");
     if !env_file_path.exists() {
       return Err(EnvError::NonExistentEnv(name.to_string()).into());
     }
@@ -51,7 +56,7 @@ impl Lapse {
     self.get_state("env")
   }
   pub fn get_env(&self, name: &str) -> Env {
-    let full_env_path = self.env_path().join(name);
+    let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new().read(true).open(full_env_path).unwrap();
 
@@ -59,7 +64,7 @@ impl Lapse {
     parsed
   }
   pub fn set_env(&self, env: &Env, name: &str) {
-    let full_env_path = self.env_path().join(name);
+    let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new()
       .write(true)

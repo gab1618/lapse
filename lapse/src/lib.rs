@@ -5,11 +5,13 @@ use std::{
   path::PathBuf,
 };
 
-use reqwest::{Client, Request};
+use reqwest::Client;
 
 pub mod env;
 pub mod error;
+pub mod eval;
 pub mod log;
+pub mod parsing;
 pub mod request;
 pub mod state;
 
@@ -77,8 +79,9 @@ impl Lapse {
 
   pub async fn request(&self, req: &RequestFile, name: String) -> ResponseLog {
     let client = Client::new();
-    let request = req.request();
-    let parsed_request: Request = request.try_into().unwrap();
+
+    let request = self.resolve_request(req);
+    let parsed_request: reqwest::Request = request.try_into().unwrap();
 
     let response = client.execute(parsed_request).await.unwrap();
 
