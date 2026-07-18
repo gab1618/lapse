@@ -2,7 +2,7 @@ POST https://example.com/comments
 content-type: application/json
 
 {
-  "name": "${var("name")}"
+  "name": "${env.name}"
 }
 
 ---

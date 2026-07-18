@@ -1,40 +1,28 @@
 pub mod error;
 pub mod request;
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::{Lapse, env::EnvVariable, eval::error::EvalError, parsing::RequestToken};
-use mlua::{IntoLua, Lua, Value};
+use mlua::Lua;
 
 pub struct EvalCtx {
-  variables: Rc<RefCell<HashMap<String, EnvVariable>>>,
   runtime: Lua,
 }
 
 impl EvalCtx {
   pub fn new(variables: HashMap<String, EnvVariable>) -> Self {
-    let variables = Rc::new(RefCell::new(variables));
     let runtime = Lua::new();
 
-    let lookup = Rc::clone(&variables);
+    let env_table = runtime.create_table().unwrap();
 
-    let var_fn = runtime
-      .create_function(move |lua, name: String| match lookup.borrow().get(&name) {
-        Some(value) => value.clone().into_lua(lua),
-        None => Ok(Value::Nil),
-      })
-      .unwrap();
+    for (key, value) in variables.into_iter() {
+      env_table.set(key.clone(), value).unwrap();
+    }
 
-    runtime.globals().set("var", var_fn).unwrap();
+    runtime.globals().set("env", env_table).unwrap();
 
-    Self { variables, runtime }
-  }
-
-  pub fn set_variable(&self, name: impl Into<String>, value: impl Into<EnvVariable>) {
-    self
-      .variables
-      .borrow_mut()
-      .insert(name.into(), value.into());
+    Self { runtime }
   }
 
   pub fn eval(&self, doc: Vec<RequestToken>) -> crate::Result<String> {
@@ -108,7 +96,7 @@ mod test {
     let ctx = eval_ctx(&[("name", "John")]);
 
     assert_eq!(
-      eval(&ctx, "{\n  \"name\": ${var(\"name\")}\n}").unwrap(),
+      eval(&ctx, "{\n  \"name\": ${env.name}\n}").unwrap(),
       "{\n  \"name\": John\n}"
     );
   }
@@ -117,15 +105,7 @@ mod test {
   fn test_var_missing_returns_null() {
     let ctx = eval_ctx(&[]);
 
-    assert_eq!(eval(&ctx, "${var(\"missing\")}").unwrap(), "null");
-  }
-
-  #[test]
-  fn test_set_variable_updates_lookup() {
-    let ctx = eval_ctx(&[]);
-    ctx.set_variable("name", "Jane");
-
-    assert_eq!(eval(&ctx, "${var(\"name\")}").unwrap(), "Jane");
+    assert_eq!(eval(&ctx, "${env.missing}").unwrap(), "null");
   }
 
   #[test]
@@ -135,7 +115,7 @@ mod test {
       EnvVariable::Number(42.0),
     )]));
 
-    assert_eq!(eval(&ctx, "${var(\"age\")}").unwrap(), "42");
+    assert_eq!(eval(&ctx, "${env.age}").unwrap(), "42");
   }
 
   #[test]
@@ -146,7 +126,7 @@ mod test {
     )]));
     let ctx = EvalCtx::new(HashMap::from([("address".to_string(), object)]));
 
-    assert_eq!(eval(&ctx, "${var(\"address\")}").unwrap(), "{\"city\":NYC}");
+    assert_eq!(eval(&ctx, "${env.address}").unwrap(), "{\"city\":NYC}");
   }
 
   #[test]

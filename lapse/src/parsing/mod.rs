@@ -157,7 +157,7 @@ mod test {
           "POST https://example.com/comments\ncontent-type: application/json\n\n{\n  \"name\": \""
             .to_owned()
         ),
-        RequestToken::Expr("var(\"name\")".to_owned()),
+        RequestToken::Expr("env.name".to_owned()),
         RequestToken::String("\"\n}\n\n".to_owned()),
       ]
     );
