@@ -1,6 +1,4 @@
-use crate::{
-  env::error::EnvError, eval::error::EvalError, log::error::LogError, state::error::StateError,
-};
+use crate::{env::error::EnvError, log::error::LogError, state::error::StateError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -17,9 +15,9 @@ pub enum Error {
   #[error(transparent)]
   State(#[from] StateError),
   #[error(transparent)]
-  Eval(#[from] EvalError),
-  #[error(transparent)]
   Log(#[from] LogError),
+  #[error(transparent)]
+  Lua(#[from] mlua::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
