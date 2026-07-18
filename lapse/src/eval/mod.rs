@@ -17,7 +17,7 @@ impl EvalCtx {
     let env_table = runtime.create_table().unwrap();
 
     for (key, value) in variables.into_iter() {
-      env_table.set(key.clone(), value).unwrap();
+      env_table.set(key, value).unwrap();
     }
 
     runtime.globals().set("env", env_table).unwrap();
