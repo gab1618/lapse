@@ -35,12 +35,12 @@ async fn entrypoint() -> error::Result<()> {
       println!("Initialized Lapse space");
     }
     Command::Ls => {
-      let lapse = Lapse::open(curr_dir);
+      let lapse = Lapse::open(curr_dir)?;
       let collection = lapse.get_request_collection(None);
       output_requests_collection(0, &collection);
     }
     Command::Send { request } => {
-      let lapse = Lapse::open(curr_dir);
+      let lapse = Lapse::open(curr_dir)?;
 
       let selected_request = match request {
         Some(existing) => existing,
@@ -64,7 +64,7 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Env(env_command) => match env_command {
       cli::EnvCommand::Switch { name } => {
-        let lapse = Lapse::open(curr_dir);
+        let lapse = Lapse::open(curr_dir)?;
         lapse.switch_env(&name)?;
       }
     },

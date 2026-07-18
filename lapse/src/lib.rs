@@ -23,7 +23,6 @@ pub struct Lapse {
 }
 
 impl Lapse {
-  // TODO: add proper error handling
   pub fn init<P: Into<PathBuf>>(path: P) -> crate::Result<Self> {
     let base_path: PathBuf = path.into();
 
@@ -42,23 +41,24 @@ impl Lapse {
       .truncate(true)
       .write(true)
       .open(base_path.join("requests").join("request.md"))
-      .unwrap();
+      .map_err(Error::OpenSampleFile)?;
 
     let sample_request_contents = include_str!("../assets/request.md");
-    f.write_all(sample_request_contents.as_bytes()).unwrap();
+    f.write_all(sample_request_contents.as_bytes())
+      .map_err(Error::WriteSampleFile)?;
 
     Ok(Self { path: base_path })
   }
-  pub fn open<P: Into<PathBuf>>(path: P) -> Self {
+  pub fn open<P: Into<PathBuf>>(path: P) -> crate::Result<Self> {
     let as_buf: PathBuf = path.into();
 
     let space_dir_path = as_buf.join(".lapse");
     if !space_dir_path.exists() {
-      let parent_path = as_buf.parent().unwrap();
+      let parent_path = as_buf.parent().ok_or(Error::GetParentDir)?;
       return Self::open(parent_path);
     }
 
-    Self { path: as_buf }
+    Ok(Self { path: as_buf })
   }
   fn requests_path(&self) -> PathBuf {
     self.path.join("requests")
