@@ -1,11 +1,8 @@
 use std::{
-  collections::HashMap,
   fs::{self, OpenOptions},
   io::Write,
   path::PathBuf,
 };
-
-use reqwest::Client;
 
 pub mod env;
 pub mod error;
@@ -17,8 +14,6 @@ pub mod request;
 pub mod state;
 
 pub use error::{Error, Result};
-
-use crate::{log::ResponseLog, request::RequestFile};
 
 #[cfg(test)]
 mod test;
@@ -76,35 +71,5 @@ impl Lapse {
   }
   fn env_path(&self) -> PathBuf {
     self.path.join("env")
-  }
-
-  pub async fn request(&self, req: &RequestFile, name: String) -> crate::Result<ResponseLog> {
-    let client = Client::new();
-
-    let request = self.resolve_request(req)?;
-    let parsed_request: reqwest::Request = request.try_into().unwrap();
-
-    let response = client.execute(parsed_request).await.unwrap();
-
-    let mut log_headers = HashMap::new();
-    response.headers().iter().for_each(|(name, value)| {
-      let str_value = value.to_str().unwrap().to_string();
-
-      log_headers.insert(name.to_string(), str_value);
-    });
-
-    let status_code = response.status().as_u16();
-    let response_body = response.text().await.unwrap();
-
-    let log = ResponseLog {
-      request: name,
-      text: response_body,
-      status: status_code,
-      headers: log_headers,
-    };
-
-    self.save_log(&log)?;
-
-    Ok(log)
   }
 }
