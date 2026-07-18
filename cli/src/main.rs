@@ -46,7 +46,7 @@ async fn main() {
         }
       };
 
-      let req = lapse.get_request_file(&selected_request);
+      let req = lapse.get_request_file(&selected_request).unwrap();
 
       let response = lapse.request(&req, selected_request).await.unwrap();
       println!("{}", response.text);

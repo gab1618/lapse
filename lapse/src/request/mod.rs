@@ -10,16 +10,16 @@ pub struct RequestFile {
 }
 
 impl Lapse {
-  pub fn get_request_file(&self, path: &str) -> RequestFile {
+  pub fn get_request_file(&self, path: &str) -> crate::Result<RequestFile> {
     let file_path = self.requests_path().join(path).with_extension("md");
     let file_content = fs::read_to_string(file_path).unwrap();
 
     let (http, markdown) = file_content.split_once("---").unwrap();
 
-    RequestFile {
+    Ok(RequestFile {
       markdown: markdown.to_owned(),
       http: http.to_owned(),
-    }
+    })
   }
   pub fn get_request_collection(&self, base: Option<String>) -> RequestCollection {
     let requests_path = self.requests_path();
@@ -43,7 +43,7 @@ mod test {
     let temp_dir = tempdir().unwrap();
     let lapse = Lapse::init(temp_dir.path()).unwrap();
 
-    let file = lapse.get_request_file("request");
+    let file = lapse.get_request_file("request").unwrap();
     assert!(!file.markdown.is_empty());
     assert!(!file.http.is_empty());
   }
