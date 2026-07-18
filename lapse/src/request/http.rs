@@ -82,7 +82,7 @@ mod test {
 
   fn request_file(http: &str) -> RequestFile {
     RequestFile {
-      markdown: String::new(),
+      markdown: None,
       http: http.to_owned(),
     }
   }
