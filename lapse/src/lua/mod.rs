@@ -69,7 +69,7 @@ impl fmt::Display for EnvVariable {
           write!(
             f,
             "{}:{}",
-            serde_json::to_string(key).map_err(|_| fmt::Error::default())?,
+            serde_json::to_string(key).map_err(|_| Default::default())?,
             fields[key]
           )?;
         }
