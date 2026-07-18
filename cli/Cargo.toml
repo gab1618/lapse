@@ -9,6 +9,7 @@ clap_complete = "4.6.7"
 inquire = "0.9.4"
 lapse = { workspace = true }
 tokio = { version = "1.52.3", features = ["full"] }
+thiserror = { workspace = true }
 
 [[bin]]
 name = "lapse"

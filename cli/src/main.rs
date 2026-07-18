@@ -1,6 +1,7 @@
 mod cli;
 mod collection;
 mod completion;
+mod error;
 
 use std::io::stdout;
 
@@ -19,12 +20,18 @@ use inquire::Select;
 
 #[tokio::main]
 async fn main() {
+  if let Err(err) = entrypoint().await {
+    println!("{}", err);
+  }
+}
+
+async fn entrypoint() -> error::Result<()> {
   let args = Cli::parse();
-  let curr_dir = std::env::current_dir().expect("Somehow we don't have a current dir");
+  let curr_dir = std::env::current_dir().map_err(error::Error::GetCurrentDir)?;
 
   match args.command {
     Command::Init => {
-      Lapse::init(curr_dir).unwrap();
+      Lapse::init(curr_dir)?;
       println!("Initialized Lapse space");
     }
     Command::Ls => {
@@ -42,13 +49,13 @@ async fn main() {
           let flat_requests = get_requests_flatlist(tree);
 
           let select = Select::new("Select the request", flat_requests);
-          select.prompt().unwrap()
+          select.prompt().map_err(error::Error::InvokePrompt)?
         }
       };
 
-      let req = lapse.get_request_file(&selected_request).unwrap();
+      let req = lapse.get_request_file(&selected_request)?;
 
-      let response = lapse.request(&req, selected_request).await.unwrap();
+      let response = lapse.request(&req, selected_request).await?;
       println!("{}", response.text);
     }
     Command::Completion { shell } => {
@@ -58,8 +65,10 @@ async fn main() {
     Command::Env(env_command) => match env_command {
       cli::EnvCommand::Switch { name } => {
         let lapse = Lapse::open(curr_dir);
-        lapse.switch_env(&name).unwrap();
+        lapse.switch_env(&name)?;
       }
     },
   }
+
+  Ok(())
 }

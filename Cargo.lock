@@ -861,6 +861,7 @@ dependencies = [
  "clap_complete",
  "inquire",
  "lapse",
+ "thiserror",
  "tokio",
 ]
 
