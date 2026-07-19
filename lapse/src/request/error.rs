@@ -4,6 +4,8 @@ pub enum RequestError {
   ReadRequestFile(#[source] std::io::Error),
   #[error("Could not read collection dir: {0}")]
   ReadCollectionDir(#[source] std::io::Error),
+  #[error("Could not parse collection path")]
+  ParseCollectionPath,
   #[error("Empty request file")]
   EmptyRequestFile,
   #[error("Missing method")]

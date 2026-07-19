@@ -36,10 +36,10 @@ impl Lapse {
         } else {
           let relative_path = full_entry_path
             .strip_prefix(prefix)
-            .unwrap()
+            .map_err(|_| RequestError::ParseCollectionPath)?
             .with_extension("")
             .to_str()
-            .unwrap()
+            .ok_or(RequestError::ParseCollectionPath)?
             .to_owned();
           Ok(RequestsCollectionEntry::Request(relative_path))
         }
