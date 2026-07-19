@@ -1,32 +1,32 @@
-use lapse::request::collection::{RequestCollection, RequestsCollectionEntry};
+use lapse::tree::{Tree, TreeEntry};
 
-pub fn output_requests_collection(level: usize, root: &RequestCollection) {
+pub fn output_tree(level: usize, root: &Tree) {
   let level_spacing = " ".repeat(level);
 
-  for entry in root {
+  for entry in root.iter() {
     match entry {
-      RequestsCollectionEntry::Request(name) => {
+      TreeEntry::Entry(name) => {
         println!("{}{}", level_spacing, name);
       }
-      RequestsCollectionEntry::Collection(name, items) => {
+      TreeEntry::Subtree(name, items) => {
         println!("{}{}", level_spacing, name);
 
-        output_requests_collection(level + 1, items);
+        output_tree(level + 1, items);
       }
     }
   }
 }
 
-pub fn get_requests_flatlist(tree: Vec<RequestsCollectionEntry>) -> Vec<String> {
+pub fn get_tree_flatlist(tree: &Tree) -> Vec<String> {
   let mut requests: Vec<String> = vec![];
 
-  for entry in tree {
+  for entry in tree.iter() {
     match entry {
-      RequestsCollectionEntry::Request(req) => {
-        requests.push(req);
+      TreeEntry::Entry(entry) => {
+        requests.push(entry.clone());
       }
-      RequestsCollectionEntry::Collection(_, items) => {
-        let sub_requests = get_requests_flatlist(*items);
+      TreeEntry::Subtree(_, items) => {
+        let sub_requests = get_tree_flatlist(items);
         for sub in sub_requests {
           requests.push(sub);
         }

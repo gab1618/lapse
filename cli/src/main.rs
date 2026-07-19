@@ -12,7 +12,7 @@ use lapse::Lapse;
 
 use crate::{
   cli::Command,
-  collection::{get_requests_flatlist, output_requests_collection},
+  collection::{get_tree_flatlist, output_tree},
   completion::generate_completion,
 };
 
@@ -37,7 +37,7 @@ async fn entrypoint() -> error::Result<()> {
     Command::Ls => {
       let lapse = Lapse::open(curr_dir)?;
       let collection = lapse.get_request_collection(None)?;
-      output_requests_collection(0, &collection);
+      output_tree(0, &collection);
     }
     Command::Send { request } => {
       let lapse = Lapse::open(curr_dir)?;
@@ -46,7 +46,7 @@ async fn entrypoint() -> error::Result<()> {
         Some(existing) => existing,
         None => {
           let tree = lapse.get_request_collection(None)?;
-          let flat_requests = get_requests_flatlist(tree);
+          let flat_requests = get_tree_flatlist(&tree);
 
           let select = Select::new("Select the request", flat_requests);
           select.prompt().map_err(error::Error::InvokePrompt)?

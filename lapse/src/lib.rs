@@ -13,6 +13,7 @@ pub mod parsing;
 pub mod request;
 pub mod secrets;
 pub mod state;
+pub mod tree;
 
 pub use error::{Error, Result};
 

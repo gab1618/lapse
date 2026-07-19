@@ -1,10 +1,6 @@
-use crate::{
-  Lapse,
-  request::{collection::RequestCollection, error::RequestError},
-};
+use crate::{Lapse, request::error::RequestError, tree::Tree};
 use std::fs;
 
-pub mod collection;
 pub mod error;
 pub mod http;
 
@@ -28,7 +24,7 @@ impl Lapse {
       http: http.to_owned(),
     })
   }
-  pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<RequestCollection> {
+  pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<Tree> {
     let requests_path = self.requests_path();
 
     let dir = match base {
@@ -36,7 +32,7 @@ impl Lapse {
       None => requests_path.clone(),
     };
 
-    Self::read_collection(&requests_path, &dir)
+    Tree::read(&requests_path, &dir)
   }
 }
 
