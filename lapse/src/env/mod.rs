@@ -20,23 +20,6 @@ pub enum EnvVariable {
   Object(HashMap<String, EnvVariable>),
 }
 
-impl From<String> for EnvVariable {
-  fn from(value: String) -> Self {
-    Self::String(value)
-  }
-}
-
-impl From<&str> for EnvVariable {
-  fn from(value: &str) -> Self {
-    Self::String(value.to_string())
-  }
-}
-impl From<f64> for EnvVariable {
-  fn from(value: f64) -> Self {
-    Self::Number(value)
-  }
-}
-
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
     let env_file_path = self.env_path().join(name).with_extension("json");

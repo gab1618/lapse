@@ -19,20 +19,8 @@ impl EvalCtx {
   ) -> crate::Result<Self> {
     let runtime = Lua::new();
 
-    let env_table = runtime.create_table()?;
-
-    for (key, value) in variables.into_iter() {
-      env_table.set(key, value)?;
-    }
-
-    let secrets_table = runtime.create_table()?;
-
-    for (key, value) in secrets.into_iter() {
-      secrets_table.set(key, value)?;
-    }
-
-    runtime.globals().set("env", env_table)?;
-    runtime.globals().set("secret", secrets_table)?;
+    runtime.globals().set("env", variables)?;
+    runtime.globals().set("secret", secrets)?;
 
     Ok(Self { runtime })
   }
@@ -70,4 +58,3 @@ impl Lapse {
     EvalCtx::new(variables, secrets)
   }
 }
-

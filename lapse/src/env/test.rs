@@ -30,7 +30,7 @@ fn test_read_env() {
 
   let mut ex_env = HashMap::new();
 
-  ex_env.insert("name".to_string(), "John".into());
+  ex_env.insert("name".to_string(), EnvVariable::String("John".to_string()));
 
   lapse.set_env(&ex_env, "env").unwrap();
 
