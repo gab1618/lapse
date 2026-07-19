@@ -2,11 +2,7 @@ use http::{Method, Request, Uri, Version};
 use reqwest::Client;
 use std::{collections::HashMap, str::FromStr};
 
-use crate::{
-  Lapse,
-  log::ResponseLog,
-  request::{RequestFile, error::RequestError},
-};
+use crate::{Lapse, log::ResponseLog, request::error::RequestError};
 
 pub fn parse_request_http(doc: String) -> crate::Result<Request<Vec<u8>>> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
@@ -49,10 +45,12 @@ pub fn parse_request_http(doc: String) -> crate::Result<Request<Vec<u8>>> {
 }
 
 impl Lapse {
-  pub async fn request(&self, req: &RequestFile, name: String) -> crate::Result<ResponseLog> {
+  pub async fn request(&self, name: String) -> crate::Result<ResponseLog> {
     let client = Client::new();
 
-    let request = self.resolve_request(req)?;
+    let req = self.get_request_file(&name)?;
+
+    let request = self.resolve_request(&req)?;
     let parsed_request: reqwest::Request =
       request.try_into().map_err(RequestError::ConvertRequest)?;
 

@@ -53,9 +53,7 @@ async fn entrypoint() -> error::Result<()> {
         }
       };
 
-      let req = lapse.get_request_file(&selected_request)?;
-
-      let response = lapse.request(&req, selected_request).await?;
+      let response = lapse.request(selected_request).await?;
       println!("{}", response.text);
     }
     Command::Completion { shell } => {
