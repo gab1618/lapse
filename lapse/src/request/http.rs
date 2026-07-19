@@ -48,7 +48,7 @@ impl Lapse {
   pub async fn request(&self, name: String) -> crate::Result<ResponseLog> {
     let client = Client::new();
 
-    let req = self.get_request_file(&name)?;
+    let req = self.get_request_http(&name)?;
 
     let request = self.resolve_request(&req)?;
     let parsed_request: reqwest::Request =

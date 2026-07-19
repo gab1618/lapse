@@ -28,4 +28,6 @@ pub enum RequestError {
   GetResponseBody(#[source] reqwest::Error),
   #[error("Could not convert header into string: {0}")]
   HeaderToStr(#[source] http::header::ToStrError),
+  #[error("Could not resolve http line")]
+  ResolveHttpLine,
 }

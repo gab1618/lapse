@@ -1,5 +1,8 @@
 use crate::{Lapse, request::error::RequestError, tree::Tree};
-use std::fs;
+use std::{
+  fs::OpenOptions,
+  io::{BufRead, BufReader},
+};
 
 pub mod error;
 pub mod http;
@@ -10,19 +13,34 @@ pub struct RequestFile {
 }
 
 impl Lapse {
-  pub fn get_request_file(&self, path: &str) -> crate::Result<RequestFile> {
-    let file_path = self.requests_path().join(path).with_extension("md");
-    let file_content = fs::read_to_string(file_path).map_err(RequestError::ReadRequestFile)?;
+  pub fn get_request_http(&self, name: &str) -> crate::Result<String> {
+    let file_path = self.requests_path().join(name).with_extension("md");
+    let f = OpenOptions::new()
+      .read(true)
+      .open(file_path)
+      .map_err(RequestError::ReadRequestFile)?;
 
-    let (http, markdown) = file_content
-      .split_once("---")
-      .map(|(inner_http, inner_markdown)| (inner_http, Some(inner_markdown)))
-      .unwrap_or_else(|| (&file_content, None));
+    let r = BufReader::new(f);
 
-    Ok(RequestFile {
-      markdown: markdown.map(|inner| inner.to_owned()),
-      http: http.to_owned(),
-    })
+    let lines = r.lines();
+
+    let http_lines = lines.take_while(|line| {
+      let is_delimiter = line.as_ref().map(|inner| inner == "---").unwrap_or(true);
+
+      !is_delimiter
+    });
+
+    let resolved_lines = http_lines
+      .map(|line| {
+        let resolved = line.map_err(|_| RequestError::ResolveHttpLine)?;
+
+        Ok(resolved)
+      })
+      .collect::<crate::Result<Vec<_>>>()?;
+
+    let http_content = resolved_lines.join("\n");
+
+    Ok(http_content)
   }
   pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<Tree> {
     let requests_path = self.requests_path();
@@ -48,9 +66,8 @@ mod test {
     let temp_dir = tempdir().unwrap();
     let lapse = Lapse::init(temp_dir.path()).unwrap();
 
-    let file = lapse.get_request_file("request").unwrap();
-    assert!(file.markdown.is_some());
-    assert!(!file.http.is_empty());
+    let file_http = lapse.get_request_http("request").unwrap();
+    assert!(!file_http.is_empty());
   }
   #[test]
   fn test_get_httponly_req() {
@@ -60,9 +77,9 @@ mod test {
     let example_req_path = temp_dir.path().join("requests/without-markdown.md");
     fs::write(example_req_path, example_req_content).unwrap();
 
-    let endpoint = lapse.get_request_file("without-markdown").unwrap();
+    let request_http = lapse.get_request_http("without-markdown").unwrap();
 
-    assert!(!endpoint.http.is_empty());
-    assert!(endpoint.markdown.is_none());
+    assert!(!request_http.is_empty());
+    assert_eq!(request_http.trim(), example_req_content.trim());
   }
 }
