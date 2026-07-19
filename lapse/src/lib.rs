@@ -11,6 +11,7 @@ pub mod log;
 pub mod lua;
 pub mod parsing;
 pub mod request;
+pub mod secrets;
 pub mod state;
 
 pub use error::{Error, Result};
@@ -71,5 +72,8 @@ impl Lapse {
   }
   fn env_path(&self) -> PathBuf {
     self.path.join("env")
+  }
+  fn secrets_path(&self) -> PathBuf {
+    self.path.join("secrets.json")
   }
 }

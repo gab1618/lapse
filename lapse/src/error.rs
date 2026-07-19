@@ -1,4 +1,7 @@
-use crate::{env::error::EnvError, log::error::LogError, request::error::RequestError, state::error::StateError};
+use crate::{
+  env::error::EnvError, log::error::LogError, request::error::RequestError,
+  secrets::error::SecretsError, state::error::StateError,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -20,6 +23,8 @@ pub enum Error {
   Lua(#[from] mlua::Error),
   #[error(transparent)]
   Request(#[from] RequestError),
+  #[error(transparent)]
+  Secrets(#[from] SecretsError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
