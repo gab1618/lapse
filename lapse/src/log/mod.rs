@@ -50,9 +50,9 @@ impl Lapse {
       .create(true)
       .truncate(true)
       .open(full_file_path)
-      .map_err(LogError::SaveLogfile)?;
+      .map_err(LogError::OpenLogFile)?;
 
-    write!(f, "{log}").unwrap();
+    write!(f, "{log}").map_err(LogError::SaveLogfile)?;
 
     Ok(())
   }

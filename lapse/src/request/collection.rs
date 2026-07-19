@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::Lapse;
+use crate::{Lapse, request::error::RequestError};
 
 pub enum RequestsCollectionEntry {
   Request(String),
@@ -10,11 +10,14 @@ pub enum RequestsCollectionEntry {
 pub type RequestCollection = Vec<RequestsCollectionEntry>;
 
 impl Lapse {
-  pub fn read_collection(prefix: &Path, dir: &Path) -> RequestCollection {
+  pub fn read_collection(prefix: &Path, dir: &Path) -> crate::Result<RequestCollection> {
     let mut dir_entries = fs::read_dir(dir)
-      .unwrap()
-      .map(|entry| entry.unwrap())
-      .collect::<Vec<_>>();
+      .map_err(RequestError::ReadCollectionDir)?
+      .map(|entry| {
+        let resolved_entry = entry.map_err(RequestError::ReadCollectionDir)?;
+        Ok(resolved_entry)
+      })
+      .collect::<crate::Result<Vec<_>>>()?;
 
     dir_entries.sort_by_key(|entry| entry.file_name());
 
@@ -25,8 +28,11 @@ impl Lapse {
 
         if full_entry_path.is_dir() {
           let name = entry.file_name().to_string_lossy().into_owned();
-          let sub_collection = Self::read_collection(prefix, &full_entry_path);
-          RequestsCollectionEntry::Collection(name, Box::new(sub_collection))
+          let sub_collection = Self::read_collection(prefix, &full_entry_path)?;
+          Ok(RequestsCollectionEntry::Collection(
+            name,
+            Box::new(sub_collection),
+          ))
         } else {
           let relative_path = full_entry_path
             .strip_prefix(prefix)
@@ -35,10 +41,10 @@ impl Lapse {
             .to_str()
             .unwrap()
             .to_owned();
-          RequestsCollectionEntry::Request(relative_path)
+          Ok(RequestsCollectionEntry::Request(relative_path))
         }
       })
-      .collect::<Vec<_>>()
+      .collect::<crate::Result<Vec<_>>>()
   }
 }
 
@@ -72,7 +78,7 @@ mod test {
 
     fs::write(temp_dir.path().join("requests").join("ping.md"), "").unwrap();
 
-    let collection = lapse.get_request_collection(None);
+    let collection = lapse.get_request_collection(None).unwrap();
 
     assert_eq!(entry_names(&collection), vec!["ping", "request"]);
   }
@@ -87,7 +93,7 @@ mod test {
     fs::write(requests_path.join("users").join("get.md"), "").unwrap();
     fs::write(requests_path.join("users").join("create.md"), "").unwrap();
 
-    let collection = lapse.get_request_collection(None);
+    let collection = lapse.get_request_collection(None).unwrap();
 
     let users_collection = collection
       .iter()
@@ -112,7 +118,9 @@ mod test {
     fs::create_dir(requests_path.join("users")).unwrap();
     fs::write(requests_path.join("users").join("get.md"), "").unwrap();
 
-    let collection = lapse.get_request_collection(Some("users".to_owned()));
+    let collection = lapse
+      .get_request_collection(Some("users".to_owned()))
+      .unwrap();
 
     assert_eq!(entry_names(&collection), vec!["users/get"]);
   }

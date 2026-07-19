@@ -16,10 +16,10 @@ impl EvalCtx {
     let env_table = runtime.create_table()?;
 
     for (key, value) in variables.into_iter() {
-      env_table.set(key, value).unwrap();
+      env_table.set(key, value)?;
     }
 
-    runtime.globals().set("env", env_table).unwrap();
+    runtime.globals().set("env", env_table)?;
 
     Ok(Self { runtime })
   }
@@ -49,7 +49,7 @@ impl Lapse {
       .current_env()
       .ok()
       .flatten()
-      .map(|name| self.get_env(&name).unwrap().variables)
+      .map(|name| self.get_env(&name).unwrap_or_default().variables)
       .unwrap_or_default();
 
     EvalCtx::new(variables)
@@ -108,7 +108,8 @@ mod test {
     let ctx = EvalCtx::new(HashMap::from([(
       "age".to_string(),
       EnvVariable::Number(42.0),
-    )])).unwrap();
+    )]))
+    .unwrap();
 
     assert_eq!(eval(&ctx, "${env.age}").unwrap(), "42");
   }

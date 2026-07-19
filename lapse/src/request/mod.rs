@@ -1,7 +1,11 @@
-use crate::{Lapse, request::collection::RequestCollection};
+use crate::{
+  Lapse,
+  request::{collection::RequestCollection, error::RequestError},
+};
 use std::fs;
 
 pub mod collection;
+pub mod error;
 pub mod http;
 
 pub struct RequestFile {
@@ -12,7 +16,7 @@ pub struct RequestFile {
 impl Lapse {
   pub fn get_request_file(&self, path: &str) -> crate::Result<RequestFile> {
     let file_path = self.requests_path().join(path).with_extension("md");
-    let file_content = fs::read_to_string(file_path).unwrap();
+    let file_content = fs::read_to_string(file_path).map_err(RequestError::ReadRequestFile)?;
 
     let (http, markdown) = file_content
       .split_once("---")
@@ -24,7 +28,7 @@ impl Lapse {
       http: http.to_owned(),
     })
   }
-  pub fn get_request_collection(&self, base: Option<String>) -> RequestCollection {
+  pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<RequestCollection> {
     let requests_path = self.requests_path();
 
     let dir = match base {

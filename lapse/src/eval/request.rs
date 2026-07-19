@@ -14,6 +14,6 @@ impl Lapse {
     let ctx = self.get_eval_ctx()?;
     let resolved_tokens = ctx.eval(tokens)?;
 
-    Ok(parse_request_http(resolved_tokens))
+    parse_request_http(resolved_tokens)
   }
 }

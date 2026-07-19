@@ -2,18 +2,22 @@ use http::{Method, Request, Uri, Version};
 use reqwest::Client;
 use std::{collections::HashMap, str::FromStr};
 
-use crate::{Lapse, log::ResponseLog, request::RequestFile};
+use crate::{
+  Lapse,
+  log::ResponseLog,
+  request::{RequestFile, error::RequestError},
+};
 
-pub fn parse_request_http(doc: String) -> Request<Vec<u8>> {
+pub fn parse_request_http(doc: String) -> crate::Result<Request<Vec<u8>>> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
 
-  let request_line = lines.next().ok_or("Empty request").unwrap();
+  let request_line = lines.next().ok_or(RequestError::EmptyRequestFile)?;
   let mut request_parts = request_line.split_whitespace();
-  let method = request_parts.next().ok_or("Missing method").unwrap();
-  let uri = request_parts.next().ok_or("Missing URI").unwrap();
+  let method = request_parts.next().ok_or(RequestError::MissingMethod)?;
+  let uri = request_parts.next().ok_or(RequestError::MissingUri)?;
 
-  let method = Method::from_str(method).unwrap();
-  let uri = Uri::from_str(uri).unwrap();
+  let method = Method::from_str(method).map_err(RequestError::ParseMethod)?;
+  let uri = Uri::from_str(uri).map_err(RequestError::ParseUri)?;
 
   let mut request_builder = Request::builder()
     .method(method)
@@ -30,16 +34,18 @@ pub fn parse_request_http(doc: String) -> Request<Vec<u8>> {
         continue;
       }
 
-      let (name, value) = line.split_once(':').ok_or("Invalid header line").unwrap();
+      let (name, value) = line.split_once(':').ok_or(RequestError::ParseHeaderLine)?;
       request_builder = request_builder.header(name.trim(), value.trim());
     } else {
       body_lines.push(line);
     }
   }
 
-  request_builder
-    .body(body_lines.join("\n").into_bytes())
-    .unwrap()
+  Ok(
+    request_builder
+      .body(body_lines.join("\n").into_bytes())
+      .map_err(RequestError::BuildRequest)?,
+  )
 }
 
 impl Lapse {
@@ -47,19 +53,32 @@ impl Lapse {
     let client = Client::new();
 
     let request = self.resolve_request(req)?;
-    let parsed_request: reqwest::Request = request.try_into().unwrap();
+    let parsed_request: reqwest::Request =
+      request.try_into().map_err(RequestError::ConvertRequest)?;
 
-    let response = client.execute(parsed_request).await.unwrap();
+    let response = client
+      .execute(parsed_request)
+      .await
+      .map_err(RequestError::ExecuteRequest)?;
 
-    let mut log_headers = HashMap::new();
-    response.headers().iter().for_each(|(name, value)| {
-      let str_value = value.to_str().unwrap().to_string();
+    let log_headers = response
+      .headers()
+      .iter()
+      .map(|(name, value)| {
+        let str_value = value
+          .to_str()
+          .map_err(RequestError::HeaderToStr)?
+          .to_string();
 
-      log_headers.insert(name.to_string(), str_value);
-    });
+        Ok((name.to_string(), str_value))
+      })
+      .collect::<crate::Result<HashMap<String, String>>>()?;
 
     let status_code = response.status().as_u16();
-    let response_body = response.text().await.unwrap();
+    let response_body = response
+      .text()
+      .await
+      .map_err(RequestError::GetResponseBody)?;
 
     let log = ResponseLog {
       request: name,
@@ -96,7 +115,7 @@ mod test {
         .0,
     );
 
-    let request = parse_request_http(file.http);
+    let request = parse_request_http(file.http).unwrap();
 
     assert_eq!(request.method(), Method::POST);
     assert_eq!(request.uri(), "https://example.com/comments");
@@ -114,7 +133,7 @@ mod test {
   fn test_parses_request_without_body() {
     let file = request_file("GET https://example.com/comments\ncontent-type: application/json\n");
 
-    let request = parse_request_http(file.http);
+    let request = parse_request_http(file.http).unwrap();
 
     assert_eq!(request.method(), Method::GET);
     assert_eq!(request.uri(), "https://example.com/comments");
@@ -129,7 +148,7 @@ mod test {
   fn test_parses_request_without_headers_or_body() {
     let file = request_file("DELETE https://example.com/comments\n");
 
-    let request = parse_request_http(file.http);
+    let request = parse_request_http(file.http).unwrap();
 
     assert_eq!(request.method(), Method::DELETE);
     assert_eq!(request.uri(), "https://example.com/comments");
@@ -141,7 +160,7 @@ mod test {
   fn test_ignores_leading_blank_lines() {
     let file = request_file("\n\nPUT https://example.com/comments\n");
 
-    let request = parse_request_http(file.http);
+    let request = parse_request_http(file.http).unwrap();
 
     assert_eq!(request.method(), Method::PUT);
     assert_eq!(request.uri(), "https://example.com/comments");

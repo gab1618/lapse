@@ -36,7 +36,7 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Ls => {
       let lapse = Lapse::open(curr_dir)?;
-      let collection = lapse.get_request_collection(None);
+      let collection = lapse.get_request_collection(None)?;
       output_requests_collection(0, &collection);
     }
     Command::Send { request } => {
@@ -45,7 +45,7 @@ async fn entrypoint() -> error::Result<()> {
       let selected_request = match request {
         Some(existing) => existing,
         None => {
-          let tree = lapse.get_request_collection(None);
+          let tree = lapse.get_request_collection(None)?;
           let flat_requests = get_requests_flatlist(tree);
 
           let select = Select::new("Select the request", flat_requests);
