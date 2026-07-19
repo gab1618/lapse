@@ -21,7 +21,7 @@ use inquire::Select;
 #[tokio::main]
 async fn main() {
   if let Err(err) = entrypoint().await {
-    println!("{}", err);
+    eprintln!("{}", err);
   }
 }
 
@@ -66,6 +66,7 @@ async fn entrypoint() -> error::Result<()> {
       cli::EnvCommand::Switch { name } => {
         let lapse = Lapse::open(curr_dir)?;
         lapse.switch_env(&name)?;
+        println!("Switched to env: {}", name);
       }
     },
   }
