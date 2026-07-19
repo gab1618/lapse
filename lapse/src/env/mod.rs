@@ -7,10 +7,7 @@ mod test;
 
 pub mod error;
 
-#[derive(Default, serde::Deserialize, serde::Serialize)]
-pub struct Env {
-  pub variables: HashMap<String, EnvVariable>,
-}
+pub type Env = HashMap<String, EnvVariable>;
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]

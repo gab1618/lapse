@@ -49,7 +49,7 @@ impl Lapse {
       .current_env()
       .ok()
       .flatten()
-      .map(|name| self.get_env(&name).unwrap_or_default().variables)
+      .map(|name| self.get_env(&name).unwrap_or_default())
       .unwrap_or_default();
 
     EvalCtx::new(variables)

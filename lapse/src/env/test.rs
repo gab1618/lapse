@@ -12,9 +12,7 @@ fn test_switch_env() {
   let temp_dir = tempdir().unwrap();
   let lapse = Lapse::init(temp_dir.path()).unwrap();
 
-  let ex_env = Env {
-    variables: HashMap::default(),
-  };
+  let ex_env = HashMap::default();
 
   lapse.set_env(&ex_env, "prod").unwrap();
 
@@ -30,19 +28,15 @@ fn test_read_env() {
   let temp_dir = tempdir().unwrap();
   let lapse = Lapse::init(temp_dir.path()).unwrap();
 
-  let mut ex_variables = HashMap::new();
+  let mut ex_env = HashMap::new();
 
-  ex_variables.insert("name".to_string(), "John".into());
-
-  let ex_env = Env {
-    variables: ex_variables,
-  };
+  ex_env.insert("name".to_string(), "John".into());
 
   lapse.set_env(&ex_env, "env").unwrap();
 
   let found_env = lapse.get_env("env").unwrap();
 
-  let found_name = found_env.variables.get("name").unwrap();
+  let found_name = found_env.get("name").unwrap();
   assert_eq!(found_name, &EnvVariable::String("John".into()));
 }
 
@@ -54,7 +48,7 @@ fn test_parse_asset_env_json() {
   let parsed: Env = serde_json::from_str(&content).unwrap();
 
   assert_eq!(
-    parsed.variables.get("name").unwrap(),
+    parsed.get("name").unwrap(),
     &EnvVariable::String("John".into())
   );
 }
