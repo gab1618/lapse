@@ -6,4 +6,8 @@ pub enum EnvError {
   NonExistentEnv(String),
   #[error("Could not open env file: {0}")]
   OpenEnvFile(#[source] std::io::Error),
+  #[error("Could not parse env")]
+  ParseEnv,
+  #[error("Could not serialize env")]
+  SerializeEnv,
 }

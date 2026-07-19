@@ -16,7 +16,7 @@ fn test_switch_env() {
     variables: HashMap::default(),
   };
 
-  lapse.set_env(&ex_env, "prod");
+  lapse.set_env(&ex_env, "prod").unwrap();
 
   lapse.switch_env("prod").unwrap();
 
@@ -38,7 +38,7 @@ fn test_read_env() {
     variables: ex_variables,
   };
 
-  lapse.set_env(&ex_env, "env");
+  lapse.set_env(&ex_env, "env").unwrap();
 
   let found_env = lapse.get_env("env").unwrap();
 

@@ -58,13 +58,16 @@ impl Lapse {
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name).with_extension("json");
 
-    let f = OpenOptions::new().read(true).open(full_env_path).unwrap();
+    let f = OpenOptions::new()
+      .read(true)
+      .open(full_env_path)
+      .map_err(EnvError::OpenEnvFile)?;
 
-    let parsed: Env = serde_json::from_reader(f).unwrap();
+    let parsed: Env = serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
 
     Ok(parsed)
   }
-  pub fn set_env(&self, env: &Env, name: &str) {
+  pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name).with_extension("json");
 
     let f = OpenOptions::new()
@@ -72,8 +75,10 @@ impl Lapse {
       .truncate(true)
       .create(true)
       .open(full_env_path)
-      .unwrap();
+      .map_err(EnvError::OpenEnvFile)?;
 
-    serde_json::to_writer(f, env).unwrap();
+    serde_json::to_writer(f, env).map_err(|_| EnvError::SerializeEnv)?;
+
+    Ok(())
   }
 }
