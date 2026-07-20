@@ -67,6 +67,10 @@ async fn entrypoint() -> error::Result<()> {
         println!("Switched to env: {}", name);
       }
     },
+    Command::Run { script } => {
+      let lapse = Lapse::open(curr_dir)?;
+      lapse.run_script(&script).await?;
+    }
   }
 
   Ok(())
