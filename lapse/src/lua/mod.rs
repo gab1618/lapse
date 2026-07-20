@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt};
 
 use mlua::{FromLua, IntoLua, Lua, Value};
 
-use crate::env::EnvVariable;
+use crate::{env::EnvVariable, log::ResponseLog};
 
 impl FromLua for EnvVariable {
   fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
@@ -76,5 +76,17 @@ impl fmt::Display for EnvVariable {
         write!(f, "}}")
       }
     }
+  }
+}
+
+impl IntoLua for ResponseLog {
+  fn into_lua(self, lua: &Lua) -> mlua::Result<Value> {
+    let mut log_map = HashMap::new();
+
+    log_map.insert("request", EnvVariable::String(self.request));
+
+    let as_lua = log_map.into_lua(lua)?;
+
+    Ok(as_lua)
   }
 }

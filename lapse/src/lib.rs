@@ -14,12 +14,14 @@ pub mod request;
 pub mod secrets;
 pub mod state;
 pub mod tree;
+mod script;
 
 pub use error::{Error, Result};
 
 #[cfg(test)]
 mod test;
 
+#[derive(Clone)]
 pub struct Lapse {
   path: PathBuf,
 }
@@ -73,6 +75,9 @@ impl Lapse {
   }
   fn env_path(&self) -> PathBuf {
     self.path.join("env")
+  }
+  fn scripts_path(&self) -> PathBuf {
+    self.path.join("scripts")
   }
   fn secrets_path(&self) -> PathBuf {
     self.path.join("secrets.json")
