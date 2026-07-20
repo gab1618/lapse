@@ -81,12 +81,13 @@ impl fmt::Display for EnvVariable {
 
 impl IntoLua for ResponseLog {
   fn into_lua(self, lua: &Lua) -> mlua::Result<Value> {
-    let mut log_map = HashMap::new();
+    let table = lua.create_table()?;
 
-    log_map.insert("request", EnvVariable::String(self.request));
+    table.set("status", self.status)?;
+    table.set("text", self.text)?;
+    table.set("headers", self.headers)?;
+    table.set("request", self.request)?;
 
-    let as_lua = log_map.into_lua(lua)?;
-
-    Ok(as_lua)
+    Ok(Value::Table(table))
   }
 }
