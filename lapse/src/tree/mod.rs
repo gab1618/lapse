@@ -2,7 +2,7 @@ pub mod error;
 
 use std::{fs, ops::Deref, path::Path};
 
-use crate::tree::error::TreeError;
+use crate::{Lapse, tree::error::TreeError};
 
 pub enum TreeEntry {
   Entry(String),
@@ -54,5 +54,18 @@ impl Tree {
         })
         .collect::<crate::Result<Vec<_>>>()?,
     ))
+  }
+}
+
+impl Lapse {
+  pub fn get_resource_tree(&self, resource: &str, base: Option<String>) -> crate::Result<Tree> {
+    let resource_path = self.path.join(resource);
+
+    let dir = match base {
+      Some(base) => resource_path.join(base),
+      None => resource_path.clone(),
+    };
+
+    Tree::read(&resource_path, &dir)
   }
 }

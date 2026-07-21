@@ -45,16 +45,6 @@ impl Lapse {
   pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<Tree> {
     self.get_resource_tree("requests", base)
   }
-  fn get_resource_tree(&self, resource: &str, base: Option<String>) -> crate::Result<Tree> {
-    let resource_path = self.path.join(resource);
-
-    let dir = match base {
-      Some(base) => resource_path.join(base),
-      None => resource_path.clone(),
-    };
-
-    Tree::read(&resource_path, &dir)
-  }
 }
 
 #[cfg(test)]
