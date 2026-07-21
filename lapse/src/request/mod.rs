@@ -43,14 +43,17 @@ impl Lapse {
     Ok(http_content)
   }
   pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<Tree> {
-    let requests_path = self.requests_path();
+    self.get_resource_tree("requests", base)
+  }
+  fn get_resource_tree(&self, resource: &str, base: Option<String>) -> crate::Result<Tree> {
+    let resource_path = self.path.join(resource);
 
     let dir = match base {
-      Some(base) => requests_path.join(base),
-      None => requests_path.clone(),
+      Some(base) => resource_path.join(base),
+      None => resource_path.clone(),
     };
 
-    Tree::read(&requests_path, &dir)
+    Tree::read(&resource_path, &dir)
   }
 }
 
