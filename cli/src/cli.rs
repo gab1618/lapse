@@ -10,7 +10,7 @@ pub enum Command {
     request: Option<String>,
   },
   Run {
-    script: String,
+    script: Option<String>,
   },
   Completion {
     shell: CliCompletionShell,

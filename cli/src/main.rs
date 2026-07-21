@@ -69,7 +69,18 @@ async fn entrypoint() -> error::Result<()> {
     },
     Command::Run { script } => {
       let lapse = Lapse::open(curr_dir)?;
-      lapse.run_script(&script).await?;
+
+      let selected_script = match script {
+        Some(existing) => existing,
+        None => {
+          let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
+          let flat_scripts = get_tree_flatlist(&tree);
+
+          let select = Select::new("Select the script", flat_scripts);
+          select.prompt().map_err(error::Error::InvokePrompt)?
+        }
+      };
+      lapse.run_script(&selected_script).await?;
     }
   }
 
