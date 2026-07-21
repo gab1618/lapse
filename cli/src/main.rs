@@ -8,7 +8,7 @@ use std::io::stdout;
 use clap::Parser;
 use cli::Cli;
 
-use lapse::Lapse;
+use lapse::{Lapse, tree::resource::Resource};
 
 use crate::{
   cli::Command,
@@ -36,7 +36,7 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Ls => {
       let lapse = Lapse::open(curr_dir)?;
-      let collection = lapse.get_request_collection(None)?;
+      let collection = lapse.get_resource_tree(Resource::Requests, None)?;
       output_tree(0, &collection);
     }
     Command::Send { request } => {
@@ -45,7 +45,7 @@ async fn entrypoint() -> error::Result<()> {
       let selected_request = match request {
         Some(existing) => existing,
         None => {
-          let tree = lapse.get_request_collection(None)?;
+          let tree = lapse.get_resource_tree(Resource::Requests, None)?;
           let flat_requests = get_tree_flatlist(&tree);
 
           let select = Select::new("Select the request", flat_requests);
@@ -67,6 +67,21 @@ async fn entrypoint() -> error::Result<()> {
         println!("Switched to env: {}", name);
       }
     },
+    Command::Run { script } => {
+      let lapse = Lapse::open(curr_dir)?;
+
+      let selected_script = match script {
+        Some(existing) => existing,
+        None => {
+          let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
+          let flat_scripts = get_tree_flatlist(&tree);
+
+          let select = Select::new("Select the script", flat_scripts);
+          select.prompt().map_err(error::Error::InvokePrompt)?
+        }
+      };
+      lapse.run_script(&selected_script).await?;
+    }
   }
 
   Ok(())

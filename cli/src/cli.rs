@@ -9,6 +9,9 @@ pub enum Command {
   Send {
     request: Option<String>,
   },
+  Run {
+    script: Option<String>,
+  },
   Completion {
     shell: CliCompletionShell,
   },

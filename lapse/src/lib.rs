@@ -11,6 +11,7 @@ pub mod log;
 pub mod lua;
 pub mod parsing;
 pub mod request;
+pub mod script;
 pub mod secrets;
 pub mod state;
 pub mod tree;
@@ -20,6 +21,7 @@ pub use error::{Error, Result};
 #[cfg(test)]
 mod test;
 
+#[derive(Clone)]
 pub struct Lapse {
   path: PathBuf,
 }
@@ -28,7 +30,7 @@ impl Lapse {
   pub fn init<P: Into<PathBuf>>(path: P) -> crate::Result<Self> {
     let base_path: PathBuf = path.into();
 
-    let space_dirs = ["requests", "env", ".lapse"];
+    let space_dirs = ["requests", "env", "scripts", ".lapse"];
 
     space_dirs
       .into_iter()
@@ -73,6 +75,9 @@ impl Lapse {
   }
   fn env_path(&self) -> PathBuf {
     self.path.join("env")
+  }
+  fn scripts_path(&self) -> PathBuf {
+    self.path.join("scripts")
   }
   fn secrets_path(&self) -> PathBuf {
     self.path.join("secrets.json")
