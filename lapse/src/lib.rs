@@ -11,10 +11,10 @@ pub mod log;
 pub mod lua;
 pub mod parsing;
 pub mod request;
+pub mod script;
 pub mod secrets;
 pub mod state;
 pub mod tree;
-mod script;
 
 pub use error::{Error, Result};
 

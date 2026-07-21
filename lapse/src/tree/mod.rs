@@ -1,8 +1,12 @@
 pub mod error;
+pub mod resource;
 
 use std::{fs, ops::Deref, path::Path};
 
-use crate::{Lapse, tree::error::TreeError};
+use crate::{
+  Lapse,
+  tree::{error::TreeError, resource::Resource},
+};
 
 pub enum TreeEntry {
   Entry(String),
@@ -58,8 +62,9 @@ impl Tree {
 }
 
 impl Lapse {
-  pub fn get_resource_tree(&self, resource: &str, base: Option<String>) -> crate::Result<Tree> {
-    let resource_path = self.path.join(resource);
+  pub fn get_resource_tree(&self, resource: Resource, base: Option<String>) -> crate::Result<Tree> {
+    let resource_subpath: &str = resource.into();
+    let resource_path = self.path.join(resource_subpath);
 
     let dir = match base {
       Some(base) => resource_path.join(base),

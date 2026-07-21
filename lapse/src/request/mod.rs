@@ -1,4 +1,4 @@
-use crate::{Lapse, request::error::RequestError, tree::Tree};
+use crate::{ Lapse, request::error::RequestError};
 use std::{
   fs::OpenOptions,
   io::{BufRead, BufReader},
@@ -41,9 +41,6 @@ impl Lapse {
     let http_content = resolved_lines.join("\n");
 
     Ok(http_content)
-  }
-  pub fn get_request_collection(&self, base: Option<String>) -> crate::Result<Tree> {
-    self.get_resource_tree("requests", base)
   }
 }
 
