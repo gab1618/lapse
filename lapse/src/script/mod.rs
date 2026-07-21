@@ -1,8 +1,10 @@
+pub mod error;
+
 use std::{fs, sync::Arc};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::Lapse;
+use crate::{Lapse, script::error::ScriptError};
 
 struct LapseLuaApi {
   lapse: Arc<Lapse>,
@@ -55,7 +57,7 @@ impl Lapse {
   pub async fn run_script(&self, name: &str) -> crate::Result<()> {
     let script_path = self.scripts_path().join(name).with_extension("lua");
 
-    let script_content = fs::read_to_string(script_path).unwrap();
+    let script_content = fs::read_to_string(script_path).map_err(ScriptError::ReadScriptFile)?;
     let runtime = self.get_runtime()?;
 
     let loaded = runtime.load(script_content);
