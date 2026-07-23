@@ -14,7 +14,10 @@ use cli::Cli;
 use lapse::{Lapse, tree::resource::Resource};
 
 use crate::{
-  cli::Command, collection::output_tree, completion::generate_completion, select::select_tree_entry,
+  cli::{Command, ScriptCommand},
+  collection::output_tree,
+  completion::generate_completion,
+  select::select_tree_entry,
 };
 
 #[tokio::main]
@@ -74,6 +77,20 @@ async fn entrypoint() -> error::Result<()> {
       let selected_script = select_tree_entry(&tree, script)?;
 
       lapse.run_script(&selected_script).await?;
+    }
+    Command::Script(script_command) => {
+      let lapse = Lapse::open(curr_dir)?;
+      let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
+
+      match script_command {
+        ScriptCommand::Run { script } => {
+          let selected_script = select_tree_entry(&tree, script)?;
+          lapse.run_script(&selected_script).await?;
+        }
+        ScriptCommand::Ls => {
+          output_tree(0, &tree);
+        }
+      }
     }
   }
 

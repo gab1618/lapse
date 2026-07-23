@@ -17,6 +17,8 @@ pub enum Command {
   },
   #[command(subcommand)]
   Env(EnvCommand),
+  #[command(subcommand)]
+  Script(ScriptCommand),
 }
 
 #[derive(Parser)]
@@ -28,5 +30,11 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum EnvCommand {
   Switch { name: Option<String> },
+  Ls,
+}
+
+#[derive(Subcommand)]
+pub enum ScriptCommand {
+  Run { script: Option<String> },
   Ls,
 }
