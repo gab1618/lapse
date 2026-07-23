@@ -6,6 +6,8 @@ pub enum Error {
   GetCurrentDir(#[source] std::io::Error),
   #[error("Could not invoke prompt: {0}")]
   InvokePrompt(#[source] inquire::InquireError),
+  #[error("No request matched query: {0}")]
+  NoRequestMatch(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
