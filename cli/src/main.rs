@@ -2,6 +2,9 @@ mod cli;
 mod collection;
 mod completion;
 mod error;
+mod select;
+
+pub use error::{Error, Result};
 
 use std::io::stdout;
 
@@ -9,15 +12,12 @@ use clap::Parser;
 use cli::Cli;
 
 use lapse::{Lapse, tree::resource::Resource};
-use nucleo_matcher::{
-  Config, Matcher,
-  pattern::{CaseMatching, Normalization, Pattern},
-};
 
 use crate::{
   cli::Command,
   collection::{get_tree_flatlist, output_tree},
   completion::generate_completion,
+  select::select_tree_entry,
 };
 
 use inquire::Select;
@@ -46,36 +46,8 @@ async fn entrypoint() -> error::Result<()> {
     Command::Send { request } => {
       let lapse = Lapse::open(curr_dir)?;
       let tree = lapse.get_resource_tree(Resource::Requests, None)?;
-      let flat_requests = get_tree_flatlist(&tree);
 
-      // Uses fuzzy finder to match some request by name. If there are multiple matches, pick one
-      // using a select
-      let match_options = match &request {
-        Some(name) => {
-          let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
-          let pattern = Pattern::parse(&name, CaseMatching::Ignore, Normalization::Smart);
-          let matches = pattern.match_list(&flat_requests, &mut matcher);
-          matches
-            .into_iter()
-            .map(|entry| entry.0.to_string())
-            .collect::<Vec<String>>()
-        }
-        None => flat_requests,
-      };
-
-      let request_query_string = request.unwrap_or_default();
-
-      let selected_request = if match_options.len() > 1 {
-        let select = Select::new("Select the request", match_options)
-          .with_starting_filter_input(&request_query_string);
-        select.prompt().map_err(error::Error::InvokePrompt)?
-      } else {
-        let best_match = match_options
-          .into_iter()
-          .next()
-          .ok_or(error::Error::NoRequestMatch(request_query_string))?;
-        best_match
-      };
+      let selected_request = select_tree_entry(&tree, request)?;
 
       let response = lapse.request(selected_request).await?;
       println!("{}", response.text);
