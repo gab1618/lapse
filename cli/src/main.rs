@@ -2,6 +2,9 @@ mod cli;
 mod collection;
 mod completion;
 mod error;
+mod select;
+
+pub use error::{Error, Result};
 
 use std::io::stdout;
 
@@ -11,12 +14,8 @@ use cli::Cli;
 use lapse::{Lapse, tree::resource::Resource};
 
 use crate::{
-  cli::Command,
-  collection::{get_tree_flatlist, output_tree},
-  completion::generate_completion,
+  cli::Command, collection::output_tree, completion::generate_completion, select::select_tree_entry,
 };
-
-use inquire::Select;
 
 #[tokio::main]
 async fn main() {
@@ -41,17 +40,9 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Send { request } => {
       let lapse = Lapse::open(curr_dir)?;
+      let tree = lapse.get_resource_tree(Resource::Requests, None)?;
 
-      let selected_request = match request {
-        Some(existing) => existing,
-        None => {
-          let tree = lapse.get_resource_tree(Resource::Requests, None)?;
-          let flat_requests = get_tree_flatlist(&tree);
-
-          let select = Select::new("Select the request", flat_requests);
-          select.prompt().map_err(error::Error::InvokePrompt)?
-        }
-      };
+      let selected_request = select_tree_entry(&tree, request)?;
 
       let response = lapse.request(selected_request).await?;
       println!("{}", response.text);
@@ -60,26 +51,28 @@ async fn entrypoint() -> error::Result<()> {
       let mut out = stdout();
       generate_completion(shell, &mut out);
     }
-    Command::Env(env_command) => match env_command {
-      cli::EnvCommand::Switch { name } => {
-        let lapse = Lapse::open(curr_dir)?;
-        lapse.switch_env(&name)?;
-        println!("Switched to env: {}", name);
+    Command::Env(env_command) => {
+      let lapse = Lapse::open(curr_dir)?;
+      let tree = lapse.get_resource_tree(Resource::Env, None)?;
+
+      match env_command {
+        cli::EnvCommand::Switch { name } => {
+          let seleced_env = select_tree_entry(&tree, name)?;
+          lapse.switch_env(&seleced_env)?;
+          println!("Switched to env: {}", seleced_env);
+        }
+        cli::EnvCommand::Ls => {
+          // TODO: mark the current env you are in
+          output_tree(0, &tree);
+        }
       }
-    },
+    }
     Command::Run { script } => {
       let lapse = Lapse::open(curr_dir)?;
+      let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
 
-      let selected_script = match script {
-        Some(existing) => existing,
-        None => {
-          let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
-          let flat_scripts = get_tree_flatlist(&tree);
+      let selected_script = select_tree_entry(&tree, script)?;
 
-          let select = Select::new("Select the script", flat_scripts);
-          select.prompt().map_err(error::Error::InvokePrompt)?
-        }
-      };
       lapse.run_script(&selected_script).await?;
     }
   }

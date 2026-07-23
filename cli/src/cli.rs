@@ -27,5 +27,6 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum EnvCommand {
-  Switch { name: String },
+  Switch { name: Option<String> },
+  Ls,
 }
