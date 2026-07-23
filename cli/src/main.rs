@@ -60,13 +60,20 @@ async fn entrypoint() -> error::Result<()> {
       let mut out = stdout();
       generate_completion(shell, &mut out);
     }
-    Command::Env(env_command) => match env_command {
-      cli::EnvCommand::Switch { name } => {
-        let lapse = Lapse::open(curr_dir)?;
-        lapse.switch_env(&name)?;
-        println!("Switched to env: {}", name);
+    Command::Env(env_command) => {
+      let lapse = Lapse::open(curr_dir)?;
+      match env_command {
+        cli::EnvCommand::Switch { name } => {
+          lapse.switch_env(&name)?;
+          println!("Switched to env: {}", name);
+        }
+        cli::EnvCommand::Ls => {
+          let tree = lapse.get_resource_tree(Resource::Env, None)?;
+          // TODO: mark the current env you are in
+          output_tree(0, &tree);
+        }
       }
-    },
+    }
     Command::Run { script } => {
       let lapse = Lapse::open(curr_dir)?;
 
