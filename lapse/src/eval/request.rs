@@ -1,6 +1,9 @@
 use http::Request;
 
-use crate::{Lapse, parsing::RequestTokenizer, request::http::parse_request_http};
+use crate::{
+  Lapse,
+  parsing::{RequestTokenizer, http::parse_request_http},
+};
 
 impl Lapse {
   pub fn resolve_request(&self, req: &str) -> crate::Result<Request<Vec<u8>>> {

@@ -1,3 +1,5 @@
+pub mod http;
+
 #[derive(PartialEq, Debug)]
 pub enum RequestToken {
   String(String),
