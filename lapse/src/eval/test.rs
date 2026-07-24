@@ -1,19 +1,20 @@
+use mlua::Lua;
+
 use super::EvalCtx;
 use crate::{env::EnvVariable, test::TempLapse};
 use std::{collections::HashMap, fs};
 
-fn eval_ctx(variables: &[(&str, &str)]) -> crate::Result<EvalCtx> {
-  let variables = variables
-    .iter()
-    .map(|(k, v)| (k.to_string(), EnvVariable::String(v.to_string())))
-    .collect::<HashMap<_, _>>();
+fn eval_ctx(variables: HashMap<String, EnvVariable>) -> crate::Result<EvalCtx> {
+  let runtime = Lua::new();
 
-  EvalCtx::new(variables, Default::default())
+  runtime.globals().set("env", variables)?;
+
+  Ok(EvalCtx::new(runtime))
 }
 
 #[test]
 fn test_evaluates_plain_string() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(
     ctx.eval("just a plain string").unwrap(),
@@ -23,7 +24,11 @@ fn test_evaluates_plain_string() {
 
 #[test]
 fn test_evaluates_var_expression() {
-  let ctx = eval_ctx(&[("name", "John")]).unwrap();
+  let ctx = eval_ctx(HashMap::from([(
+    "name".to_string(),
+    EnvVariable::String("John".to_string()),
+  )]))
+  .unwrap();
 
   assert_eq!(
     ctx.eval("{\n  \"name\": ${env.name}\n}").unwrap(),
@@ -33,18 +38,14 @@ fn test_evaluates_var_expression() {
 
 #[test]
 fn test_var_missing_returns_null() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
 }
 
 #[test]
 fn test_evaluates_number_var_expression() {
-  let ctx = EvalCtx::new(
-    HashMap::from([("age".to_string(), EnvVariable::Number(42.0))]),
-    Default::default(),
-  )
-  .unwrap();
+  let ctx = eval_ctx(HashMap::from([("age".to_string(), 42.into())])).unwrap();
 
   assert_eq!(ctx.eval("${env.age}").unwrap(), "42");
 }
@@ -55,32 +56,28 @@ fn test_evaluates_object_var_expression() {
     "city".to_string(),
     EnvVariable::String("NYC".to_string()),
   )]));
-  let ctx = EvalCtx::new(
-    HashMap::from([("address".to_string(), object)]),
-    Default::default(),
-  )
-  .unwrap();
+  let ctx = eval_ctx(HashMap::from([("address".to_string(), object)])).unwrap();
 
   assert_eq!(ctx.eval("${env.address}").unwrap(), "{\"city\":NYC}");
 }
 
 #[test]
 fn test_evaluates_arithmetic_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(ctx.eval("${1 + 2}").unwrap(), "3");
 }
 
 #[test]
 fn test_evaluates_boolean_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(ctx.eval("${1 == 1}").unwrap(), "true");
 }
 
 #[test]
 fn test_evaluates_table_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(
     ctx.eval("${ {a = 1, b = \"x\"} }").unwrap(),

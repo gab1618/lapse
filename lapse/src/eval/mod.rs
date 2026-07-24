@@ -3,8 +3,6 @@ pub mod lexer;
 #[cfg(test)]
 mod test;
 
-use std::collections::HashMap;
-
 use crate::{
   Lapse,
   env::EnvVariable,
@@ -17,16 +15,8 @@ pub struct EvalCtx {
 }
 
 impl EvalCtx {
-  pub fn new(
-    variables: HashMap<String, EnvVariable>,
-    secrets: HashMap<String, EnvVariable>,
-  ) -> crate::Result<Self> {
-    let runtime = Lua::new();
-
-    runtime.globals().set("env", variables)?;
-    runtime.globals().set("secret", secrets)?;
-
-    Ok(Self { runtime })
+  pub fn new(runtime: Lua) -> Self {
+    Self { runtime }
   }
 
   pub fn eval(&self, doc: &str) -> crate::Result<String> {
@@ -61,6 +51,11 @@ impl Lapse {
 
     let secrets = self.load_secrets().unwrap_or_default();
 
-    EvalCtx::new(variables, secrets)
+    let runtime = Lua::new();
+
+    runtime.globals().set("env", variables)?;
+    runtime.globals().set("secret", secrets)?;
+
+    Ok(EvalCtx::new(runtime))
   }
 }
