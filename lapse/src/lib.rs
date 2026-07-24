@@ -9,7 +9,6 @@ pub mod error;
 pub mod eval;
 pub mod log;
 pub mod lua;
-pub mod parsing;
 pub mod request;
 pub mod script;
 pub mod secrets;

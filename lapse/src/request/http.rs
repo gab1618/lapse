@@ -54,7 +54,7 @@ impl Lapse {
 mod test {
   use http::Method;
 
-  use crate::{parsing::parse_request_http, request::RequestFile};
+  use crate::request::{RequestFile, parsing::parse_request_http};
 
   fn request_file(http: &str) -> RequestFile {
     RequestFile {
