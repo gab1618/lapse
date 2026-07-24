@@ -1,3 +1,4 @@
+pub mod lexer;
 pub mod request;
 
 #[cfg(test)]
@@ -5,7 +6,11 @@ mod test;
 
 use std::collections::HashMap;
 
-use crate::{Lapse, env::EnvVariable, parsing::RequestToken};
+use crate::{
+  Lapse,
+  env::EnvVariable,
+  eval::lexer::{DocumentLexer, DocumentToken},
+};
 use mlua::Lua;
 
 pub struct EvalCtx {
@@ -25,15 +30,17 @@ impl EvalCtx {
     Ok(Self { runtime })
   }
 
-  pub fn eval(&self, doc: Vec<RequestToken>) -> crate::Result<String> {
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
     let mut result = String::new();
 
-    for token in doc {
+    for token in tokens {
       match token {
-        RequestToken::String(inner) => {
+        DocumentToken::String(inner) => {
           result.push_str(&inner);
         }
-        RequestToken::Expr(inner) => {
+        DocumentToken::Expr(inner) => {
           let value: EnvVariable = self.runtime.load(inner).eval()?;
           result.push_str(&value.to_string());
         }
