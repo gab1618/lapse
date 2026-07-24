@@ -1,5 +1,4 @@
 pub mod lexer;
-pub mod request;
 
 #[cfg(test)]
 mod test;

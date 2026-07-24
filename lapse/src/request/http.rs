@@ -1,7 +1,11 @@
 use reqwest::Client;
 use std::collections::HashMap;
 
-use crate::{Lapse, log::ResponseLog, request::error::RequestError};
+use crate::{
+  Lapse,
+  log::ResponseLog,
+  request::{error::RequestError, parsing::parse_request_http},
+};
 
 impl Lapse {
   pub async fn request(&self, name: String) -> crate::Result<ResponseLog> {
@@ -9,7 +13,9 @@ impl Lapse {
 
     let req = self.get_request_http(&name)?;
 
-    let request = self.resolve_request(&req)?;
+    let ctx = self.get_eval_ctx()?;
+    let solved_req = ctx.eval(&req)?;
+    let request = parse_request_http(solved_req)?;
     let parsed_request: reqwest::Request =
       request.try_into().map_err(RequestError::ConvertRequest)?;
 
