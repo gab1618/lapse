@@ -5,7 +5,9 @@ use crate::completion::CliCompletionShell;
 #[derive(Subcommand)]
 pub enum Command {
   Init,
-  Ls,
+  Ls {
+    path: Option<String>,
+  },
   Send {
     request: Option<String>,
   },
@@ -30,11 +32,11 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum EnvCommand {
   Switch { name: Option<String> },
-  Ls,
+  Ls { path: Option<String> },
 }
 
 #[derive(Subcommand)]
 pub enum ScriptCommand {
   Run { script: Option<String> },
-  Ls,
+  Ls { path: Option<String> },
 }

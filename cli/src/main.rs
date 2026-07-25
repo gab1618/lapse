@@ -41,9 +41,9 @@ async fn entrypoint() -> error::Result<()> {
       Lapse::init(curr_dir)?;
       println!("Initialized Lapse space");
     }
-    Command::Ls => {
+    Command::Ls { path } => {
       let lapse = open_lapse()?;
-      let collection = lapse.get_resource_tree(Resource::Requests, None)?;
+      let collection = lapse.get_resource_tree(Resource::Requests, path)?;
       output_tree(0, &collection);
     }
     Command::Send { request } => {
@@ -63,16 +63,18 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Env(env_command) => {
       let lapse = open_lapse()?;
-      let tree = lapse.get_resource_tree(Resource::Env, None)?;
 
       match env_command {
         cli::EnvCommand::Switch { name } => {
+          let tree = lapse.get_resource_tree(Resource::Env, None)?;
           let seleced_env = select_tree_entry(&tree, name)?;
+
           lapse.switch_env(&seleced_env)?;
           println!("Switched to env: {}", seleced_env);
         }
-        cli::EnvCommand::Ls => {
+        cli::EnvCommand::Ls { path } => {
           // TODO: mark the current env you are in
+          let tree = lapse.get_resource_tree(Resource::Env, path)?;
           output_tree(0, &tree);
         }
       }
@@ -87,14 +89,15 @@ async fn entrypoint() -> error::Result<()> {
     }
     Command::Script(script_command) => {
       let lapse = open_lapse()?;
-      let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
 
       match script_command {
         ScriptCommand::Run { script } => {
+          let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
           let selected_script = select_tree_entry(&tree, script)?;
           lapse.run_script(&selected_script).await?;
         }
-        ScriptCommand::Ls => {
+        ScriptCommand::Ls { path } => {
+          let tree = lapse.get_resource_tree(Resource::Scripts, path)?;
           output_tree(0, &tree);
         }
       }
