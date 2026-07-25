@@ -14,7 +14,7 @@ pub struct RequestFile {
 }
 
 impl Lapse {
-  pub fn get_request_http(&self, name: &str) -> crate::Result<String> {
+  fn get_request_http(&self, name: &str) -> crate::Result<String> {
     let file_path = self.requests_path().join(name).with_extension("md");
     let f = OpenOptions::new()
       .read(true)
