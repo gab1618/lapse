@@ -20,6 +20,11 @@ use crate::{
   select::select_tree_entry,
 };
 
+pub fn open_lapse() -> Result<Lapse> {
+  let curr_dir = std::env::current_dir().map_err(error::Error::GetCurrentDir)?;
+  Ok(Lapse::open(curr_dir)?)
+}
+
 #[tokio::main]
 async fn main() {
   if let Err(err) = entrypoint().await {
@@ -29,20 +34,20 @@ async fn main() {
 
 async fn entrypoint() -> error::Result<()> {
   let args = Cli::parse();
-  let curr_dir = std::env::current_dir().map_err(error::Error::GetCurrentDir)?;
 
   match args.command {
     Command::Init => {
+      let curr_dir = std::env::current_dir().map_err(error::Error::GetCurrentDir)?;
       Lapse::init(curr_dir)?;
       println!("Initialized Lapse space");
     }
     Command::Ls => {
-      let lapse = Lapse::open(curr_dir)?;
+      let lapse = open_lapse()?;
       let collection = lapse.get_resource_tree(Resource::Requests, None)?;
       output_tree(0, &collection);
     }
     Command::Send { request } => {
-      let lapse = Lapse::open(curr_dir)?;
+      let lapse = open_lapse()?;
       let tree = lapse.get_resource_tree(Resource::Requests, None)?;
 
       let selected_request = select_tree_entry(&tree, request)?;
@@ -57,7 +62,7 @@ async fn entrypoint() -> error::Result<()> {
       generate_completion(shell, &mut out);
     }
     Command::Env(env_command) => {
-      let lapse = Lapse::open(curr_dir)?;
+      let lapse = open_lapse()?;
       let tree = lapse.get_resource_tree(Resource::Env, None)?;
 
       match env_command {
@@ -73,7 +78,7 @@ async fn entrypoint() -> error::Result<()> {
       }
     }
     Command::Run { script } => {
-      let lapse = Lapse::open(curr_dir)?;
+      let lapse = open_lapse()?;
       let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
 
       let selected_script = select_tree_entry(&tree, script)?;
@@ -81,7 +86,7 @@ async fn entrypoint() -> error::Result<()> {
       lapse.run_script(&selected_script).await?;
     }
     Command::Script(script_command) => {
-      let lapse = Lapse::open(curr_dir)?;
+      let lapse = open_lapse()?;
       let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
 
       match script_command {
