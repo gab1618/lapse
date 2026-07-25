@@ -47,7 +47,9 @@ async fn entrypoint() -> error::Result<()> {
 
       let selected_request = select_tree_entry(&tree, request)?;
 
-      let response = lapse.request(selected_request).await?;
+      let response = lapse
+        .request(selected_request, lapse.get_eval_ctx()?)
+        .await?;
       println!("{}", response.text);
     }
     Command::Completion { shell } => {

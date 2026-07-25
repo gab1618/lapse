@@ -1,35 +1,33 @@
-pub mod http;
-
 #[derive(PartialEq, Debug)]
-pub enum RequestToken {
+pub enum DocumentToken {
   String(String),
   Expr(String),
 }
 
-pub struct RequestTokenizer<'a> {
+pub struct DocumentLexer<'a> {
   src: &'a str,
   pos: usize,
 }
 
-impl<'a> RequestTokenizer<'a> {
+impl<'a> DocumentLexer<'a> {
   pub fn new(src: &'a str) -> Self {
     Self { src, pos: 0 }
   }
 
-  pub fn tokenize(&mut self) -> Vec<RequestToken> {
+  pub fn tokenize(&mut self) -> Vec<DocumentToken> {
     let mut tokens = vec![];
 
     loop {
       let string = self.consume_string();
       if !string.is_empty() {
-        tokens.push(RequestToken::String(string));
+        tokens.push(DocumentToken::String(string));
       }
 
       if self.peek().is_none() {
         break;
       }
 
-      tokens.push(RequestToken::Expr(self.consume_expr()));
+      tokens.push(DocumentToken::Expr(self.consume_expr()));
     }
 
     tokens
@@ -110,10 +108,10 @@ impl<'a> RequestTokenizer<'a> {
 
 #[cfg(test)]
 mod test {
-  use super::{RequestToken, RequestTokenizer};
+  use super::{DocumentLexer, DocumentToken};
 
-  fn tokenize(src: &str) -> Vec<RequestToken> {
-    RequestTokenizer::new(src).tokenize()
+  fn tokenize(src: &str) -> Vec<DocumentToken> {
+    DocumentLexer::new(src).tokenize()
   }
 
   #[test]
@@ -122,7 +120,7 @@ mod test {
 
     assert_eq!(
       tokens,
-      vec![RequestToken::String(
+      vec![DocumentToken::String(
         "{\n  \"name\": \"sample\"\n}".to_owned()
       )]
     );
@@ -135,9 +133,9 @@ mod test {
     assert_eq!(
       tokens,
       vec![
-        RequestToken::String("{\n  \"name\": ".to_owned()),
-        RequestToken::Expr("var(\"name\")".to_owned()),
-        RequestToken::String("\n}".to_owned()),
+        DocumentToken::String("{\n  \"name\": ".to_owned()),
+        DocumentToken::Expr("var(\"name\")".to_owned()),
+        DocumentToken::String("\n}".to_owned()),
       ]
     );
   }
@@ -155,12 +153,12 @@ mod test {
     assert_eq!(
       tokens,
       vec![
-        RequestToken::String(
+        DocumentToken::String(
           "POST https://example.com/comments\ncontent-type: application/json\n\n{\n  \"name\": \""
             .to_owned()
         ),
-        RequestToken::Expr("env.name".to_owned()),
-        RequestToken::String("\"\n}\n\n".to_owned()),
+        DocumentToken::Expr("env.name".to_owned()),
+        DocumentToken::String("\"\n}\n\n".to_owned()),
       ]
     );
   }
@@ -171,7 +169,7 @@ mod test {
 
     assert_eq!(
       tokens,
-      vec![RequestToken::Expr("fn(\"a\", nested(1))".to_owned())]
+      vec![DocumentToken::Expr("fn(\"a\", nested(1))".to_owned())]
     );
   }
 
@@ -179,7 +177,7 @@ mod test {
   fn test_expr_with_nested_braces() {
     let tokens = tokenize("${fn({a = 1})}");
 
-    assert_eq!(tokens, vec![RequestToken::Expr("fn({a = 1})".to_owned())]);
+    assert_eq!(tokens, vec![DocumentToken::Expr("fn({a = 1})".to_owned())]);
   }
 
   #[test]
@@ -188,7 +186,7 @@ mod test {
 
     assert_eq!(
       tokens,
-      vec![RequestToken::Expr("fn(\"{literal}\")".to_owned())]
+      vec![DocumentToken::Expr("fn(\"{literal}\")".to_owned())]
     );
   }
 
@@ -196,6 +194,6 @@ mod test {
   fn test_leaves_lone_dollar_sign_as_string() {
     let tokens = tokenize("price: $5");
 
-    assert_eq!(tokens, vec![RequestToken::String("price: $5".to_owned())]);
+    assert_eq!(tokens, vec![DocumentToken::String("price: $5".to_owned())]);
   }
 }

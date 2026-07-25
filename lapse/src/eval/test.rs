@@ -1,57 +1,53 @@
+use mlua::Lua;
+
 use super::EvalCtx;
-use crate::{env::EnvVariable, parsing::RequestTokenizer, test::TempLapse};
+use crate::{env::EnvVariable, test::TempLapse};
 use std::{collections::HashMap, fs};
 
-fn eval_ctx(variables: &[(&str, &str)]) -> crate::Result<EvalCtx> {
-  let variables = variables
-    .iter()
-    .map(|(k, v)| (k.to_string(), EnvVariable::String(v.to_string())))
-    .collect::<HashMap<_, _>>();
+fn eval_ctx(variables: HashMap<String, EnvVariable>) -> crate::Result<EvalCtx> {
+  let runtime = Lua::new();
 
-  EvalCtx::new(variables, Default::default())
-}
+  runtime.globals().set("env", variables)?;
 
-fn eval(ctx: &EvalCtx, src: &str) -> crate::Result<String> {
-  let tokens = RequestTokenizer::new(src).tokenize();
-  ctx.eval(tokens)
+  Ok(EvalCtx::new(runtime))
 }
 
 #[test]
 fn test_evaluates_plain_string() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(
-    eval(&ctx, "just a plain string").unwrap(),
+    ctx.eval("just a plain string").unwrap(),
     "just a plain string"
   );
 }
 
 #[test]
 fn test_evaluates_var_expression() {
-  let ctx = eval_ctx(&[("name", "John")]).unwrap();
+  let ctx = eval_ctx(HashMap::from([(
+    "name".to_string(),
+    EnvVariable::String("John".to_string()),
+  )]))
+  .unwrap();
 
   assert_eq!(
-    eval(&ctx, "{\n  \"name\": ${env.name}\n}").unwrap(),
+    ctx.eval("{\n  \"name\": ${env.name}\n}").unwrap(),
     "{\n  \"name\": John\n}"
   );
 }
 
 #[test]
 fn test_var_missing_returns_null() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
-  assert_eq!(eval(&ctx, "${env.missing}").unwrap(), "null");
+  assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
 }
 
 #[test]
 fn test_evaluates_number_var_expression() {
-  let ctx = EvalCtx::new(
-    HashMap::from([("age".to_string(), EnvVariable::Number(42.0))]),
-    Default::default(),
-  )
-  .unwrap();
+  let ctx = eval_ctx(HashMap::from([("age".to_string(), 42.into())])).unwrap();
 
-  assert_eq!(eval(&ctx, "${env.age}").unwrap(), "42");
+  assert_eq!(ctx.eval("${env.age}").unwrap(), "42");
 }
 
 #[test]
@@ -60,35 +56,31 @@ fn test_evaluates_object_var_expression() {
     "city".to_string(),
     EnvVariable::String("NYC".to_string()),
   )]));
-  let ctx = EvalCtx::new(
-    HashMap::from([("address".to_string(), object)]),
-    Default::default(),
-  )
-  .unwrap();
+  let ctx = eval_ctx(HashMap::from([("address".to_string(), object)])).unwrap();
 
-  assert_eq!(eval(&ctx, "${env.address}").unwrap(), "{\"city\":NYC}");
+  assert_eq!(ctx.eval("${env.address}").unwrap(), "{\"city\":NYC}");
 }
 
 #[test]
 fn test_evaluates_arithmetic_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
-  assert_eq!(eval(&ctx, "${1 + 2}").unwrap(), "3");
+  assert_eq!(ctx.eval("${1 + 2}").unwrap(), "3");
 }
 
 #[test]
 fn test_evaluates_boolean_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
-  assert_eq!(eval(&ctx, "${1 == 1}").unwrap(), "true");
+  assert_eq!(ctx.eval("${1 == 1}").unwrap(), "true");
 }
 
 #[test]
 fn test_evaluates_table_expression() {
-  let ctx = eval_ctx(&[]).unwrap();
+  let ctx = eval_ctx(Default::default()).unwrap();
 
   assert_eq!(
-    eval(&ctx, "${ {a = 1, b = \"x\"} }").unwrap(),
+    ctx.eval("${ {a = 1, b = \"x\"} }").unwrap(),
     "{\"a\":1,\"b\":x}"
   );
 }
@@ -108,6 +100,6 @@ fn test_load_secret() {
   fs::write(lapse.secrets_path(), ex_secret_content).unwrap();
   let ctx = lapse.get_eval_ctx().unwrap();
 
-  let result = eval(&ctx, "${secret.password}").unwrap();
+  let result = ctx.eval("${secret.password}").unwrap();
   assert_eq!(result, "sshhhh");
 }

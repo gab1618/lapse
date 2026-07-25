@@ -6,6 +6,7 @@ use std::{
 
 pub mod error;
 pub mod http;
+pub mod parsing;
 
 pub struct RequestFile {
   pub http: String,

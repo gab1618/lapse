@@ -4,7 +4,7 @@ use std::ops::Deref;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
-use crate::{Lapse, env::EnvVariable, parsing::RequestTokenizer};
+use crate::{Lapse, env::EnvVariable};
 
 #[cfg(test)]
 pub struct TempLapse {
@@ -54,9 +54,8 @@ fn test_get_eval_ctx_loads_current_env_variables() {
   lapse.switch_env("prod").unwrap();
 
   let ctx = lapse.get_eval_ctx().unwrap();
-  let tokens = RequestTokenizer::new("${env.name} is ${env.age}").tokenize();
 
-  assert_eq!(ctx.eval(tokens).unwrap(), "Jane is 30");
+  assert_eq!(ctx.eval("${env.name} is ${env.age}").unwrap(), "Jane is 30");
 }
 
 #[test]
@@ -64,7 +63,6 @@ fn test_get_eval_ctx_defaults_to_empty_without_current_env() {
   let lapse = TempLapse::new();
 
   let ctx = lapse.get_eval_ctx().unwrap();
-  let tokens = RequestTokenizer::new("${env.missing}").tokenize();
 
-  assert_eq!(ctx.eval(tokens).unwrap(), "null");
+  assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
 }

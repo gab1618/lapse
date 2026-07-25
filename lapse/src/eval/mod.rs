@@ -1,11 +1,13 @@
-pub mod request;
+pub mod lexer;
 
 #[cfg(test)]
 mod test;
 
-use std::collections::HashMap;
-
-use crate::{Lapse, env::EnvVariable, parsing::RequestToken};
+use crate::{
+  Lapse,
+  env::EnvVariable,
+  eval::lexer::{DocumentLexer, DocumentToken},
+};
 use mlua::Lua;
 
 pub struct EvalCtx {
@@ -13,27 +15,21 @@ pub struct EvalCtx {
 }
 
 impl EvalCtx {
-  pub fn new(
-    variables: HashMap<String, EnvVariable>,
-    secrets: HashMap<String, EnvVariable>,
-  ) -> crate::Result<Self> {
-    let runtime = Lua::new();
-
-    runtime.globals().set("env", variables)?;
-    runtime.globals().set("secret", secrets)?;
-
-    Ok(Self { runtime })
+  pub fn new(runtime: Lua) -> Self {
+    Self { runtime }
   }
 
-  pub fn eval(&self, doc: Vec<RequestToken>) -> crate::Result<String> {
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
     let mut result = String::new();
 
-    for token in doc {
+    for token in tokens {
       match token {
-        RequestToken::String(inner) => {
+        DocumentToken::String(inner) => {
           result.push_str(&inner);
         }
-        RequestToken::Expr(inner) => {
+        DocumentToken::Expr(inner) => {
           let value: EnvVariable = self.runtime.load(inner).eval()?;
           result.push_str(&value.to_string());
         }
@@ -55,6 +51,11 @@ impl Lapse {
 
     let secrets = self.load_secrets().unwrap_or_default();
 
-    EvalCtx::new(variables, secrets)
+    let runtime = Lua::new();
+
+    runtime.globals().set("env", variables)?;
+    runtime.globals().set("secret", secrets)?;
+
+    Ok(EvalCtx::new(runtime))
   }
 }

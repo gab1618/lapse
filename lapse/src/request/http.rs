@@ -1,15 +1,21 @@
 use reqwest::Client;
 use std::collections::HashMap;
 
-use crate::{Lapse, log::ResponseLog, request::error::RequestError};
+use crate::{
+  Lapse,
+  eval::EvalCtx,
+  log::ResponseLog,
+  request::{error::RequestError, parsing::parse_request_http},
+};
 
 impl Lapse {
-  pub async fn request(&self, name: String) -> crate::Result<ResponseLog> {
+  pub async fn request(&self, name: String, ctx: EvalCtx) -> crate::Result<ResponseLog> {
     let client = Client::new();
 
     let req = self.get_request_http(&name)?;
 
-    let request = self.resolve_request(&req)?;
+    let solved_req = ctx.eval(&req)?;
+    let request = parse_request_http(solved_req)?;
     let parsed_request: reqwest::Request =
       request.try_into().map_err(RequestError::ConvertRequest)?;
 
@@ -54,7 +60,7 @@ impl Lapse {
 mod test {
   use http::Method;
 
-  use crate::{parsing::http::parse_request_http, request::RequestFile};
+  use crate::request::{RequestFile, parsing::parse_request_http};
 
   fn request_file(http: &str) -> RequestFile {
     RequestFile {
