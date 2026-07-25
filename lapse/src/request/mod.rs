@@ -1,4 +1,4 @@
-use crate::{ Lapse, request::error::RequestError};
+use crate::{Lapse, request::error::RequestError};
 use std::{
   fs::OpenOptions,
   io::{BufRead, BufReader},
