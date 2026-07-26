@@ -5,7 +5,10 @@ use crate::{
   Lapse,
   eval::EvalCtx,
   log::ResponseLog,
-  request::{error::RequestError, parsing::parse_request_http},
+  request::{
+    error::RequestError,
+    parsing::{ParsedRequest, parse_request_http},
+  },
 };
 
 impl Lapse {
@@ -16,13 +19,17 @@ impl Lapse {
 
     let solved_req = ctx.eval(&req)?;
     let request = parse_request_http(solved_req)?;
-    let parsed_request: reqwest::Request =
-      request.try_into().map_err(RequestError::ConvertRequest)?;
+    let response = match request {
+      ParsedRequest::Multipart(_) => todo!("Still missing multipart implementation"),
+      ParsedRequest::Http(http_request) => {
+        let parsed_request: reqwest::Request = http_request.try_into()?;
 
-    let response = client
-      .execute(parsed_request)
-      .await
-      .map_err(RequestError::ExecuteRequest)?;
+        client
+          .execute(parsed_request)
+          .await
+          .map_err(RequestError::ExecuteRequest)?
+      }
+    };
 
     let log_headers = response
       .headers()
@@ -58,9 +65,10 @@ impl Lapse {
 
 #[cfg(test)]
 mod test {
-  use http::Method;
-
-  use crate::request::{RequestFile, parsing::parse_request_http};
+  use crate::request::{
+    RequestFile,
+    parsing::{ParsedRequest, parse_request_http},
+  };
 
   fn request_file(http: &str) -> RequestFile {
     RequestFile {
@@ -78,54 +86,67 @@ mod test {
         .0,
     );
 
-    let request = parse_request_http(file.http).unwrap();
-
-    assert_eq!(request.method(), Method::POST);
-    assert_eq!(request.uri(), "https://example.com/comments");
-    assert_eq!(
-      request.headers().get("content-type").unwrap(),
-      "application/json"
-    );
-    assert_eq!(
-      std::str::from_utf8(request.body()).unwrap().trim(),
-      "{\n  \"name\": \"sample\"\n}"
-    );
+    match parse_request_http(file.http).unwrap() {
+      ParsedRequest::Multipart(_) => panic!("This was supposed to be a plain http request"),
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "POST");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert_eq!(
+          request.headers.get("content-type").unwrap(),
+          "application/json"
+        );
+        assert_eq!(request.body.trim(), "{\n  \"name\": \"sample\"\n}");
+      }
+    }
   }
 
   #[test]
   fn test_parses_request_without_body() {
     let file = request_file("GET https://example.com/comments\ncontent-type: application/json\n");
 
-    let request = parse_request_http(file.http).unwrap();
-
-    assert_eq!(request.method(), Method::GET);
-    assert_eq!(request.uri(), "https://example.com/comments");
-    assert_eq!(
-      request.headers().get("content-type").unwrap(),
-      "application/json"
-    );
-    assert!(request.body().is_empty());
+    match parse_request_http(file.http).unwrap() {
+      ParsedRequest::Multipart(_) => {
+        panic!("This was supposed to be a plain http request")
+      }
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "GET");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert_eq!(
+          request.headers.get("content-type").unwrap(),
+          "application/json"
+        );
+        assert!(request.body.is_empty());
+      }
+    }
   }
 
   #[test]
   fn test_parses_request_without_headers_or_body() {
     let file = request_file("DELETE https://example.com/comments\n");
 
-    let request = parse_request_http(file.http).unwrap();
-
-    assert_eq!(request.method(), Method::DELETE);
-    assert_eq!(request.uri(), "https://example.com/comments");
-    assert!(request.headers().is_empty());
-    assert!(request.body().is_empty());
+    match parse_request_http(file.http).unwrap() {
+      ParsedRequest::Multipart(_) => {
+        panic!("This was supposed to be a plain http request")
+      }
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "DELETE");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert!(request.headers.is_empty());
+        assert!(request.body.is_empty());
+      }
+    }
   }
 
   #[test]
   fn test_ignores_leading_blank_lines() {
     let file = request_file("\n\nPUT https://example.com/comments\n");
 
-    let request = parse_request_http(file.http).unwrap();
-
-    assert_eq!(request.method(), Method::PUT);
-    assert_eq!(request.uri(), "https://example.com/comments");
+    match parse_request_http(file.http).unwrap() {
+      ParsedRequest::Multipart(_) => panic!("This was supposed to be a plan http request"),
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "PUT");
+        assert_eq!(request.url, "https://example.com/comments");
+      }
+    }
   }
 }
