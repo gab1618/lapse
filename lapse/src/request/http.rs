@@ -1,5 +1,6 @@
+use http::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr as _};
 
 use crate::{
   Lapse,
@@ -20,7 +21,26 @@ impl Lapse {
     let solved_req = ctx.eval(&req)?;
     let request = parse_request_http(solved_req)?;
     let response = match request {
-      ParsedRequest::Multipart(_) => todo!("Still missing multipart implementation"),
+      ParsedRequest::Multipart(request) => {
+        let form = reqwest::multipart::Form::new();
+        let mut headers = HeaderMap::new();
+
+        for (key, val) in request.headers {
+          headers.insert(
+            HeaderName::from_str(&key).unwrap(),
+            HeaderValue::from_str(&val).unwrap(),
+          );
+        }
+        let response = client
+          .post(request.url)
+          .headers(headers)
+          .multipart(form)
+          .send()
+          .await
+          .map_err(RequestError::ExecuteRequest)?;
+
+        response
+      }
       ParsedRequest::Http(http_request) => {
         let parsed_request: reqwest::Request = http_request.try_into()?;
 
