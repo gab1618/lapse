@@ -30,4 +30,6 @@ pub enum RequestError {
   HeaderToStr(#[source] http::header::ToStrError),
   #[error("Could not resolve http line")]
   ResolveHttpLine,
+  #[error("Invalid character: {0}")]
+  InvalidMultipartCharacter(char),
 }

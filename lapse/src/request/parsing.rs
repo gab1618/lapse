@@ -14,14 +14,15 @@ pub struct HttpRequest {
   pub body: String,
 }
 
+#[cfg_attr(test, derive(Debug, PartialEq))]
 pub enum MultipartRequestValue {
   File(String),
   Text(String),
 }
 pub struct MultipartRequest {
-  url: String,
-  headers: HashMap<String, String>,
-  body: HashMap<String, MultipartRequestValue>,
+  pub url: String,
+  pub headers: HashMap<String, String>,
+  pub body: HashMap<String, MultipartRequestValue>,
 }
 
 pub enum ParsedRequest {
@@ -115,13 +116,106 @@ fn parse_multipart_http_body(raw: String) -> crate::Result<HashMap<String, Multi
         let (name, value) = line.split_once(":").unwrap();
         let (name, value) = (name.trim().to_owned(), value.trim().to_owned());
 
-        let parsed_value = parse_multipart_value(&value);
+        let mut parser = MultipartValueParser::new(&value);
+        let parsed_value = parser.parse().unwrap();
         (name.trim().to_owned(), parsed_value)
       })
       .collect::<HashMap<String, MultipartRequestValue>>(),
   )
 }
 
-fn parse_multipart_value(value: &str) -> MultipartRequestValue {
-  todo!()
+pub struct MultipartValueParser<'a> {
+  src: &'a str,
+  position: usize,
+}
+
+impl<'a> MultipartValueParser<'a> {
+  pub fn new(src: &'a str) -> Self {
+    Self { src, position: 0 }
+  }
+  pub fn parse(&mut self) -> crate::Result<MultipartRequestValue> {
+    let next_char = self.peek().unwrap();
+
+    match next_char {
+      '"' => {
+        self.bump();
+        let s = self.consume_string();
+        Ok(MultipartRequestValue::Text(s))
+      }
+      '@' => {
+        self.bump();
+        let p = self.consume_file();
+        Ok(MultipartRequestValue::File(p))
+      }
+      c => Err(RequestError::InvalidMultipartCharacter(c).into()),
+    }
+  }
+  fn bump(&mut self) {
+    self.position += 1;
+  }
+  fn peek(&self) -> Option<char> {
+    self.src[self.position..].chars().next()
+  }
+  fn consume_string(&mut self) -> String {
+    let mut content = String::new();
+
+    while let Some(c) = self.peek() {
+      self.bump();
+      if c == '"' {
+        break;
+      }
+
+      content.push(c);
+    }
+
+    content
+  }
+  fn consume_file(&mut self) -> String {
+    let mut content = String::new();
+
+    while let Some(c) = self.peek() {
+      self.bump();
+      if c == '"' || c == ' ' {
+        break;
+      }
+
+      content.push(c)
+    }
+
+    content
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use crate::request::parsing::{MultipartRequestValue, ParsedRequest};
+
+  use super::parse_request_http;
+
+  #[test]
+  fn parses_multipart_req() {
+    let raw_req = include_str!("../../assets/with-multipart.md");
+    let http_portion = raw_req.split_once("---").unwrap().0;
+    let parsed = parse_request_http(http_portion.to_owned()).unwrap();
+    match parsed {
+      ParsedRequest::Http(_) => panic!("It was supposed to be a multipart request"),
+      ParsedRequest::Multipart(req) => {
+        assert_eq!(req.url, "https://example.com/comments");
+        let found_content_type = req.headers.get("content-type").unwrap();
+        assert_eq!(found_content_type, "multipart/form-data");
+
+        let found_text_field = req.body.get("name").unwrap();
+        let found_file_field = req.body.get("ex-file").unwrap();
+
+        assert_eq!(
+          found_text_field,
+          &MultipartRequestValue::Text("${env.name}".to_owned())
+        );
+        assert_eq!(
+          found_file_field,
+          &MultipartRequestValue::File("./env.json".to_owned())
+        );
+      }
+    }
+  }
 }

@@ -2,7 +2,7 @@ MULTIPART https://example.com/comments
 content-type: multipart/form-data
 
 name: "${env.name}"
-ex-file: @file(./env.json)
+ex-file: @./env.json
 
 ---
 
