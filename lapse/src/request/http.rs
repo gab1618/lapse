@@ -8,7 +8,7 @@ use crate::{
   log::ResponseLog,
   request::{
     error::RequestError,
-    parsing::{ParsedRequest, parse_request_http},
+    parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
   },
 };
 
@@ -22,7 +22,16 @@ impl Lapse {
     let request = parse_request_http(solved_req)?;
     let response = match request {
       ParsedRequest::Multipart(request) => {
-        let form = reqwest::multipart::Form::new();
+        let mut form = reqwest::multipart::Form::new();
+
+        for (field, value) in request.body {
+          match value {
+            MultipartRequestValue::File(_) => {}
+            MultipartRequestValue::Text(s) => {
+              form = form.text(field, s);
+            }
+          }
+        }
         let mut headers = HeaderMap::new();
 
         for (key, val) in request.headers {
@@ -31,15 +40,13 @@ impl Lapse {
             HeaderValue::from_str(&val).unwrap(),
           );
         }
-        let response = client
+        client
           .post(request.url)
           .headers(headers)
           .multipart(form)
           .send()
           .await
-          .map_err(RequestError::ExecuteRequest)?;
-
-        response
+          .map_err(RequestError::ExecuteRequest)?
       }
       ParsedRequest::Http(http_request) => {
         let parsed_request: reqwest::Request = http_request.try_into()?;
