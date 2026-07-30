@@ -26,7 +26,9 @@ impl Lapse {
 
         for (field, value) in request.body {
           match value {
-            MultipartRequestValue::File(_) => {}
+            MultipartRequestValue::File(f) => {
+              form = form.file(field, f).await.unwrap();
+            }
             MultipartRequestValue::Text(s) => {
               form = form.text(field, s);
             }
