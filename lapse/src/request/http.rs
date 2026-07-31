@@ -91,28 +91,16 @@ impl Lapse {
 
 #[cfg(test)]
 mod test {
-  use crate::request::{
-    RequestFile,
-    parsing::{ParsedRequest, parse_request_http},
-  };
-
-  fn request_file(http: &str) -> RequestFile {
-    RequestFile {
-      markdown: None,
-      http: http.to_owned(),
-    }
-  }
+  use crate::request::parsing::{ParsedRequest, parse_request_http};
 
   #[test]
   fn test_parses_sample_request() {
-    let file = request_file(
-      include_str!("../../assets/request.md")
-        .split_once("---")
-        .unwrap()
-        .0,
-    );
+    let file_http = include_str!("../../assets/request.md")
+      .split_once("---")
+      .unwrap()
+      .0;
 
-    match parse_request_http(&file.http).unwrap() {
+    match parse_request_http(file_http).unwrap() {
       ParsedRequest::Multipart(_) => panic!("This was supposed to be a plain http request"),
       ParsedRequest::Http(request) => {
         assert_eq!(request.method, "POST");
@@ -128,9 +116,9 @@ mod test {
 
   #[test]
   fn test_parses_request_without_body() {
-    let file = request_file("GET https://example.com/comments\ncontent-type: application/json\n");
-
-    match parse_request_http(&file.http).unwrap() {
+    match parse_request_http("GET https://example.com/comments\ncontent-type: application/json\n")
+      .unwrap()
+    {
       ParsedRequest::Multipart(_) => {
         panic!("This was supposed to be a plain http request")
       }
@@ -148,9 +136,7 @@ mod test {
 
   #[test]
   fn test_parses_request_without_headers_or_body() {
-    let file = request_file("DELETE https://example.com/comments\n");
-
-    match parse_request_http(&file.http).unwrap() {
+    match parse_request_http("DELETE https://example.com/comments\n").unwrap() {
       ParsedRequest::Multipart(_) => {
         panic!("This was supposed to be a plain http request")
       }
@@ -165,9 +151,7 @@ mod test {
 
   #[test]
   fn test_ignores_leading_blank_lines() {
-    let file = request_file("\n\nPUT https://example.com/comments\n");
-
-    match parse_request_http(&file.http).unwrap() {
+    match parse_request_http("\n\nPUT https://example.com/comments\n").unwrap() {
       ParsedRequest::Multipart(_) => panic!("This was supposed to be a plan http request"),
       ParsedRequest::Http(request) => {
         assert_eq!(request.method, "PUT");

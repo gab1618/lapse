@@ -8,11 +8,6 @@ pub mod error;
 pub mod http;
 pub mod parsing;
 
-pub struct RequestFile {
-  pub http: String,
-  pub markdown: Option<String>,
-}
-
 impl Lapse {
   fn get_request_http(&self, name: &str) -> crate::Result<String> {
     let file_path = self.requests_path().join(name).with_extension("md");
