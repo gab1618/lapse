@@ -14,8 +14,8 @@ pub enum RequestError {
   MissingUri,
   #[error("Could not parse method: {0}")]
   ParseMethod(#[source] http::method::InvalidMethod),
-  #[error("Could not parse URI: {0}")]
-  ParseUri(#[source] http::uri::InvalidUri),
+  #[error("Could not parse Url")]
+  ParseUrl,
   #[error("Could not parse header line")]
   ParseHeaderLine,
   #[error("Could not build request: {0}")]
@@ -32,4 +32,10 @@ pub enum RequestError {
   ResolveHttpLine,
   #[error("Invalid character: {0}")]
   InvalidMultipartCharacter(char),
+  #[error("Could not parse header")]
+  ParseHeader,
+  #[error("Could not add file")]
+  AddFile,
+  #[error("Could not parse multipart form value: empty")]
+  EmptyMultipartValue,
 }

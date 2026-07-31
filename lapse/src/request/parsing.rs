@@ -1,5 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
+use http::HeaderMap;
 use reqwest::{
   Body, Method, Request, Url,
   header::{HeaderName, HeaderValue},
@@ -46,15 +47,15 @@ impl TryFrom<HttpRequest> for reqwest::Request {
 
   fn try_from(value: HttpRequest) -> Result<Self, Self::Error> {
     let mut req = Request::new(
-      Method::from_str(&value.method).unwrap(),
-      Url::from_str(&value.url).unwrap(),
+      Method::from_str(&value.method).map_err(RequestError::ParseMethod)?,
+      Url::from_str(&value.url).map_err(|_| RequestError::ParseUrl)?,
     );
     let headers = req.headers_mut();
 
     for (name, value) in value.headers {
       headers.insert(
-        HeaderName::from_str(&name).unwrap(),
-        HeaderValue::from_str(&value).unwrap(),
+        HeaderName::from_str(&name).map_err(|_| RequestError::ParseHeader)?,
+        HeaderValue::from_str(&value).map_err(|_| RequestError::ParseHeader)?,
       );
     }
 
@@ -63,6 +64,23 @@ impl TryFrom<HttpRequest> for reqwest::Request {
 
     body.replace(parsed_body);
     Ok(req)
+  }
+}
+
+impl MultipartRequest {
+  pub fn headers(&self) -> crate::Result<HeaderMap> {
+    let headers = self
+      .headers
+      .iter()
+      .map(|(key, value)| {
+        Ok((
+          HeaderName::from_str(key).map_err(|_| RequestError::ParseHeader)?,
+          HeaderValue::from_str(value).map_err(|_| RequestError::ParseHeader)?,
+        ))
+      })
+      .collect::<crate::Result<HeaderMap>>()?;
+
+    Ok(headers)
   }
 }
 
@@ -110,18 +128,19 @@ pub fn parse_request_http(doc: String) -> crate::Result<ParsedRequest> {
 
 fn parse_multipart_http_body(raw: String) -> crate::Result<HashMap<String, MultipartRequestValue>> {
   let lines = raw.lines();
-  Ok(
-    lines
-      .map(|line| {
-        let (name, value) = line.split_once(":").unwrap();
-        let (name, value) = (name.trim().to_owned(), value.trim().to_owned());
 
-        let mut parser = MultipartValueParser::new(&value);
-        let parsed_value = parser.parse().unwrap();
-        (name.trim().to_owned(), parsed_value)
-      })
-      .collect::<HashMap<String, MultipartRequestValue>>(),
-  )
+  lines
+    .map(|line| {
+      let (name, value) = line
+        .split_once(":")
+        .ok_or(RequestError::EmptyMultipartValue)?;
+      let (name, value) = (name.trim().to_owned(), value.trim().to_owned());
+
+      let mut parser = MultipartValueParser::new(&value);
+      let parsed_value = parser.parse()?;
+      Ok((name.trim().to_owned(), parsed_value))
+    })
+    .collect::<crate::Result<HashMap<String, MultipartRequestValue>>>()
 }
 
 pub struct MultipartValueParser<'a> {
@@ -134,7 +153,7 @@ impl<'a> MultipartValueParser<'a> {
     Self { src, position: 0 }
   }
   pub fn parse(&mut self) -> crate::Result<MultipartRequestValue> {
-    let next_char = self.peek().unwrap();
+    let next_char = self.peek().ok_or(RequestError::EmptyMultipartValue)?;
 
     match next_char {
       '"' => {

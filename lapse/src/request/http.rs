@@ -1,6 +1,5 @@
-use http::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::Client;
-use std::{collections::HashMap, str::FromStr as _};
+use std::collections::HashMap;
 
 use crate::{
   Lapse,
@@ -24,24 +23,22 @@ impl Lapse {
       ParsedRequest::Multipart(request) => {
         let mut form = reqwest::multipart::Form::new();
 
+        let headers = request.headers()?;
+
         for (field, value) in request.body {
           match value {
             MultipartRequestValue::File(f) => {
-              form = form.file(field, f).await.unwrap();
+              form = form
+                .file(field, f)
+                .await
+                .map_err(|_| RequestError::AddFile)?;
             }
             MultipartRequestValue::Text(s) => {
               form = form.text(field, s);
             }
           }
         }
-        let mut headers = HeaderMap::new();
 
-        for (key, val) in request.headers {
-          headers.insert(
-            HeaderName::from_str(&key).unwrap(),
-            HeaderValue::from_str(&val).unwrap(),
-          );
-        }
         client
           .post(request.url)
           .headers(headers)
