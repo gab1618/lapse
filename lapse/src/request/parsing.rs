@@ -84,7 +84,7 @@ impl MultipartRequest {
   }
 }
 
-pub fn parse_request_http(doc: String) -> crate::Result<ParsedRequest> {
+pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
 
   let request_line = lines.next().ok_or(RequestError::EmptyRequestFile)?;
@@ -215,7 +215,7 @@ mod test {
   fn parses_multipart_req() {
     let raw_req = include_str!("../../assets/with-multipart.md");
     let http_portion = raw_req.split_once("---").unwrap().0;
-    let parsed = parse_request_http(http_portion.to_owned()).unwrap();
+    let parsed = parse_request_http(http_portion).unwrap();
     match parsed {
       ParsedRequest::Http(_) => panic!("It was supposed to be a multipart request"),
       ParsedRequest::Multipart(req) => {

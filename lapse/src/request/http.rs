@@ -18,7 +18,7 @@ impl Lapse {
     let req = self.get_request_http(&name)?;
 
     let solved_req = ctx.eval(&req)?;
-    let request = parse_request_http(solved_req)?;
+    let request = parse_request_http(&solved_req)?;
     let response = match request {
       ParsedRequest::Multipart(request) => {
         let mut form = reqwest::multipart::Form::new();
@@ -112,7 +112,7 @@ mod test {
         .0,
     );
 
-    match parse_request_http(file.http).unwrap() {
+    match parse_request_http(&file.http).unwrap() {
       ParsedRequest::Multipart(_) => panic!("This was supposed to be a plain http request"),
       ParsedRequest::Http(request) => {
         assert_eq!(request.method, "POST");
@@ -130,7 +130,7 @@ mod test {
   fn test_parses_request_without_body() {
     let file = request_file("GET https://example.com/comments\ncontent-type: application/json\n");
 
-    match parse_request_http(file.http).unwrap() {
+    match parse_request_http(&file.http).unwrap() {
       ParsedRequest::Multipart(_) => {
         panic!("This was supposed to be a plain http request")
       }
@@ -150,7 +150,7 @@ mod test {
   fn test_parses_request_without_headers_or_body() {
     let file = request_file("DELETE https://example.com/comments\n");
 
-    match parse_request_http(file.http).unwrap() {
+    match parse_request_http(&file.http).unwrap() {
       ParsedRequest::Multipart(_) => {
         panic!("This was supposed to be a plain http request")
       }
@@ -167,7 +167,7 @@ mod test {
   fn test_ignores_leading_blank_lines() {
     let file = request_file("\n\nPUT https://example.com/comments\n");
 
-    match parse_request_http(file.http).unwrap() {
+    match parse_request_http(&file.http).unwrap() {
       ParsedRequest::Multipart(_) => panic!("This was supposed to be a plan http request"),
       ParsedRequest::Http(request) => {
         assert_eq!(request.method, "PUT");
