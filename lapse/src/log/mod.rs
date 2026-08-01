@@ -19,8 +19,7 @@ pub struct ResponseLog {
 
 impl Display for ResponseLog {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "{}", self.request)?;
-    writeln!(f, "{}", self.status)?;
+    writeln!(f, "{} {}", self.request, self.status)?;
     for (header, value) in &self.headers {
       writeln!(f, "{}: {}", header, value)?;
     }
