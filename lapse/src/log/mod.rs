@@ -4,7 +4,8 @@ use std::{
   collections::HashMap,
   fmt::Display,
   fs::{self, OpenOptions},
-  io::Write,
+  io::{Read, Write},
+  str::FromStr,
   time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -25,6 +26,47 @@ impl Display for ResponseLog {
     }
     writeln!(f)?;
     writeln!(f, "{}", self.text)
+  }
+}
+
+impl FromStr for ResponseLog {
+  type Err = LogError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let mut lines = s.lines();
+    let first = lines.next().unwrap();
+    let (request, status) = first.split_once(" ").unwrap();
+
+    let status = u16::from_str(status).unwrap();
+    let mut headers = HashMap::new();
+
+    for line in lines.by_ref() {
+      if line.is_empty() {
+        break;
+      }
+
+      let (key, value) = line.split_once(":").unwrap();
+      headers.insert(key.trim().to_string(), value.trim().to_string());
+    }
+
+    let body_lines = lines.collect::<Vec<&str>>();
+    let body = body_lines.join("\n");
+
+    Ok(Self {
+      request: request.to_string(),
+      text: body,
+      status,
+      headers,
+    })
+  }
+}
+
+impl ResponseLog {
+  pub fn from_read<R: Read>(r: &mut R) -> crate::Result<Self> {
+    let mut buf = String::new();
+    r.read_to_string(&mut buf).unwrap();
+
+    Ok(Self::from_str(&buf)?)
   }
 }
 
