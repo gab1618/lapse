@@ -5,6 +5,7 @@ use std::{
   fmt::Display,
   fs::{self, OpenOptions},
   io::{Read, Write},
+  path::PathBuf,
   str::FromStr,
   time::{SystemTime, UNIX_EPOCH},
 };
@@ -71,9 +72,11 @@ impl ResponseLog {
 }
 
 impl Lapse {
+  fn response_logs_path(&self, request: &str) -> PathBuf {
+    self.logs_path().join(request)
+  }
   pub fn save_log(&self, log: &ResponseLog) -> crate::Result<()> {
-    let logs_path = self.logs_path();
-    let request_logs_path = logs_path.join(&log.request);
+    let request_logs_path = self.response_logs_path(&log.request);
 
     // Ensure logs path exists
     fs::create_dir_all(&request_logs_path).map_err(LogError::EnsureLogsDir)?;
@@ -96,5 +99,37 @@ impl Lapse {
     write!(f, "{log}").map_err(LogError::SaveLogfile)?;
 
     Ok(())
+  }
+  pub fn get_response_log(&self, request: &str, n: usize) -> crate::Result<ResponseLog> {
+    let mut all_logs_names = self.get_response_logs_names(request);
+
+    all_logs_names.reverse();
+
+    let entry_name = all_logs_names.get(n).map(String::to_string).unwrap();
+    let full_entry_path = self.response_logs_path(request).join(entry_name);
+
+    let mut f = OpenOptions::new().read(true).open(full_entry_path).unwrap();
+    let parsed_entry = ResponseLog::from_read(&mut f).unwrap();
+
+    Ok(parsed_entry)
+  }
+  pub fn get_response_logs_names(&self, request: &str) -> Vec<String> {
+    let request_logs_path = self.response_logs_path(request);
+
+    let entries = fs::read_dir(request_logs_path).unwrap();
+
+    let list = entries
+      .filter_map(|entry| {
+        let resolved = entry.unwrap();
+
+        if resolved.path().is_dir() {
+          return None;
+        }
+
+        Some(resolved.file_name().to_str().unwrap().to_owned())
+      })
+      .collect::<Vec<_>>();
+
+    list
   }
 }
