@@ -101,33 +101,40 @@ impl Lapse {
     Ok(())
   }
   pub fn get_response_log(&self, request: &str, n: usize) -> crate::Result<ResponseLog> {
-    let mut all_logs_names = self.get_response_logs_names(request);
+    let mut all_logs_names = self.get_response_logs_names(request)?;
 
     all_logs_names.reverse();
 
-    let entry_name = all_logs_names.get(n).map(String::to_string).unwrap();
+    let entry_name = all_logs_names
+      .get(n)
+      .map(String::to_string)
+      .ok_or(LogError::LogIndexNotFound(n))?;
     let full_entry_path = self.response_logs_path(request).join(entry_name);
 
-    let mut f = OpenOptions::new().read(true).open(full_entry_path).unwrap();
-    let parsed_entry = ResponseLog::from_read(&mut f).unwrap();
+    let mut f = OpenOptions::new()
+      .read(true)
+      .open(full_entry_path)
+      .map_err(LogError::ReadLogFile)?;
+    let parsed_entry = ResponseLog::from_read(&mut f)?;
 
     Ok(parsed_entry)
   }
-  pub fn get_response_logs_names(&self, request: &str) -> Vec<String> {
+  pub fn get_response_logs_names(&self, request: &str) -> crate::Result<Vec<String>> {
     let request_logs_path = self.response_logs_path(request);
 
-    let entries = fs::read_dir(request_logs_path).unwrap();
+    let entries = fs::read_dir(request_logs_path).map_err(LogError::ListLogFiles)?;
 
-    entries
-      .filter_map(|entry| {
-        let resolved = entry.unwrap();
+    Ok(
+      entries
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| !entry.path().is_dir())
+        .filter_map(|entry| {
+          let file_name = entry.file_name();
+          let str_name = file_name.to_str();
 
-        if resolved.path().is_dir() {
-          return None;
-        }
-
-        Some(resolved.file_name().to_str().unwrap().to_owned())
-      })
-      .collect::<Vec<_>>()
+          str_name.map(|inner| inner.to_string())
+        })
+        .collect::<Vec<_>>(),
+    )
   }
 }

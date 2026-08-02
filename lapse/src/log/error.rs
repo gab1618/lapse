@@ -8,4 +8,8 @@ pub enum LogError {
   SaveLogfile(#[source] std::io::Error),
   #[error("Could not read log file: {0}")]
   ReadLogFile(#[source] std::io::Error),
+  #[error("Could not list log files: {0}")]
+  ListLogFiles(#[source] std::io::Error),
+  #[error("Log {0} not found")]
+  LogIndexNotFound(usize),
 }
