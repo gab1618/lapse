@@ -35,10 +35,10 @@ impl FromStr for ResponseLog {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut lines = s.lines();
-    let first = lines.next().unwrap();
-    let (request, status) = first.split_once(" ").unwrap();
+    let first = lines.next().ok_or(LogError::ParseHead)?;
+    let (request, status) = first.split_once(" ").ok_or(LogError::ParseHead)?;
 
-    let status = u16::from_str(status).unwrap();
+    let status = u16::from_str(status).map_err(|_| LogError::ParseHead)?;
     let mut headers = HashMap::new();
 
     for line in lines.by_ref() {
@@ -46,7 +46,7 @@ impl FromStr for ResponseLog {
         break;
       }
 
-      let (key, value) = line.split_once(":").unwrap();
+      let (key, value) = line.split_once(":").ok_or(LogError::ParseHeader)?;
       headers.insert(key.trim().to_string(), value.trim().to_string());
     }
 

@@ -12,4 +12,8 @@ pub enum LogError {
   ListLogFiles(#[source] std::io::Error),
   #[error("Log {0} not found")]
   LogIndexNotFound(usize),
+  #[error("Could not parse log head")]
+  ParseHead,
+  #[error("Could not parse log header")]
+  ParseHeader,
 }
