@@ -65,7 +65,7 @@ impl FromStr for ResponseLog {
 impl ResponseLog {
   pub fn from_read<R: Read>(r: &mut R) -> crate::Result<Self> {
     let mut buf = String::new();
-    r.read_to_string(&mut buf).unwrap();
+    r.read_to_string(&mut buf).map_err(LogError::ReadLogFile)?;
 
     Ok(Self::from_str(&buf)?)
   }

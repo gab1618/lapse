@@ -6,4 +6,6 @@ pub enum LogError {
   OpenLogFile(#[source] std::io::Error),
   #[error("Could not save log file: {0}")]
   SaveLogfile(#[source] std::io::Error),
+  #[error("Could not read log file: {0}")]
+  ReadLogFile(#[source] std::io::Error),
 }
