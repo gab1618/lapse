@@ -26,6 +26,13 @@ pub enum Command {
   /// Runs a script
   #[command(about)]
   Run { script: Option<String> },
+  /// Logs a request's response logs history
+  #[command(about)]
+  Log {
+    /// Request name
+    request: Option<String>,
+  },
+
   /// Outputs a completion script
   #[command(about)]
   Completion { shell: CliCompletionShell },
