@@ -105,21 +105,39 @@ impl Lapse {
     Ok(())
   }
   pub fn get_response_log(&self, request: &str, n: usize) -> crate::Result<ResponseLog> {
-    let all_logs_names = self.get_response_logs_names(request)?;
-
-    let entry_name = all_logs_names
-      .get(n)
-      .map(String::to_string)
-      .ok_or(LogError::LogIndexNotFound(n))?;
-    let full_entry_path = self.response_logs_path(request).join(entry_name);
-
-    let mut f = OpenOptions::new()
-      .read(true)
-      .open(full_entry_path)
-      .map_err(LogError::ReadLogFile)?;
+    let mut f = self.get_response_log_reader(request, n)?;
     let parsed_entry = ResponseLog::from_read(&mut f)?;
 
     Ok(parsed_entry)
+  }
+  fn get_response_log_name(&self, request: &str, n: usize) -> crate::Result<String> {
+    let all_logs_names = self.get_response_logs_names(request)?;
+
+    all_logs_names
+      .get(n)
+      .map(String::to_string)
+      .ok_or(LogError::LogIndexNotFound(n).into())
+  }
+  fn get_response_log_reader(&self, request: &str, n: usize) -> crate::Result<fs::File> {
+    let entry_name = self.get_response_log_name(request, n)?;
+    let full_entry_path = self.response_logs_path(request).join(entry_name);
+
+    Ok(
+      OpenOptions::new()
+        .read(true)
+        .open(full_entry_path)
+        .map_err(LogError::ReadLogFile)?,
+    )
+  }
+  pub fn get_response_log_raw(&self, request: &str, n: usize) -> crate::Result<String> {
+    let mut f = self.get_response_log_reader(request, n)?;
+
+    let mut contents = String::new();
+
+    f.read_to_string(&mut contents)
+      .map_err(LogError::ReadLogFile)?;
+
+    Ok(contents)
   }
   pub fn get_response_logs_names(&self, request: &str) -> crate::Result<Vec<String>> {
     let request_logs_path = self.response_logs_path(request);
