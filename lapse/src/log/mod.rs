@@ -15,6 +15,7 @@ use crate::{Lapse, log::error::LogError};
 #[cfg(test)]
 mod test;
 
+#[cfg_attr(test, derive(Debug, PartialEq))]
 pub struct ResponseLog {
   pub request: String,
   pub text: String,
