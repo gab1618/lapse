@@ -118,7 +118,7 @@ impl Lapse {
 
     let entries = fs::read_dir(request_logs_path).unwrap();
 
-    let list = entries
+    entries
       .filter_map(|entry| {
         let resolved = entry.unwrap();
 
@@ -128,8 +128,6 @@ impl Lapse {
 
         Some(resolved.file_name().to_str().unwrap().to_owned())
       })
-      .collect::<Vec<_>>();
-
-    list
+      .collect::<Vec<_>>()
   }
 }
