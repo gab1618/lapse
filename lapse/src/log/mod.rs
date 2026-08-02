@@ -12,6 +12,9 @@ use std::{
 
 use crate::{Lapse, log::error::LogError};
 
+#[cfg(test)]
+mod test;
+
 pub struct ResponseLog {
   pub request: String,
   pub text: String,
@@ -85,7 +88,7 @@ impl Lapse {
       .duration_since(UNIX_EPOCH)
       .expect("time should go forward");
 
-    let filename = curr_time.as_millis().to_string();
+    let filename = curr_time.as_nanos().to_string();
 
     let full_file_path = request_logs_path.join(filename);
 
@@ -101,9 +104,7 @@ impl Lapse {
     Ok(())
   }
   pub fn get_response_log(&self, request: &str, n: usize) -> crate::Result<ResponseLog> {
-    let mut all_logs_names = self.get_response_logs_names(request)?;
-
-    all_logs_names.reverse();
+    let all_logs_names = self.get_response_logs_names(request)?;
 
     let entry_name = all_logs_names
       .get(n)
