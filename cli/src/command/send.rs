@@ -11,7 +11,7 @@ pub async fn send(request: Option<String>) -> crate::Result<()> {
   let response = lapse
     .request(selected_request, lapse.get_eval_ctx()?)
     .await?;
-  println!("{}", response.text);
+  print!("{}", response);
 
   Ok(())
 }
