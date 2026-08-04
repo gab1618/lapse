@@ -1,13 +1,32 @@
 use std::{
   fmt::Write as _,
-  sync::{Arc, Mutex},
+  sync::{Arc, Mutex, MutexGuard},
 };
 
-use lapse::tree::resource::Resource;
+use lapse::{log::ResponseLogsIter, tree::resource::Resource};
 
 use crate::{command::open_lapse, select::select_tree_entry};
 
 use minus::{Pager, hooks::Hook};
+
+fn append_to_log_until_fills(
+  thread_pager: &mut Pager,
+  mut missing_lines: usize,
+  entries: &mut MutexGuard<'_, ResponseLogsIter>,
+) -> crate::Result<()> {
+  while missing_lines > 0 {
+    if let Some((entry_name, new_log)) = entries.next() {
+      let lines_written = new_log.lines().count() + 1;
+      missing_lines -= lines_written;
+      writeln!(thread_pager, "{}", entry_name).unwrap();
+      writeln!(thread_pager, "{}", new_log).unwrap();
+    } else {
+      break;
+    }
+  }
+
+  Ok(())
+}
 
 pub fn log(request: Option<String>) -> crate::Result<()> {
   let lapse = Arc::new(open_lapse()?);
@@ -29,12 +48,11 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
     .add_hook(
       Hook::EofReached,
       0,
-      Box::new(move |_state| {
+      Box::new(move |state| {
         let mut entries = thread_entries_iter.lock().unwrap();
-        if let Some((entry_name, new_log)) = entries.next() {
-          writeln!(thread_pager, "{}", entry_name).unwrap();
-          writeln!(thread_pager, "{}", new_log).unwrap();
-        }
+        let missing_lines = state.rows - state.screen.line_count().min(state.rows);
+        append_to_log_until_fills(&mut thread_pager, missing_lines, &mut entries)
+          .expect("Error fetching log content");
       }),
     )
     .unwrap();
@@ -48,18 +66,9 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
       1,
       Box::new(move |state| {
         let mut entries = thread_entries_iter.lock().unwrap();
-        let mut missing_lines = state.rows - state.screen.line_count().min(state.rows);
-
-        while missing_lines > 0 {
-          if let Some((entry_name, new_log)) = entries.next() {
-            let lines_written = new_log.lines().count() + 1;
-            missing_lines -= lines_written;
-            writeln!(thread_pager, "{}", entry_name).unwrap();
-            writeln!(thread_pager, "{}", new_log).unwrap();
-          } else {
-            break;
-          }
-        }
+        let missing_lines = state.rows - state.screen.line_count().min(state.rows);
+        append_to_log_until_fills(&mut thread_pager, missing_lines, &mut entries)
+          .expect("Error fetching log content");
       }),
     )
     .unwrap();
