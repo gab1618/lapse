@@ -5,9 +5,14 @@ use std::{
 
 use lapse::{log::ResponseLogsIter, tree::resource::Resource};
 
-use crate::{command::open_lapse, select::select_tree_entry};
+use crate::{
+  command::{log::error::LogError, open_lapse},
+  select::select_tree_entry,
+};
 
 use minus::{Pager, hooks::Hook};
+
+pub mod error;
 
 fn append_to_log_until_fills(
   thread_pager: &mut Pager,
@@ -18,8 +23,8 @@ fn append_to_log_until_fills(
     if let Some((entry_name, new_log)) = entries.next() {
       let lines_written = new_log.lines().count() + 1;
       missing_lines -= lines_written;
-      writeln!(thread_pager, "{}", entry_name).unwrap();
-      writeln!(thread_pager, "{}", new_log).unwrap();
+      writeln!(thread_pager, "{}", entry_name).map_err(LogError::SendToPager)?;
+      writeln!(thread_pager, "{}", new_log).map_err(LogError::SendToPager)?;
     } else {
       break;
     }
@@ -39,7 +44,9 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
   let shared_entries_iter = Arc::new(Mutex::new(entries_iter));
 
   let pager = Pager::new();
-  pager.set_run_no_overflow(true).unwrap();
+  pager
+    .set_run_no_overflow(true)
+    .map_err(LogError::SetupPagerConfig)?;
 
   let mut thread_pager = pager.clone();
   let thread_entries_iter = shared_entries_iter.clone();
@@ -49,13 +56,13 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
       Hook::EofReached,
       0,
       Box::new(move |state| {
-        let mut entries = thread_entries_iter.lock().unwrap();
+        let mut entries = thread_entries_iter.lock().expect("Poisoned mutex");
         let missing_lines = state.rows - state.screen.line_count().min(state.rows);
         append_to_log_until_fills(&mut thread_pager, missing_lines, &mut entries)
           .expect("Error fetching log content");
       }),
     )
-    .unwrap();
+    .map_err(LogError::SetupPagerConfig)?;
 
   let mut thread_pager = pager.clone();
   let thread_entries_iter = shared_entries_iter.clone();
@@ -65,7 +72,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
       Hook::PrePagerStart,
       1,
       Box::new(move |state| {
-        let mut entries = thread_entries_iter.lock().unwrap();
+        let mut entries = thread_entries_iter.lock().expect("Poisoned mutex");
         let missing_lines = state.rows - state.screen.line_count().min(state.rows);
         append_to_log_until_fills(&mut thread_pager, missing_lines, &mut entries)
           .expect("Error fetching log content");
@@ -73,7 +80,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
     )
     .unwrap();
 
-  minus::page_all(pager).unwrap();
+  minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
 
   Ok(())
 }
