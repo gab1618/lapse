@@ -20,31 +20,14 @@ fn test_retrieve_log() {
   };
 
   lapse.save_log(&first_entry).unwrap();
-
-  let log_names = lapse.get_response_logs_names("testing").unwrap();
-
-  let last_log_name = log_names.get(0).unwrap();
-  let last_log = lapse
-    .get_response_log_entry("testing", last_log_name)
-    .unwrap();
-  assert_eq!(ResponseLog::from_str(&last_log).unwrap(), first_entry);
-
   lapse.save_log(&second_entry).unwrap();
 
-  let log_names = lapse.get_response_logs_names("testing").unwrap();
+  let mut entries = lapse.logs_iter("testing").unwrap();
 
-  let last_log_name = log_names.get(1).unwrap();
-  let last_log = lapse
-    .get_response_log_entry("testing", last_log_name)
-    .unwrap();
-  assert_eq!(ResponseLog::from_str(&last_log).unwrap(), first_entry);
+  let (_, last_log) = entries.next().unwrap();
+  let (_, first_log) = entries.next().unwrap();
 
-  let second_last_log_name = log_names.get(0).unwrap();
-  let second_last_log = lapse
-    .get_response_log_entry("testing", second_last_log_name)
-    .unwrap();
-  assert_eq!(
-    ResponseLog::from_str(&second_last_log).unwrap(),
-    second_entry
-  );
+  assert_eq!(ResponseLog::from_str(&last_log).unwrap(), second_entry);
+
+  assert_eq!(ResponseLog::from_str(&first_log).unwrap(), first_entry);
 }
