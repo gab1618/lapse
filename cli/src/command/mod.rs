@@ -3,9 +3,9 @@ use lapse::{Lapse, tree::resource::Resource};
 use crate::{Error, collection::output_tree};
 
 pub mod env;
+pub mod log;
 pub mod script;
 pub mod send;
-pub mod log;
 
 pub fn open_lapse() -> crate::Result<Lapse> {
   let curr_dir = std::env::current_dir().map_err(Error::GetCurrentDir)?;
