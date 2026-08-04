@@ -80,7 +80,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
             .expect("Error fetching log content");
         }),
       )
-      .unwrap();
+      .map_err(LogError::SetupPagerConfig)?;
 
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
