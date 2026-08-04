@@ -3,6 +3,7 @@ use lapse::{Lapse, tree::resource::Resource};
 use crate::{Error, collection::output_tree};
 
 pub mod env;
+pub mod log;
 pub mod script;
 pub mod send;
 

@@ -1,12 +1,10 @@
 use std::ops::Deref;
 
-#[cfg(test)]
 use tempfile::TempDir;
 use tempfile::tempdir;
 
 use crate::{Lapse, env::EnvVariable};
 
-#[cfg(test)]
 pub struct TempLapse {
   pub _tempdir: TempDir,
   lapse: Lapse,
