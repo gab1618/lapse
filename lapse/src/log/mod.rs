@@ -154,6 +154,13 @@ impl Lapse {
         .collect::<Vec<_>>(),
     )
   }
+  pub fn get_response_log_entry(&self, request: &str, entry_name: &str) -> crate::Result<String> {
+    let full_entry_path = self.response_logs_path(request).join(entry_name);
+
+    let content = fs::read_to_string(full_entry_path).unwrap();
+
+    Ok(content)
+  }
   pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
     let mut entries_names = self.get_response_logs_names(request)?;
 
