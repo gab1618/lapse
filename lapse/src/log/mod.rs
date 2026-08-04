@@ -87,20 +87,15 @@ impl Iterator for ResponseLogsIter {
   type Item = (String, String);
 
   fn next(&mut self) -> Option<Self::Item> {
-    let name = self.src.pop();
-
-    if name.is_none() {
-      return None;
-    }
-    let name = name.unwrap();
+    let name = self.src.pop()?;
 
     let full_entry_path = self.lapse.response_logs_path(&self.request).join(&name);
 
-    let mut log = OpenOptions::new().read(true).open(full_entry_path).unwrap();
+    let mut log = OpenOptions::new().read(true).open(full_entry_path).ok()?;
 
     let mut contents = String::new();
 
-    log.read_to_string(&mut contents).unwrap();
+    log.read_to_string(&mut contents).ok()?;
 
     Some((name, contents))
   }
@@ -157,7 +152,7 @@ impl Lapse {
   pub fn get_response_log_entry(&self, request: &str, entry_name: &str) -> crate::Result<String> {
     let full_entry_path = self.response_logs_path(request).join(entry_name);
 
-    let content = fs::read_to_string(full_entry_path).unwrap();
+    let content = fs::read_to_string(full_entry_path).map_err(LogError::ReadLogFile)?;
 
     Ok(content)
   }
