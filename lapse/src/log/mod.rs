@@ -7,6 +7,7 @@ use std::{
   io::{Read, Write},
   path::PathBuf,
   str::FromStr,
+  sync::Arc,
   time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -75,6 +76,36 @@ impl ResponseLog {
   }
 }
 
+#[derive(Clone)]
+pub struct ResponseLogsIter {
+  lapse: Arc<Lapse>,
+  request: String,
+  src: Vec<String>,
+}
+
+impl Iterator for ResponseLogsIter {
+  type Item = (String, String);
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let name = self.src.pop();
+
+    if name.is_none() {
+      return None;
+    }
+    let name = name.unwrap();
+
+    let full_entry_path = self.lapse.response_logs_path(&self.request).join(&name);
+
+    let mut log = OpenOptions::new().read(true).open(full_entry_path).unwrap();
+
+    let mut contents = String::new();
+
+    log.read_to_string(&mut contents).unwrap();
+
+    Some((name, contents))
+  }
+}
+
 impl Lapse {
   fn response_logs_path(&self, request: &str) -> PathBuf {
     self.logs_path().join(request)
@@ -104,41 +135,7 @@ impl Lapse {
 
     Ok(())
   }
-  pub fn get_response_log(&self, request: &str, n: usize) -> crate::Result<ResponseLog> {
-    let mut f = self.get_response_log_reader(request, n)?;
-    let parsed_entry = ResponseLog::from_read(&mut f)?;
 
-    Ok(parsed_entry)
-  }
-  fn get_response_log_name(&self, request: &str, n: usize) -> crate::Result<String> {
-    let all_logs_names = self.get_response_logs_names(request)?;
-
-    all_logs_names
-      .get(n)
-      .map(String::to_string)
-      .ok_or(LogError::LogIndexNotFound(n).into())
-  }
-  fn get_response_log_reader(&self, request: &str, n: usize) -> crate::Result<fs::File> {
-    let entry_name = self.get_response_log_name(request, n)?;
-    let full_entry_path = self.response_logs_path(request).join(entry_name);
-
-    Ok(
-      OpenOptions::new()
-        .read(true)
-        .open(full_entry_path)
-        .map_err(LogError::ReadLogFile)?,
-    )
-  }
-  pub fn get_response_log_raw(&self, request: &str, n: usize) -> crate::Result<String> {
-    let mut f = self.get_response_log_reader(request, n)?;
-
-    let mut contents = String::new();
-
-    f.read_to_string(&mut contents)
-      .map_err(LogError::ReadLogFile)?;
-
-    Ok(contents)
-  }
   pub fn get_response_logs_names(&self, request: &str) -> crate::Result<Vec<String>> {
     let request_logs_path = self.response_logs_path(request);
 
@@ -156,5 +153,16 @@ impl Lapse {
         })
         .collect::<Vec<_>>(),
     )
+  }
+  pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
+    let mut entries_names = self.get_response_logs_names(request)?;
+
+    entries_names.reverse();
+
+    Ok(ResponseLogsIter {
+      lapse: Arc::new(self.clone()),
+      request: request.to_string(),
+      src: entries_names,
+    })
   }
 }
