@@ -33,7 +33,8 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 I recommend to ignore these entries in your VCS:
 
 ```.gitignore
-.lapse/
+.lapse/log/*
+.lapse/state/*
 secrets.json
 ```
 
