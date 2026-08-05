@@ -38,4 +38,6 @@ pub enum RequestError {
   AddFile,
   #[error("Could not parse multipart form value: empty")]
   EmptyMultipartValue,
+  #[error("Could not create request client: {0}")]
+  CreateClient(#[source] reqwest::Error),
 }

@@ -13,7 +13,10 @@ use crate::{
 
 impl Lapse {
   pub async fn request(&self, name: String, ctx: EvalCtx) -> crate::Result<ResponseLog> {
-    let client = Client::new();
+    let client = Client::builder()
+      .cookie_store(true)
+      .build()
+      .map_err(RequestError::CreateClient)?;
 
     let req = self.get_request_http(&name)?;
 
