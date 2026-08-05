@@ -180,10 +180,18 @@ lapse env ls
 
 ### Env switch
 
-Switch to an enviromnent.
+Switches to an enviromnent.
 
 ```shell
-lapse env switch <query>
+lapse env switch [query]
+```
+
+### Log
+
+Logs the response logs for a given request
+
+```shell
+lapse log [query]
 ```
 
 ## Evaluation API
