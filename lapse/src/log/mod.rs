@@ -7,7 +7,6 @@ use std::{
   io::{Read, Write},
   path::PathBuf,
   str::FromStr,
-  sync::Arc,
   time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -78,7 +77,7 @@ impl ResponseLog {
 
 #[derive(Clone)]
 pub struct ResponseLogsIter {
-  lapse: Arc<Lapse>,
+  lapse: Lapse,
   request: String,
   src: Vec<String>,
 }
@@ -162,7 +161,7 @@ impl Lapse {
     entries_names.reverse();
 
     Ok(ResponseLogsIter {
-      lapse: Arc::new(self.clone()),
+      lapse: self.clone(),
       request: request.to_string(),
       src: entries_names,
     })
