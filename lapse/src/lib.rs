@@ -1,8 +1,4 @@
-use std::{
-  fs::{self, OpenOptions},
-  io::Write,
-  path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
 pub mod env;
 pub mod error;
@@ -38,17 +34,6 @@ impl Lapse {
         fs::create_dir_all(dir_path).map_err(|_| Error::CreateSpaceDir(subdir.to_owned()))
       })
       .collect::<Result<Vec<_>>>()?;
-
-    let mut f = OpenOptions::new()
-      .create(true)
-      .truncate(true)
-      .write(true)
-      .open(base_path.join("requests").join("request.md"))
-      .map_err(Error::OpenSampleFile)?;
-
-    let sample_request_contents = include_str!("../assets/request.md");
-    f.write_all(sample_request_contents.as_bytes())
-      .map_err(Error::WriteSampleFile)?;
 
     Ok(Self { path: base_path })
   }
