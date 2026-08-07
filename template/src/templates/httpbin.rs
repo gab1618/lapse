@@ -1,6 +1,6 @@
-use crate::templates::{LapseTemplate, TemplateEntry};
+use crate::templates::{LapsePreset, TemplateEntry};
 
-impl LapseTemplate {
+impl LapsePreset {
   pub fn httpbin() -> Self {
     let requests: Vec<(String, String)> = vec![
       (
@@ -44,11 +44,11 @@ impl LapseTemplate {
 mod tests {
   use lapse::Lapse;
 
-  use crate::templates::{LapseTemplate, test::TestTemplate};
+  use crate::templates::{LapsePreset, test::TestTemplate};
 
   #[test]
   fn test_load_httpbin_preset() {
-    let template = LapseTemplate::httpbin();
+    let template = LapsePreset::httpbin();
     let test = TestTemplate::from(template);
     Lapse::init(test.path()).unwrap();
     test.load();

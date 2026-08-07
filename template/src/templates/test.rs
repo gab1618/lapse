@@ -6,11 +6,11 @@ use lapse::{
 };
 use tempfile::{TempDir, tempdir};
 
-use crate::templates::{LapseTemplate, TemplateEntry};
+use crate::templates::{LapsePreset, TemplateEntry};
 
 pub struct TestTemplate {
   tempdir: TempDir,
-  inner: LapseTemplate,
+  inner: LapsePreset,
 }
 
 impl TestTemplate {
@@ -22,8 +22,8 @@ impl TestTemplate {
   }
 }
 
-impl From<LapseTemplate> for TestTemplate {
-  fn from(value: LapseTemplate) -> Self {
+impl From<LapsePreset> for TestTemplate {
+  fn from(value: LapsePreset) -> Self {
     let dir = tempdir().unwrap();
 
     Self {
@@ -35,7 +35,7 @@ impl From<LapseTemplate> for TestTemplate {
 
 #[test]
 fn test_load_template() {
-  let template = LapseTemplate {
+  let template = LapsePreset {
     scripts: vec![
       TemplateEntry {
         name: "script.lua".to_string(),

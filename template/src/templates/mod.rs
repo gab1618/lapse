@@ -51,12 +51,14 @@ impl TemplateCollection {
   }
 }
 
-pub struct LapseTemplate {
+/// Presets are templates that can be used to initialize spaces. Since they import multiple types of
+/// resources, we can't use them to import into existing spaces, only initialize.
+pub struct LapsePreset {
   scripts: Vec<TemplateItem>,
   requests: Vec<TemplateItem>,
 }
 
-impl LapseTemplate {
+impl LapsePreset {
   fn load_templates(base: PathBuf, templates: &[TemplateItem]) {
     for template in templates {
       match template {

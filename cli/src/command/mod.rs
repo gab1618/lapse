@@ -1,5 +1,5 @@
 use lapse::{Lapse, tree::resource::Resource};
-use lapse_template::templates::LapseTemplate;
+use lapse_template::templates::LapsePreset;
 
 use crate::{Error, cli::AvailablePreset, collection::output_tree};
 
@@ -19,7 +19,7 @@ pub fn init(preset: Option<AvailablePreset>) -> crate::Result<()> {
 
   if let Some(preset) = preset {
     let template = match preset {
-      AvailablePreset::Httpbin => LapseTemplate::httpbin(),
+      AvailablePreset::Httpbin => LapsePreset::httpbin(),
     };
 
     template.load(curr_dir);
