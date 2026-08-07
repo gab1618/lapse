@@ -3,6 +3,8 @@ use std::{fs, io::Write as _, path::PathBuf};
 #[cfg(test)]
 mod test;
 
+pub mod httpbin;
+
 pub struct TemplateEntry {
   name: String,
   content: String,
