@@ -951,6 +951,7 @@ dependencies = [
  "inquire",
  "is-terminal",
  "lapse",
+ "lapse-template",
  "minus",
  "nucleo-matcher",
  "thiserror",

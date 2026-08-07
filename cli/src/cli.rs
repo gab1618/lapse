@@ -10,10 +10,18 @@ pub struct Cli {
   pub command: Command,
 }
 
+#[derive(Clone, clap::ValueEnum)]
+pub enum AvailableTemplate {
+  Httpbin,
+}
+
 #[derive(Subcommand)]
 pub enum Command {
   /// Initializes a Lapse space at current dir
-  Init,
+  Init {
+    #[arg(short, long)]
+    preset: Option<AvailableTemplate>,
+  },
   /// Lists all requests
   #[command(about)]
   Ls {

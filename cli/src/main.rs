@@ -28,8 +28,8 @@ async fn entrypoint() -> error::Result<()> {
   let args = Cli::parse();
 
   match args.command {
-    Command::Init => {
-      command::init()?;
+    Command::Init { preset } => {
+      command::init(preset)?;
     }
     Command::Ls { path } => {
       command::ls(path)?;
