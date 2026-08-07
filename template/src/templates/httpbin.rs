@@ -44,7 +44,7 @@ impl LapseTemplate {
 mod tests {
   use lapse::Lapse;
 
-use crate::templates::{LapseTemplate, test::TestTemplate};
+  use crate::templates::{LapseTemplate, test::TestTemplate};
 
   #[test]
   fn test_load_httpbin_preset() {
