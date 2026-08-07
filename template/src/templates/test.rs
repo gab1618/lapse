@@ -15,7 +15,7 @@ pub struct TestTemplate {
 
 impl TestTemplate {
   pub fn load(&self) {
-    self.inner.load(self.tempdir.path().into());
+    self.inner.load(self.tempdir.path().into()).unwrap();
   }
   pub fn path(&self) -> &Path {
     self.tempdir.path()

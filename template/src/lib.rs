@@ -1,5 +1,8 @@
+pub mod error;
 pub mod templates;
 use std::fmt::Display;
+
+pub use error::Result;
 
 pub struct RequestFile {
   markdown: String,

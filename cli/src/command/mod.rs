@@ -23,7 +23,7 @@ pub fn init(preset: Option<AvailablePreset>) -> crate::Result<()> {
     })
     .unwrap_or_default();
 
-  selected_preset.load(curr_dir);
+  selected_preset.load(curr_dir).unwrap();
 
   println!("Initialized Lapse space");
 

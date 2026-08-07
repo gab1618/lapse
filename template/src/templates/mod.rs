@@ -1,5 +1,7 @@
 use std::{fs, io::Write as _, path::PathBuf};
 
+use crate::error::Error;
+
 #[cfg(test)]
 mod test;
 
@@ -34,21 +36,23 @@ pub struct TemplateCollection {
 }
 
 impl TemplateCollection {
-  pub fn load(&self, base: PathBuf) {
+  pub fn load(&self, base: PathBuf) -> crate::Result<()> {
     for entry in self.items.iter() {
       match entry {
         TemplateItem::Template(entry) => {
           let entry_path = base.join(&entry.name);
-          fs::write(entry_path, &entry.content).unwrap();
+          fs::write(entry_path, &entry.content).map_err(Error::CreateTemplateFile)?;
         }
         TemplateItem::Collection(coll) => {
           let dir_path = base.join(&coll.name);
-          fs::create_dir(&dir_path).unwrap();
+          fs::create_dir(&dir_path).map_err(Error::CreateTemplateFile)?;
 
-          coll.load(dir_path);
+          coll.load(dir_path)?;
         }
       }
     }
+
+    Ok(())
   }
 }
 
@@ -60,21 +64,26 @@ pub struct LapsePreset {
 }
 
 impl LapsePreset {
-  fn load_templates(base: PathBuf, templates: &[TemplateItem]) {
+  fn load_templates(base: PathBuf, templates: &[TemplateItem]) -> crate::Result<()> {
     for template in templates {
       match template {
         TemplateItem::Template(template_entry) => {
-          let mut f = fs::File::create(base.join(&template_entry.name)).unwrap();
-          write!(f, "{}", template_entry.content).unwrap();
+          let mut f =
+            fs::File::create(base.join(&template_entry.name)).map_err(Error::CreateTemplateFile)?;
+          write!(f, "{}", template_entry.content).map_err(Error::CreateTemplateFile)?;
         }
         TemplateItem::Collection(coll) => {
-          coll.load(base.join(&coll.name));
+          coll.load(base.join(&coll.name))?;
         }
       }
     }
+
+    Ok(())
   }
-  pub fn load(&self, base: PathBuf) {
-    Self::load_templates(base.join("scripts"), &self.scripts);
-    Self::load_templates(base.join("requests"), &self.requests);
+  pub fn load(&self, base: PathBuf) -> crate::Result<()> {
+    Self::load_templates(base.join("scripts"), &self.scripts)?;
+    Self::load_templates(base.join("requests"), &self.requests)?;
+
+    Ok(())
   }
 }
