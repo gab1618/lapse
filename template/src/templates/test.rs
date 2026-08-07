@@ -42,14 +42,16 @@ fn test_load_template() {
         content: "print('hey')".to_string(),
       }
       .into(),
-    ],
+    ]
+    .into(),
     requests: vec![
       TemplateEntry {
         name: "request.md".to_string(),
         content: "GET https://httpbin.org/get".to_string(),
       }
       .into(),
-    ],
+    ]
+    .into(),
   };
   let temp = TestTemplate::from(template);
   let lapse = Lapse::init(temp.path()).unwrap();

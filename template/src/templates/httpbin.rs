@@ -28,14 +28,16 @@ impl LapsePreset {
       requests: requests
         .into_iter()
         .map(|(name, content)| TemplateEntry { name, content }.into())
-        .collect::<Vec<_>>(),
+        .collect::<Vec<_>>()
+        .into(),
       scripts: vec![
         TemplateEntry {
           name: "test.lua".to_string(),
           content: include_str!("../../templates/httpbin/scripts/test.lua").to_string(),
         }
         .into(),
-      ],
+      ]
+      .into(),
     }
   }
 }

@@ -1,4 +1,7 @@
-use std::{fs, io::Write as _, path::PathBuf};
+use std::{
+  fs,
+  path::{Path, PathBuf},
+};
 
 use crate::error::Error;
 
@@ -30,13 +33,25 @@ impl From<TemplateCollection> for TemplateItem {
   }
 }
 
+#[derive(Default)]
 pub struct TemplateCollection {
   name: String,
   items: Vec<TemplateItem>,
 }
 
+impl From<Vec<TemplateItem>> for TemplateCollection {
+  fn from(value: Vec<TemplateItem>) -> Self {
+    Self {
+      name: Default::default(),
+      items: value,
+    }
+  }
+}
+
 impl TemplateCollection {
-  pub fn load(&self, base: PathBuf) -> crate::Result<()> {
+  pub fn load<P: AsRef<Path>>(&self, base: P) -> crate::Result<()> {
+    let base = base.as_ref();
+
     for entry in self.items.iter() {
       match entry {
         TemplateItem::Template(entry) => {
@@ -44,10 +59,7 @@ impl TemplateCollection {
           fs::write(entry_path, &entry.content).map_err(Error::CreateTemplateFile)?;
         }
         TemplateItem::Collection(coll) => {
-          let dir_path = base.join(&coll.name);
-          fs::create_dir(&dir_path).map_err(Error::CreateTemplateFile)?;
-
-          coll.load(dir_path)?;
+          coll.load(base.join(&coll.name))?;
         }
       }
     }
@@ -59,30 +71,14 @@ impl TemplateCollection {
 /// Presets are templates that can be used to initialize spaces. Since they import multiple types of
 /// resources, we can't use them to import into existing spaces, only initialize.
 pub struct LapsePreset {
-  scripts: Vec<TemplateItem>,
-  requests: Vec<TemplateItem>,
+  scripts: TemplateCollection,
+  requests: TemplateCollection,
 }
 
 impl LapsePreset {
-  fn load_templates(base: PathBuf, templates: &[TemplateItem]) -> crate::Result<()> {
-    for template in templates {
-      match template {
-        TemplateItem::Template(template_entry) => {
-          let mut f =
-            fs::File::create(base.join(&template_entry.name)).map_err(Error::CreateTemplateFile)?;
-          write!(f, "{}", template_entry.content).map_err(Error::CreateTemplateFile)?;
-        }
-        TemplateItem::Collection(coll) => {
-          coll.load(base.join(&coll.name))?;
-        }
-      }
-    }
-
-    Ok(())
-  }
   pub fn load(&self, base: PathBuf) -> crate::Result<()> {
-    Self::load_templates(base.join("scripts"), &self.scripts)?;
-    Self::load_templates(base.join("requests"), &self.requests)?;
+    self.scripts.load(base.join("scripts"))?;
+    self.requests.load(base.join("requests"))?;
 
     Ok(())
   }

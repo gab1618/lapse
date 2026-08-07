@@ -10,7 +10,8 @@ impl Default for LapsePreset {
       requests: requests
         .into_iter()
         .map(|(name, content)| TemplateEntry { name, content }.into())
-        .collect::<Vec<_>>(),
+        .collect::<Vec<_>>()
+        .into(),
       scripts: Default::default(),
     }
   }
