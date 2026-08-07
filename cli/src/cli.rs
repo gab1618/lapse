@@ -11,7 +11,7 @@ pub struct Cli {
 }
 
 #[derive(Clone, clap::ValueEnum)]
-pub enum AvailableTemplate {
+pub enum AvailablePreset {
   Httpbin,
 }
 
@@ -20,7 +20,7 @@ pub enum Command {
   /// Initializes a Lapse space at current dir
   Init {
     #[arg(short, long)]
-    preset: Option<AvailableTemplate>,
+    preset: Option<AvailablePreset>,
   },
   /// Lists all requests
   #[command(about)]
@@ -40,7 +40,6 @@ pub enum Command {
     /// Request name
     request: Option<String>,
   },
-
   /// Outputs a completion script
   #[command(about)]
   Completion { shell: CliCompletionShell },
