@@ -13,6 +13,7 @@ pub mod error;
 #[derive(Default)]
 pub struct Env {
   pub variables: HashMap<String, EnvValue>,
+  pub secrets: HashMap<String, EnvValue>,
 }
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -64,25 +65,31 @@ impl Lapse {
     Ok(())
   }
 
+  /// Every file is optional. If it doesn't exist, we just treat it as if it was empty. Therefore,
+  /// it is impossible to face some error when dealing with these files
+  fn read_env_resource(&self, env: &str, name: &str) -> HashMap<String, EnvValue> {
+    let full_env_path = self.env_path().join(env);
+
+    let f = OpenOptions::new()
+      .read(true)
+      .open(full_env_path.join(name))
+      .map_err(EnvError::OpenVariables);
+
+    f.map(|inner| serde_json::from_reader(inner).ok())
+      .ok()
+      .flatten()
+      .unwrap_or_default()
+  }
+
   pub fn current_env(&self) -> crate::Result<String> {
     let env_name = self.get_state("env")?.unwrap_or("default".to_string());
     Ok(env_name)
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
-    let full_env_path = self.env_path().join(name);
-    let variables_path = full_env_path.join("variables.json");
+    let variables = self.read_env_resource(name, "variables.json");
+    let secrets = self.read_env_resource(name, "secrets.json");
 
-    let f = OpenOptions::new()
-      .read(true)
-      .open(variables_path)
-      .map_err(EnvError::OpenVariables)?;
-
-    let parsed_variables: HashMap<String, EnvValue> =
-      serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
-
-    Ok(Env {
-      variables: parsed_variables,
-    })
+    Ok(Env { variables, secrets })
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name);

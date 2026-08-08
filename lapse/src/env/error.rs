@@ -8,8 +8,6 @@ pub enum EnvError {
   OpenVariables(#[source] std::io::Error),
   #[error("Could not create env: {0}")]
   Create(#[source] std::io::Error),
-  #[error("Could not parse env")]
-  ParseEnv,
   #[error("Could not serialize variables")]
   SerializeVariables,
 }
