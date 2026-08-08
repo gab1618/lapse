@@ -4,7 +4,7 @@ use std::{fs, sync::Arc};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{Lapse, eval::EvalCtx, script::error::ScriptError};
+use crate::{Lapse, eval::EvalCtx, request::runner::RequestRunner, script::error::ScriptError};
 
 struct LapseLuaApi {
   lapse: Arc<Lapse>,
@@ -19,9 +19,15 @@ impl LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let response = this
+      let runner = RequestRunner::new(EvalCtx::new(lua));
+
+      let http = this
         .lapse
-        .request(name, EvalCtx::new(lua))
+        .get_raw_request_http(&name)
+        .map_err(|_| mlua::Error::RuntimeError("Error getting the request".to_string()))?;
+
+      let response = runner
+        .execute(&http)
         .await
         .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))?;
 
