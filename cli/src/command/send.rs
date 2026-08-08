@@ -1,4 +1,4 @@
-use lapse::{request::runner::RequestRunner, tree::resource::Resource};
+use lapse::{log::ResponseLog, request::runner::RequestRunner, tree::resource::Resource};
 
 use crate::{command::open_lapse, select::select_tree_entry};
 
@@ -14,6 +14,15 @@ pub async fn send(request: Option<String>) -> crate::Result<()> {
 
   let response = runner.execute(&request_http).await?;
   print!("{}", response);
+
+  let log = ResponseLog {
+    request: selected_request,
+    text: response.text,
+    status: response.status,
+    headers: response.headers,
+  };
+
+  lapse.save_log(&log)?;
 
   Ok(())
 }
