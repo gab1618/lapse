@@ -7,7 +7,6 @@ pub mod log;
 pub mod lua;
 pub mod request;
 pub mod script;
-pub mod secrets;
 pub mod state;
 pub mod tree;
 
@@ -62,8 +61,5 @@ impl Lapse {
   }
   fn scripts_path(&self) -> PathBuf {
     self.path.join("scripts")
-  }
-  fn secrets_path(&self) -> PathBuf {
-    self.path.join("secrets.json")
   }
 }

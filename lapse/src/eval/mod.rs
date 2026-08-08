@@ -47,12 +47,10 @@ impl Lapse {
       .map(|name| self.get_env(&name).unwrap_or_default())
       .unwrap_or_default();
 
-    let secrets = self.load_secrets().unwrap_or_default();
-
     let runtime = Lua::new();
 
     runtime.globals().set("env", env.variables)?;
-    runtime.globals().set("secret", secrets)?;
+    runtime.globals().set("secret", env.secrets)?;
 
     Ok(EvalCtx::new(runtime))
   }

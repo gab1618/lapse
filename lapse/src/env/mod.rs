@@ -94,16 +94,24 @@ impl Lapse {
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name);
     fs::create_dir_all(&full_env_path).map_err(EnvError::Create)?;
-    let variables_path = full_env_path.join("variables.json");
 
-    let f = OpenOptions::new()
+    let variables = OpenOptions::new()
       .write(true)
       .truncate(true)
       .create(true)
-      .open(variables_path)
+      .open(full_env_path.join("variables.json"))
       .map_err(EnvError::OpenVariables)?;
 
-    serde_json::to_writer(f, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
+    serde_json::to_writer(variables, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
+
+    let secrets = OpenOptions::new()
+      .write(true)
+      .truncate(true)
+      .create(true)
+      .open(full_env_path.join("secrets.json"))
+      .map_err(EnvError::OpenVariables)?;
+
+    serde_json::to_writer(secrets, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
 
     Ok(())
   }

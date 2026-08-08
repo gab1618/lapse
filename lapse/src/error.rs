@@ -1,7 +1,6 @@
 use crate::{
   env::error::EnvError, log::error::LogError, request::error::RequestError,
-  script::error::ScriptError, secrets::error::SecretsError, state::error::StateError,
-  tree::error::TreeError,
+  script::error::ScriptError, state::error::StateError, tree::error::TreeError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -24,8 +23,6 @@ pub enum Error {
   Lua(#[from] mlua::Error),
   #[error(transparent)]
   Request(#[from] RequestError),
-  #[error(transparent)]
-  Secrets(#[from] SecretsError),
   #[error(transparent)]
   Tree(#[from] TreeError),
   #[error(transparent)]
