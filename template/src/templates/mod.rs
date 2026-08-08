@@ -50,7 +50,8 @@ impl From<Vec<TemplateItem>> for TemplateCollection {
 
 impl TemplateCollection {
   pub fn load<P: AsRef<Path>>(&self, base: P) -> crate::Result<()> {
-    let base = base.as_ref();
+    let base = base.as_ref().join(&self.name);
+    fs::create_dir_all(&base).map_err(Error::CreateCollection)?;
 
     for entry in self.items.iter() {
       match entry {
@@ -59,7 +60,7 @@ impl TemplateCollection {
           fs::write(entry_path, &entry.content).map_err(Error::CreateTemplateFile)?;
         }
         TemplateItem::Collection(coll) => {
-          coll.load(base.join(&coll.name))?;
+          coll.load(&base)?;
         }
       }
     }
