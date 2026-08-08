@@ -22,12 +22,13 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 ```
 ├── .lapse
 ├── env
-│   └── default.json
+│   └── default
+│       ├── variables.json
+│       └── secrets.json
 ├── requests
 │   └── httpbin.md
-├── scripts
-│   └── test.lua
-└── secrets.json
+└── scripts
+    └── test.lua
 ```
 
 I recommend to ignore these entries in your VCS:
@@ -71,7 +72,7 @@ These request files can be organized however you want, as long as they are insid
 
 ### Env files
 
-Env files are just json files with values. Any json valid value is accepted, even objects. You are not supposed to throw secrets into environments, we will get there yet.
+Env variable files are just json files with values. Any json valid value is accepted, even objects. You are not supposed to throw secrets into environments, we will get there yet.
 
 ```json
 {
@@ -85,7 +86,7 @@ Scripts are just lua scripts. We will have more details about its API later.
 
 ### Secrets
 
-Secrets is just like an env file.
+Secrets are just like env variables, but they are not supposed to be tracked by VCS
 
 ```json
 {
