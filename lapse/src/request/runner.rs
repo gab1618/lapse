@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
+use mlua::{IntoLua, Value};
 use reqwest::Client;
 
 use crate::{
   eval::EvalCtx,
-  log::ResponseLog,
   request::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
@@ -15,11 +15,40 @@ pub struct RequestRunner {
   ctx: EvalCtx,
 }
 
+pub struct RunnerResponse {
+  pub text: String,
+  pub status: u16,
+  pub headers: HashMap<String, String>,
+}
+
+impl IntoLua for RunnerResponse {
+  fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+    let table = lua.create_table()?;
+
+    table.set("status", self.status)?;
+    table.set("text", self.text)?;
+    table.set("headers", self.headers)?;
+
+    Ok(Value::Table(table))
+  }
+}
+
+impl Display for RunnerResponse {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "{}", self.status)?;
+    for (header, value) in &self.headers {
+      writeln!(f, "{}: {}", header, value)?;
+    }
+    writeln!(f)?;
+    writeln!(f, "{}", self.text)
+  }
+}
+
 impl RequestRunner {
   pub fn new(ctx: EvalCtx) -> Self {
     Self { ctx }
   }
-  pub async fn execute(&self, req: &str) -> crate::Result<ResponseLog> {
+  pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
     let resolved = self.ctx.eval(req)?;
 
     let client = Client::builder()
@@ -86,13 +115,12 @@ impl RequestRunner {
       .await
       .map_err(RequestError::GetResponseBody)?;
 
-    let log = ResponseLog {
-      request: "request".to_string(),
+    let response = RunnerResponse {
       text: response_body,
       status: status_code,
       headers: log_headers,
     };
 
-    Ok(log)
+    Ok(response)
   }
 }
