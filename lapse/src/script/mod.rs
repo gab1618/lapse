@@ -18,7 +18,7 @@ impl LapseLuaApi {
 
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-    methods.add_async_method("request", |lua, this, name: String| async move {
+    methods.add_async_method_mut("request", |lua, this, name: String| async move {
       let response = this
         .lapse
         .request(name, EvalCtx::new(lua))
