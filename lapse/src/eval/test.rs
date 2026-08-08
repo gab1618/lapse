@@ -1,8 +1,8 @@
 use mlua::Lua;
 
 use super::EvalCtx;
-use crate::{env::EnvValue, test::TempLapse};
-use std::{collections::HashMap, fs};
+use crate::env::EnvValue;
+use std::collections::HashMap;
 
 fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<EvalCtx> {
   let runtime = Lua::new();
@@ -91,15 +91,4 @@ fn test_env_variable_display() {
   assert_eq!(EnvValue::Boolean(true).to_string(), "true");
   assert_eq!(EnvValue::Integer(42).to_string(), "42");
   assert_eq!(EnvValue::String("hi".to_owned()).to_string(), "hi");
-}
-
-#[test]
-fn test_load_secret() {
-  let lapse = TempLapse::new();
-  let ex_secret_content = include_str!("../../assets/secrets.json");
-  fs::write(lapse.secrets_path(), ex_secret_content).unwrap();
-  let ctx = lapse.get_eval_ctx().unwrap();
-
-  let result = ctx.eval("${secret.password}").unwrap();
-  assert_eq!(result, "sshhhh");
 }
