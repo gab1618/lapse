@@ -58,8 +58,9 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn current_env(&self) -> crate::Result<Option<String>> {
-    self.get_state("env")
+  pub fn current_env(&self) -> crate::Result<String> {
+    let env_name = self.get_state("env")?.unwrap_or("default".to_string());
+    Ok(env_name)
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name).with_extension("json");
