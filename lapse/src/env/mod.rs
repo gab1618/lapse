@@ -7,41 +7,44 @@ mod test;
 
 pub mod error;
 
-pub type Env = HashMap<String, EnvVariable>;
+#[derive(Default)]
+pub struct Env {
+  pub variables: HashMap<String, EnvValue>,
+}
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
-pub enum EnvVariable {
+pub enum EnvValue {
   Null,
   Boolean(bool),
   Integer(i64),
   Number(f64),
   String(String),
-  Object(HashMap<String, EnvVariable>),
+  Object(HashMap<String, EnvValue>),
 }
 
-impl From<bool> for EnvVariable {
+impl From<bool> for EnvValue {
   fn from(value: bool) -> Self {
     Self::Boolean(value)
   }
 }
-impl From<f64> for EnvVariable {
+impl From<f64> for EnvValue {
   fn from(value: f64) -> Self {
     Self::Number(value)
   }
 }
-impl From<i64> for EnvVariable {
+impl From<i64> for EnvValue {
   fn from(value: i64) -> Self {
     Self::Integer(value)
   }
 }
-impl From<String> for EnvVariable {
+impl From<String> for EnvValue {
   fn from(value: String) -> Self {
     Self::String(value)
   }
 }
-impl From<HashMap<String, EnvVariable>> for EnvVariable {
-  fn from(value: HashMap<String, EnvVariable>) -> Self {
+impl From<HashMap<String, EnvValue>> for EnvValue {
+  fn from(value: HashMap<String, EnvValue>) -> Self {
     Self::Object(value)
   }
 }
@@ -70,9 +73,12 @@ impl Lapse {
       .open(full_env_path)
       .map_err(EnvError::OpenEnvFile)?;
 
-    let parsed: Env = serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
+    let parsed_variables: HashMap<String, EnvValue> =
+      serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
 
-    Ok(parsed)
+    Ok(Env {
+      variables: parsed_variables,
+    })
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name).with_extension("json");
@@ -84,7 +90,7 @@ impl Lapse {
       .open(full_env_path)
       .map_err(EnvError::OpenEnvFile)?;
 
-    serde_json::to_writer(f, env).map_err(|_| EnvError::SerializeEnv)?;
+    serde_json::to_writer(f, &env.variables).map_err(|_| EnvError::SerializeEnv)?;
 
     Ok(())
   }

@@ -5,7 +5,7 @@ mod test;
 
 use crate::{
   Lapse,
-  env::EnvVariable,
+  env::EnvValue,
   eval::lexer::{DocumentLexer, DocumentToken},
 };
 use mlua::Lua;
@@ -30,7 +30,7 @@ impl EvalCtx {
           result.push_str(&inner);
         }
         DocumentToken::Expr(inner) => {
-          let value: EnvVariable = self.runtime.load(inner).eval()?;
+          let value: EnvValue = self.runtime.load(inner).eval()?;
           result.push_str(&value.to_string());
         }
       }
@@ -42,7 +42,7 @@ impl EvalCtx {
 
 impl Lapse {
   pub fn get_eval_ctx(&self) -> crate::Result<EvalCtx> {
-    let variables = self
+    let env = self
       .current_env()
       .map(|name| self.get_env(&name).unwrap_or_default())
       .unwrap_or_default();
@@ -51,7 +51,7 @@ impl Lapse {
 
     let runtime = Lua::new();
 
-    runtime.globals().set("env", variables)?;
+    runtime.globals().set("env", env.variables)?;
     runtime.globals().set("secret", secrets)?;
 
     Ok(EvalCtx::new(runtime))

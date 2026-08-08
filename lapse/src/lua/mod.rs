@@ -2,9 +2,9 @@ use std::{collections::HashMap, fmt};
 
 use mlua::{FromLua, IntoLua, Lua, Value};
 
-use crate::{env::EnvVariable, log::ResponseLog};
+use crate::{env::EnvValue, log::ResponseLog};
 
-impl FromLua for EnvVariable {
+impl FromLua for EnvValue {
   fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
     match value {
       Value::Nil => Ok(Self::Null),
@@ -29,7 +29,7 @@ impl FromLua for EnvVariable {
     }
   }
 }
-impl IntoLua for EnvVariable {
+impl IntoLua for EnvValue {
   fn into_lua(self, lua: &Lua) -> mlua::prelude::LuaResult<Value> {
     match self {
       Self::Null => Ok(Value::Nil),
@@ -49,7 +49,7 @@ impl IntoLua for EnvVariable {
   }
 }
 
-impl fmt::Display for EnvVariable {
+impl fmt::Display for EnvValue {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Null => write!(f, "null"),

@@ -1,10 +1,10 @@
 use mlua::Lua;
 
 use super::EvalCtx;
-use crate::{env::EnvVariable, test::TempLapse};
+use crate::{env::EnvValue, test::TempLapse};
 use std::{collections::HashMap, fs};
 
-fn eval_ctx(variables: HashMap<String, EnvVariable>) -> crate::Result<EvalCtx> {
+fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<EvalCtx> {
   let runtime = Lua::new();
 
   runtime.globals().set("env", variables)?;
@@ -26,7 +26,7 @@ fn test_evaluates_plain_string() {
 fn test_evaluates_var_expression() {
   let ctx = eval_ctx(HashMap::from([(
     "name".to_string(),
-    EnvVariable::String("John".to_string()),
+    EnvValue::String("John".to_string()),
   )]))
   .unwrap();
 
@@ -52,9 +52,9 @@ fn test_evaluates_number_var_expression() {
 
 #[test]
 fn test_evaluates_object_var_expression() {
-  let object = EnvVariable::Object(HashMap::from([(
+  let object = EnvValue::Object(HashMap::from([(
     "city".to_string(),
-    EnvVariable::String("NYC".to_string()),
+    EnvValue::String("NYC".to_string()),
   )]));
   let ctx = eval_ctx(HashMap::from([("address".to_string(), object)])).unwrap();
 
@@ -87,10 +87,10 @@ fn test_evaluates_table_expression() {
 
 #[test]
 fn test_env_variable_display() {
-  assert_eq!(EnvVariable::Null.to_string(), "null");
-  assert_eq!(EnvVariable::Boolean(true).to_string(), "true");
-  assert_eq!(EnvVariable::Integer(42).to_string(), "42");
-  assert_eq!(EnvVariable::String("hi".to_owned()).to_string(), "hi");
+  assert_eq!(EnvValue::Null.to_string(), "null");
+  assert_eq!(EnvValue::Boolean(true).to_string(), "true");
+  assert_eq!(EnvValue::Integer(42).to_string(), "42");
+  assert_eq!(EnvValue::String("hi".to_owned()).to_string(), "hi");
 }
 
 #[test]

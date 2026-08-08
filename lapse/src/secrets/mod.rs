@@ -2,9 +2,9 @@ pub mod error;
 
 use std::{collections::HashMap, fs::OpenOptions};
 
-use crate::{Lapse, env::EnvVariable, secrets::error::SecretsError};
+use crate::{Lapse, env::EnvValue, secrets::error::SecretsError};
 
-pub type Secrets = HashMap<String, EnvVariable>;
+pub type Secrets = HashMap<String, EnvValue>;
 
 impl Lapse {
   pub fn load_secrets(&self) -> crate::Result<Secrets> {
