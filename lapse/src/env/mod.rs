@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fs::OpenOptions};
+use std::{
+  collections::HashMap,
+  fs::{self, OpenOptions},
+};
 
 use crate::{Lapse, env::error::EnvError};
 
@@ -7,49 +10,53 @@ mod test;
 
 pub mod error;
 
-pub type Env = HashMap<String, EnvVariable>;
+#[derive(Default)]
+pub struct Env {
+  pub variables: HashMap<String, EnvValue>,
+  pub secrets: HashMap<String, EnvValue>,
+}
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
-pub enum EnvVariable {
+pub enum EnvValue {
   Null,
   Boolean(bool),
   Integer(i64),
   Number(f64),
   String(String),
-  Object(HashMap<String, EnvVariable>),
+  Object(HashMap<String, EnvValue>),
 }
 
-impl From<bool> for EnvVariable {
+impl From<bool> for EnvValue {
   fn from(value: bool) -> Self {
     Self::Boolean(value)
   }
 }
-impl From<f64> for EnvVariable {
+impl From<f64> for EnvValue {
   fn from(value: f64) -> Self {
     Self::Number(value)
   }
 }
-impl From<i64> for EnvVariable {
+impl From<i64> for EnvValue {
   fn from(value: i64) -> Self {
     Self::Integer(value)
   }
 }
-impl From<String> for EnvVariable {
+impl From<String> for EnvValue {
   fn from(value: String) -> Self {
     Self::String(value)
   }
 }
-impl From<HashMap<String, EnvVariable>> for EnvVariable {
-  fn from(value: HashMap<String, EnvVariable>) -> Self {
+impl From<HashMap<String, EnvValue>> for EnvValue {
+  fn from(value: HashMap<String, EnvValue>) -> Self {
     Self::Object(value)
   }
 }
 
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
-    let env_file_path = self.env_path().join(name).with_extension("json");
-    if !env_file_path.exists() {
+    let env_path = self.env_path().join(name);
+    if !env_path.exists() {
       return Err(EnvError::NonExistentEnv(name.to_string()).into());
     }
 
@@ -58,32 +65,53 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn current_env(&self) -> crate::Result<Option<String>> {
-    self.get_state("env")
-  }
-  pub fn get_env(&self, name: &str) -> crate::Result<Env> {
-    let full_env_path = self.env_path().join(name).with_extension("json");
+  /// Every file is optional. If it doesn't exist, we just treat it as if it was empty. Therefore,
+  /// it is impossible to face some error when dealing with these files
+  fn read_env_resource(&self, env: &str, name: &str) -> HashMap<String, EnvValue> {
+    let full_env_path = self.env_path().join(env);
 
     let f = OpenOptions::new()
       .read(true)
-      .open(full_env_path)
-      .map_err(EnvError::OpenEnvFile)?;
+      .open(full_env_path.join(name))
+      .map_err(EnvError::OpenVariables);
 
-    let parsed: Env = serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
+    f.map(|inner| serde_json::from_reader(inner).ok())
+      .ok()
+      .flatten()
+      .unwrap_or_default()
+  }
 
-    Ok(parsed)
+  pub fn current_env(&self) -> crate::Result<String> {
+    let env_name = self.get_state("env")?.unwrap_or("default".to_string());
+    Ok(env_name)
+  }
+  pub fn get_env(&self, name: &str) -> crate::Result<Env> {
+    let variables = self.read_env_resource(name, "variables.json");
+    let secrets = self.read_env_resource(name, "secrets.json");
+
+    Ok(Env { variables, secrets })
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
-    let full_env_path = self.env_path().join(name).with_extension("json");
+    let full_env_path = self.env_path().join(name);
+    fs::create_dir_all(&full_env_path).map_err(EnvError::Create)?;
 
-    let f = OpenOptions::new()
+    let variables = OpenOptions::new()
       .write(true)
       .truncate(true)
       .create(true)
-      .open(full_env_path)
-      .map_err(EnvError::OpenEnvFile)?;
+      .open(full_env_path.join("variables.json"))
+      .map_err(EnvError::OpenVariables)?;
 
-    serde_json::to_writer(f, env).map_err(|_| EnvError::SerializeEnv)?;
+    serde_json::to_writer(variables, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
+
+    let secrets = OpenOptions::new()
+      .write(true)
+      .truncate(true)
+      .create(true)
+      .open(full_env_path.join("secrets.json"))
+      .map_err(EnvError::OpenVariables)?;
+
+    serde_json::to_writer(secrets, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
 
     Ok(())
   }

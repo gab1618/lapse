@@ -3,7 +3,8 @@ use std::ops::Deref;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
-use crate::{Lapse, env::EnvVariable};
+use crate::env::Env;
+use crate::{Lapse, env::EnvValue};
 
 pub struct TempLapse {
   pub _tempdir: TempDir,
@@ -40,9 +41,13 @@ fn test_init_space() {
 fn test_get_eval_ctx_loads_current_env_variables() {
   let lapse = TempLapse::new();
 
-  let mut env = std::collections::HashMap::new();
-  env.insert("name".to_string(), EnvVariable::String("Jane".to_string()));
-  env.insert("age".to_string(), EnvVariable::Number(30.0));
+  let mut env = Env::default();
+  env
+    .variables
+    .insert("name".to_string(), EnvValue::String("Jane".to_string()));
+  env
+    .variables
+    .insert("age".to_string(), EnvValue::Number(30.0));
 
   lapse.set_env(&env, "prod").unwrap();
   lapse.switch_env("prod").unwrap();
