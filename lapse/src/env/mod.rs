@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fs::OpenOptions};
+use std::{
+  collections::HashMap,
+  fs::{self, OpenOptions},
+};
 
 use crate::{Lapse, env::error::EnvError};
 
@@ -51,8 +54,8 @@ impl From<HashMap<String, EnvValue>> for EnvValue {
 
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
-    let env_file_path = self.env_path().join(name).with_extension("json");
-    if !env_file_path.exists() {
+    let env_path = self.env_path().join(name);
+    if !env_path.exists() {
       return Err(EnvError::NonExistentEnv(name.to_string()).into());
     }
 
@@ -66,11 +69,12 @@ impl Lapse {
     Ok(env_name)
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
-    let full_env_path = self.env_path().join(name).with_extension("json");
+    let full_env_path = self.env_path().join(name);
+    let variables_path = full_env_path.join("variables.json");
 
     let f = OpenOptions::new()
       .read(true)
-      .open(full_env_path)
+      .open(variables_path)
       .map_err(EnvError::OpenEnvFile)?;
 
     let parsed_variables: HashMap<String, EnvValue> =
@@ -81,13 +85,15 @@ impl Lapse {
     })
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
-    let full_env_path = self.env_path().join(name).with_extension("json");
+    let full_env_path = self.env_path().join(name);
+    fs::create_dir_all(&full_env_path).unwrap();
+    let variables_path = full_env_path.join("variables.json");
 
     let f = OpenOptions::new()
       .write(true)
       .truncate(true)
       .create(true)
-      .open(full_env_path)
+      .open(variables_path)
       .map_err(EnvError::OpenEnvFile)?;
 
     serde_json::to_writer(f, &env.variables).map_err(|_| EnvError::SerializeEnv)?;
