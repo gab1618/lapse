@@ -75,7 +75,7 @@ impl Lapse {
     let f = OpenOptions::new()
       .read(true)
       .open(variables_path)
-      .map_err(EnvError::OpenEnvFile)?;
+      .map_err(EnvError::OpenVariables)?;
 
     let parsed_variables: HashMap<String, EnvValue> =
       serde_json::from_reader(f).map_err(|_| EnvError::ParseEnv)?;
@@ -86,7 +86,7 @@ impl Lapse {
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name);
-    fs::create_dir_all(&full_env_path).unwrap();
+    fs::create_dir_all(&full_env_path).map_err(EnvError::Create)?;
     let variables_path = full_env_path.join("variables.json");
 
     let f = OpenOptions::new()
@@ -94,9 +94,9 @@ impl Lapse {
       .truncate(true)
       .create(true)
       .open(variables_path)
-      .map_err(EnvError::OpenEnvFile)?;
+      .map_err(EnvError::OpenVariables)?;
 
-    serde_json::to_writer(f, &env.variables).map_err(|_| EnvError::SerializeEnv)?;
+    serde_json::to_writer(f, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
 
     Ok(())
   }
