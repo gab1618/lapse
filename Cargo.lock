@@ -951,10 +951,20 @@ dependencies = [
  "inquire",
  "is-terminal",
  "lapse",
+ "lapse-template",
  "minus",
  "nucleo-matcher",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "lapse-template"
+version = "0.1.0"
+dependencies = [
+ "lapse",
+ "tempfile",
+ "thiserror",
 ]
 
 [[package]]

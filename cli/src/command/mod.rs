@@ -1,6 +1,7 @@
 use lapse::{Lapse, tree::resource::Resource};
+use lapse_template::templates::LapsePreset;
 
-use crate::{Error, collection::output_tree};
+use crate::{Error, cli::AvailablePreset, collection::output_tree};
 
 pub mod env;
 pub mod log;
@@ -12,9 +13,18 @@ pub fn open_lapse() -> crate::Result<Lapse> {
   Ok(Lapse::open(curr_dir)?)
 }
 
-pub fn init() -> crate::Result<()> {
+pub fn init(preset: Option<AvailablePreset>) -> crate::Result<()> {
   let curr_dir = std::env::current_dir().map_err(Error::GetCurrentDir)?;
-  Lapse::init(curr_dir)?;
+  Lapse::init(&curr_dir)?;
+
+  let selected_preset = preset
+    .map(|entry| match entry {
+      AvailablePreset::Httpbin => LapsePreset::httpbin(),
+    })
+    .unwrap_or_default();
+
+  selected_preset.load(curr_dir)?;
+
   println!("Initialized Lapse space");
 
   Ok(())

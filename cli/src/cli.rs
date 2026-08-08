@@ -10,10 +10,18 @@ pub struct Cli {
   pub command: Command,
 }
 
+#[derive(Clone, clap::ValueEnum)]
+pub enum AvailablePreset {
+  Httpbin,
+}
+
 #[derive(Subcommand)]
 pub enum Command {
   /// Initializes a Lapse space at current dir
-  Init,
+  Init {
+    #[arg(short, long)]
+    preset: Option<AvailablePreset>,
+  },
   /// Lists all requests
   #[command(about)]
   Ls {
@@ -32,7 +40,6 @@ pub enum Command {
     /// Request name
     request: Option<String>,
   },
-
   /// Outputs a completion script
   #[command(about)]
   Completion { shell: CliCompletionShell },

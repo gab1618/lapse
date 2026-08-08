@@ -48,14 +48,6 @@ mod test {
   use tempfile::tempdir;
 
   #[test]
-  fn test_get_sample_req() {
-    let temp_dir = tempdir().unwrap();
-    let lapse = Lapse::init(temp_dir.path()).unwrap();
-
-    let file_http = lapse.get_request_http("request").unwrap();
-    assert!(!file_http.is_empty());
-  }
-  #[test]
   fn test_get_httponly_req() {
     let temp_dir = tempdir().unwrap();
     let lapse = Lapse::init(temp_dir.path()).unwrap();

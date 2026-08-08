@@ -6,6 +6,8 @@ pub enum Error {
   Lapse(#[from] lapse::Error),
   #[error(transparent)]
   Log(#[from] LogError),
+  #[error(transparent)]
+  Template(#[from] lapse_template::Error),
   #[error("Could not get current dir: {0}")]
   GetCurrentDir(#[source] std::io::Error),
   #[error("Could not invoke prompt: {0}")]
