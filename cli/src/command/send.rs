@@ -1,4 +1,4 @@
-use lapse::tree::resource::Resource;
+use lapse::{request::runner::RequestRunner, tree::resource::Resource};
 
 use crate::{command::open_lapse, select::select_tree_entry};
 
@@ -8,9 +8,11 @@ pub async fn send(request: Option<String>) -> crate::Result<()> {
 
   let selected_request = select_tree_entry(&tree, request)?;
 
-  let response = lapse
-    .request(selected_request, lapse.get_eval_ctx()?)
-    .await?;
+  let runner = RequestRunner::new(lapse.get_eval_ctx()?);
+
+  let request_http = lapse.get_raw_request_http(&selected_request)?;
+
+  let response = runner.execute(&request_http).await?;
   print!("{}", response);
 
   Ok(())

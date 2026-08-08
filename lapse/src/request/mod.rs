@@ -7,9 +7,10 @@ use std::{
 pub mod error;
 pub mod http;
 pub mod parsing;
+pub mod runner;
 
 impl Lapse {
-  fn get_request_http(&self, name: &str) -> crate::Result<String> {
+  pub fn get_raw_request_http(&self, name: &str) -> crate::Result<String> {
     let file_path = self.requests_path().join(name).with_extension("md");
     let f = OpenOptions::new()
       .read(true)
@@ -55,7 +56,7 @@ mod test {
     let example_req_path = temp_dir.path().join("requests/without-markdown.md");
     fs::write(example_req_path, example_req_content).unwrap();
 
-    let request_http = lapse.get_request_http("without-markdown").unwrap();
+    let request_http = lapse.get_raw_request_http("without-markdown").unwrap();
 
     assert!(!request_http.is_empty());
     assert_eq!(request_http.trim(), example_req_content.trim());
