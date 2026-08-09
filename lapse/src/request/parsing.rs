@@ -26,9 +26,16 @@ pub struct MultipartRequest {
   pub body: HashMap<String, MultipartRequestValue>,
 }
 
+pub struct GraphQLRequest {
+  pub url: String,
+  pub query: String,
+  pub headers: HashMap<String, String>,
+}
+
 pub enum ParsedRequest {
   Http(HttpRequest),
   Multipart(MultipartRequest),
+  GraphQL(GraphQLRequest),
 }
 
 impl From<HttpRequest> for ParsedRequest {
@@ -39,6 +46,48 @@ impl From<HttpRequest> for ParsedRequest {
 impl From<MultipartRequest> for ParsedRequest {
   fn from(value: MultipartRequest) -> Self {
     Self::Multipart(value)
+  }
+}
+impl From<GraphQLRequest> for ParsedRequest {
+  fn from(value: GraphQLRequest) -> Self {
+    Self::GraphQL(value)
+  }
+}
+
+#[derive(serde::Serialize)]
+struct GraphQLQueryBody {
+  pub query: String,
+  pub variables: HashMap<String, String>,
+}
+impl TryFrom<GraphQLRequest> for reqwest::Request {
+  type Error = crate::Error;
+
+  fn try_from(value: GraphQLRequest) -> Result<Self, Self::Error> {
+    let mut req = Request::new(
+      Method::POST,
+      Url::from_str(&value.url).map_err(|_| RequestError::ParseUrl)?,
+    );
+    let headers = req.headers_mut();
+
+    for (name, value) in value.headers {
+      headers.insert(
+        HeaderName::from_str(&name).map_err(|_| RequestError::ParseHeader)?,
+        HeaderValue::from_str(&value).map_err(|_| RequestError::ParseHeader)?,
+      );
+    }
+
+    let body = req.body_mut();
+
+    let query_body = GraphQLQueryBody {
+      query: value.query,
+      variables: Default::default(),
+    };
+
+    let body_query = serde_json::to_string(&query_body).unwrap();
+    let parsed_body = Body::from(body_query);
+
+    body.replace(parsed_body);
+    Ok(req)
   }
 }
 
@@ -111,6 +160,14 @@ pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
         url: uri.to_owned(),
         headers,
         body: parse_multipart_http_body(raw_body)?,
+      }
+      .into(),
+    ),
+    "GRAPHQL" => Ok(
+      GraphQLRequest {
+        url: uri.to_owned(),
+        query: raw_body,
+        headers,
       }
       .into(),
     ),
@@ -217,7 +274,6 @@ mod test {
     let http_portion = raw_req.split_once("---").unwrap().0;
     let parsed = parse_request_http(http_portion).unwrap();
     match parsed {
-      ParsedRequest::Http(_) => panic!("It was supposed to be a multipart request"),
       ParsedRequest::Multipart(req) => {
         assert_eq!(req.url, "https://example.com/comments");
         let found_content_type = req.headers.get("content-type").unwrap();
@@ -235,6 +291,7 @@ mod test {
           &MultipartRequestValue::File("./env.json".to_owned())
         );
       }
+      _ => panic!("It was supposed to be a multipart request"),
     }
   }
 }
