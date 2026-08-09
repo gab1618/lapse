@@ -54,6 +54,43 @@ impl From<GraphQLRequest> for ParsedRequest {
   }
 }
 
+#[derive(serde::Serialize)]
+struct GraphQLQueryBody {
+  pub query: String,
+  pub variables: HashMap<String, String>,
+}
+impl TryFrom<GraphQLRequest> for reqwest::Request {
+  type Error = crate::Error;
+
+  fn try_from(value: GraphQLRequest) -> Result<Self, Self::Error> {
+    let mut req = Request::new(
+      Method::POST,
+      Url::from_str(&value.url).map_err(|_| RequestError::ParseUrl)?,
+    );
+    let headers = req.headers_mut();
+
+    for (name, value) in value.headers {
+      headers.insert(
+        HeaderName::from_str(&name).map_err(|_| RequestError::ParseHeader)?,
+        HeaderValue::from_str(&value).map_err(|_| RequestError::ParseHeader)?,
+      );
+    }
+
+    let body = req.body_mut();
+
+    let query_body = GraphQLQueryBody {
+      query: value.query,
+      variables: Default::default(),
+    };
+
+    let body_query = serde_json::to_string(&query_body).unwrap();
+    let parsed_body = Body::from(body_query);
+
+    body.replace(parsed_body);
+    Ok(req)
+  }
+}
+
 impl TryFrom<HttpRequest> for reqwest::Request {
   type Error = crate::Error;
 
