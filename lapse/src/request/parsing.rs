@@ -126,6 +126,14 @@ pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
       }
       .into(),
     ),
+    "GRAPHQL" => Ok(
+      GraphQLRequest {
+        url: uri.to_owned(),
+        query: raw_body,
+        headers,
+      }
+      .into(),
+    ),
     method => Ok(
       HttpRequest {
         url: uri.to_owned(),
