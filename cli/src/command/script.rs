@@ -1,12 +1,17 @@
 use lapse::tree::resource::Resource;
 
-use crate::{collection::output_tree, command::open_lapse, select::select_tree_entry};
+use crate::{
+  collection::{FlatlistReadConfig, output_tree},
+  command::open_lapse,
+  select::select_tree_entry,
+};
 
 pub async fn run(script: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let tree = lapse.get_resource_tree(Resource::Scripts, None)?;
 
-  let selected_script = select_tree_entry(&tree, script)?;
+  let flatlist_config = FlatlistReadConfig::default().files(true);
+  let selected_script = select_tree_entry(&tree, script, flatlist_config)?;
 
   lapse.run_script(&selected_script).await?;
 
@@ -16,7 +21,9 @@ pub async fn run(script: Option<String>) -> crate::Result<()> {
 pub fn ls(path: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let tree = lapse.get_resource_tree(Resource::Scripts, path)?;
-  output_tree(0, &tree);
+
+  let flatlist_config = FlatlistReadConfig::default().files(true).dirs(true);
+  output_tree(0, &tree, flatlist_config);
 
   Ok(())
 }

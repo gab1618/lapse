@@ -1,38 +1,65 @@
 use lapse::tree::{Tree, TreeEntry};
 
-pub fn output_tree(level: usize, root: &Tree) {
+pub fn output_tree(level: usize, root: &Tree, config: FlatlistReadConfig) {
   let level_spacing = " ".repeat(level);
 
   for entry in root.iter() {
     match entry {
       TreeEntry::Entry(name) => {
-        println!("{}{}", level_spacing, name);
+        if config.include_files {
+          println!("{}{}", level_spacing, name);
+        }
       }
       TreeEntry::Subtree(name, items) => {
-        println!("{}{}", level_spacing, name);
+        if config.include_dirs {
+          println!("{}{}", level_spacing, name);
+        }
 
-        output_tree(level + 1, items);
+        output_tree(level + 1, items, config);
       }
     }
   }
 }
 
-pub fn get_tree_flatlist(tree: &Tree) -> Vec<String> {
-  let mut requests: Vec<String> = vec![];
+#[derive(Clone, Copy, Default)]
+pub struct FlatlistReadConfig {
+  pub include_files: bool,
+  pub include_dirs: bool,
+}
+
+impl FlatlistReadConfig {
+  pub fn files(mut self, value: bool) -> Self {
+    self.include_files = value;
+    self
+  }
+
+  pub fn dirs(mut self, value: bool) -> Self {
+    self.include_dirs = value;
+    self
+  }
+}
+
+pub fn get_tree_flatlist(tree: &Tree, config: FlatlistReadConfig) -> Vec<String> {
+  let mut entries: Vec<String> = vec![];
 
   for entry in tree.iter() {
     match entry {
       TreeEntry::Entry(entry) => {
-        requests.push(entry.clone());
+        if config.include_files {
+          entries.push(entry.clone());
+        }
       }
-      TreeEntry::Subtree(_, items) => {
-        let sub_requests = get_tree_flatlist(items);
+      TreeEntry::Subtree(entry, items) => {
+        if config.include_dirs {
+          entries.push(entry.clone());
+        }
+        let sub_requests = get_tree_flatlist(items, config);
         for sub in sub_requests {
-          requests.push(sub);
+          entries.push(sub);
         }
       }
     }
   }
 
-  requests
+  entries
 }

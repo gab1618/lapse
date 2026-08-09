@@ -1,7 +1,11 @@
 use lapse::{Lapse, tree::resource::Resource};
 use lapse_template::templates::LapsePreset;
 
-use crate::{Error, cli::AvailablePreset, collection::output_tree};
+use crate::{
+  Error,
+  cli::AvailablePreset,
+  collection::{FlatlistReadConfig, output_tree},
+};
 
 pub mod env;
 pub mod log;
@@ -33,7 +37,9 @@ pub fn init(preset: Option<AvailablePreset>) -> crate::Result<()> {
 pub fn ls(path: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let collection = lapse.get_resource_tree(Resource::Requests, path)?;
-  output_tree(0, &collection);
+
+  let flatlist_config = FlatlistReadConfig::default().files(true).dirs(true);
+  output_tree(0, &collection, flatlist_config);
 
   Ok(())
 }

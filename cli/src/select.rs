@@ -5,10 +5,14 @@ use nucleo_matcher::{
   pattern::{CaseMatching, Normalization, Pattern},
 };
 
-use crate::collection::get_tree_flatlist;
+use crate::collection::{FlatlistReadConfig, get_tree_flatlist};
 
-pub fn select_tree_entry(tree: &Tree, query: Option<String>) -> crate::Result<String> {
-  let flat_list = get_tree_flatlist(tree);
+pub fn select_tree_entry(
+  tree: &Tree,
+  query: Option<String>,
+  config: FlatlistReadConfig,
+) -> crate::Result<String> {
+  let flat_list = get_tree_flatlist(tree, config);
 
   // Uses fuzzy finder to match some entry by name. If there are multiple matches, pick one
   // using a select

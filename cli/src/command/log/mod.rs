@@ -8,6 +8,7 @@ use is_terminal::IsTerminal;
 use lapse::{log::ResponseLogsIter, tree::resource::Resource};
 
 use crate::{
+  collection::FlatlistReadConfig,
   command::{log::error::LogError, open_lapse},
   select::select_tree_entry,
 };
@@ -39,7 +40,8 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
   let lapse = Arc::new(open_lapse()?);
   let tree = lapse.get_resource_tree(Resource::Requests, None)?;
 
-  let selected_request = select_tree_entry(&tree, request)?;
+  let flatlist_config = FlatlistReadConfig::default().files(true);
+  let selected_request = select_tree_entry(&tree, request, flatlist_config)?;
 
   if io::stdout().is_terminal() {
     let entries_iter = lapse.logs_iter(&selected_request)?;
