@@ -26,9 +26,16 @@ pub struct MultipartRequest {
   pub body: HashMap<String, MultipartRequestValue>,
 }
 
+pub struct GraphQLRequest {
+  pub url: String,
+  pub query: String,
+  pub headers: HashMap<String, String>,
+}
+
 pub enum ParsedRequest {
   Http(HttpRequest),
   Multipart(MultipartRequest),
+  GraphQL(GraphQLRequest),
 }
 
 impl From<HttpRequest> for ParsedRequest {
@@ -39,6 +46,11 @@ impl From<HttpRequest> for ParsedRequest {
 impl From<MultipartRequest> for ParsedRequest {
   fn from(value: MultipartRequest) -> Self {
     Self::Multipart(value)
+  }
+}
+impl From<GraphQLRequest> for ParsedRequest {
+  fn from(value: GraphQLRequest) -> Self {
+    Self::GraphQL(value)
   }
 }
 
@@ -217,7 +229,6 @@ mod test {
     let http_portion = raw_req.split_once("---").unwrap().0;
     let parsed = parse_request_http(http_portion).unwrap();
     match parsed {
-      ParsedRequest::Http(_) => panic!("It was supposed to be a multipart request"),
       ParsedRequest::Multipart(req) => {
         assert_eq!(req.url, "https://example.com/comments");
         let found_content_type = req.headers.get("content-type").unwrap();
@@ -235,6 +246,7 @@ mod test {
           &MultipartRequestValue::File("./env.json".to_owned())
         );
       }
+      _ => panic!("It was supposed to be a multipart request"),
     }
   }
 }

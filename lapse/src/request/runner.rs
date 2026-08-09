@@ -94,6 +94,7 @@ impl RequestRunner {
           .await
           .map_err(RequestError::ExecuteRequest)?
       }
+      ParsedRequest::GraphQL(_graphql_request) => todo!(),
     };
 
     let log_headers = response
