@@ -4,7 +4,10 @@ use tempfile::tempdir;
 
 use crate::{
   Lapse,
-  env::{Env, EnvValue},
+  env::{
+    Env, EnvValue,
+    hook::{Event, HookEntry},
+  },
 };
 
 #[test]
@@ -34,12 +37,19 @@ fn test_read_env() {
     .variables
     .insert("name".to_string(), EnvValue::String("John".to_string()));
 
+  ex_env.hooks.insert(
+    Event::PreRequest,
+    HookEntry {
+      enabled: true,
+      scripts: vec![],
+    },
+  );
+
   lapse.set_env(&ex_env, "env").unwrap();
 
   let found_env = lapse.get_env("env").unwrap();
 
-  let found_name = found_env.variables.get("name").unwrap();
-  assert_eq!(found_name, &EnvValue::String("John".into()));
+  assert_eq!(ex_env, found_env);
 }
 
 #[test]
