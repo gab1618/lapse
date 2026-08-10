@@ -7,7 +7,7 @@ use mlua::{Lua, UserData, UserDataMethods};
 use crate::{
   Lapse,
   env::EnvValue,
-  eval::lexer::{DocumentLexer, DocumentToken},
+  lua::lexer::{DocumentLexer, DocumentToken},
   request::runner::RequestRunner,
   script::error::ScriptError,
 };

@@ -1,3 +1,8 @@
+pub mod lexer;
+
+#[cfg(test)]
+mod test;
+
 use std::{collections::HashMap, fmt};
 
 use mlua::{FromLua, IntoLua, Lua, Value};

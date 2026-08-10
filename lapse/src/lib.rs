@@ -2,7 +2,6 @@ use std::{fs, path::PathBuf};
 
 pub mod env;
 pub mod error;
-pub mod eval;
 pub mod log;
 pub mod lua;
 pub mod request;
