@@ -1,17 +1,17 @@
 pub mod error;
 
-use std::{fs, sync::Arc};
+use std::fs;
 
 use mlua::{Lua, UserData, UserDataMethods};
 
 use crate::{Lapse, script::error::ScriptError};
 
 struct LapseLuaApi {
-  lapse: Arc<Lapse>,
+  lapse: Lapse,
 }
 
 impl LapseLuaApi {
-  pub fn new(lapse: Arc<Lapse>) -> Self {
+  pub fn new(lapse: Lapse) -> Self {
     Self { lapse }
   }
 }
@@ -32,9 +32,7 @@ impl Lapse {
   pub fn get_runtime(&self) -> crate::Result<Lua> {
     let runtime = Lua::new();
 
-    let shared_lapse = Arc::new(self.clone());
-
-    let lapse_api = LapseLuaApi::new(shared_lapse);
+    let lapse_api = LapseLuaApi::new(self.clone());
 
     let env = self.get_env(&self.current_env())?;
 
