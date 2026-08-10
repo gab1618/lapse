@@ -57,7 +57,7 @@ impl LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let runner = RequestRunner::new(Runtime(lua));
+      let runner = RequestRunner::new(Runtime(lua), Default::default());
 
       let http = this
         .lapse
@@ -82,10 +82,7 @@ impl Lapse {
 
     let lapse_api = LapseLuaApi::new(shared_lapse);
 
-    let env = self
-      .current_env()
-      .map(|name| self.get_env(&name).unwrap_or_default())
-      .unwrap_or_default();
+    let env = self.get_env(&self.current_env())?;
 
     runtime.globals().set("env", env.variables)?;
     runtime.globals().set("secret", env.secrets)?;

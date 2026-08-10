@@ -90,9 +90,12 @@ impl Lapse {
       .unwrap_or_default()
   }
 
-  pub fn current_env(&self) -> crate::Result<String> {
-    let env_name = self.get_state("env")?.unwrap_or("default".to_string());
-    Ok(env_name)
+  pub fn current_env(&self) -> String {
+    self
+      .get_state("env")
+      .ok()
+      .flatten()
+      .unwrap_or("default".to_string())
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name);

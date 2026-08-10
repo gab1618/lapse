@@ -4,6 +4,7 @@ use mlua::{IntoLua, Value};
 use reqwest::Client;
 
 use crate::{
+  env::hook::Event,
   request::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
@@ -13,6 +14,7 @@ use crate::{
 
 pub struct RequestRunner {
   runtime: Runtime,
+  hooks: HashMap<Event, Vec<String>>,
 }
 
 pub struct RunnerResponse {
@@ -45,10 +47,16 @@ impl Display for RunnerResponse {
 }
 
 impl RequestRunner {
-  pub fn new(runtime: Runtime) -> Self {
-    Self { runtime }
+  pub fn new(runtime: Runtime, hooks: HashMap<Event, Vec<String>>) -> Self {
+    Self { runtime, hooks }
   }
   pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
+    if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
+      for hook in pre_request_hooks {
+        let loaded = self.runtime.load(hook);
+        loaded.exec_async().await.unwrap();
+      }
+    }
     let resolved = self.runtime.eval(req)?;
 
     let client = Client::builder()
@@ -122,6 +130,13 @@ impl RequestRunner {
       .text()
       .await
       .map_err(RequestError::GetResponseBody)?;
+
+    if let Some(post_request_hooks) = self.hooks.get(&Event::PostRequest) {
+      for hook in post_request_hooks {
+        let loaded = self.runtime.load(hook);
+        loaded.exec_async().await.unwrap();
+      }
+    }
 
     let response = RunnerResponse {
       text: response_body,
