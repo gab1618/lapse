@@ -75,7 +75,7 @@ impl RequestRunner {
     if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
       for hook in pre_request_hooks {
         let loaded = self.runtime.load(hook);
-        loaded.exec_async().await.unwrap();
+        loaded.exec_async().await?;
       }
     }
     let resolved = self.eval(req)?;
@@ -155,7 +155,7 @@ impl RequestRunner {
     if let Some(post_request_hooks) = self.hooks.get(&Event::PostRequest) {
       for hook in post_request_hooks {
         let loaded = self.runtime.load(hook);
-        loaded.exec_async().await.unwrap();
+        loaded.exec_async().await?;
       }
     }
 
