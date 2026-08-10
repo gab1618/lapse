@@ -1,9 +1,6 @@
-use std::{
-  fs,
-  path::{Path, PathBuf},
-};
+use std::{fs, path::Path};
 
-use crate::error::Error;
+use crate::{Generator, error::Error};
 
 #[cfg(test)]
 mod test;
@@ -48,9 +45,9 @@ impl From<Vec<TemplateItem>> for TemplateCollection {
   }
 }
 
-impl TemplateCollection {
-  pub fn load<P: AsRef<Path>>(&self, base: P) -> crate::Result<()> {
-    let base = base.as_ref().join(&self.name);
+impl Generator for TemplateCollection {
+  fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
+    let base = path.as_ref().join(&self.name);
     fs::create_dir_all(&base).map_err(Error::CreateCollection)?;
 
     for entry in self.items.iter() {
@@ -76,8 +73,10 @@ pub struct LapsePreset {
   requests: TemplateCollection,
 }
 
-impl LapsePreset {
-  pub fn load(&self, base: PathBuf) -> crate::Result<()> {
+impl Generator for LapsePreset {
+  fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
+    let base = path.as_ref();
+
     self.scripts.load(base.join("scripts"))?;
     self.requests.load(base.join("requests"))?;
 

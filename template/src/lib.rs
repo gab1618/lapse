@@ -1,6 +1,8 @@
 pub mod error;
+pub mod generators;
 pub mod templates;
-use std::fmt::Display;
+
+use std::{fmt::Display, path::Path};
 
 pub use error::{Error, Result};
 
@@ -15,4 +17,8 @@ impl Display for RequestFile {
     writeln!(f, "---")?;
     writeln!(f, "{}", self.markdown)
   }
+}
+
+pub trait Generator {
+  fn load<P: AsRef<Path>>(&self, path: P) -> Result<()>;
 }

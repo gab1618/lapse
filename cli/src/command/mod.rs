@@ -1,5 +1,5 @@
 use lapse::{Lapse, tree::resource::Resource};
-use lapse_template::templates::LapsePreset;
+use lapse_template::{Generator as _, templates::LapsePreset};
 
 use crate::{
   Error,

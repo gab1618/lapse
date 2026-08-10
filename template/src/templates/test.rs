@@ -6,7 +6,10 @@ use lapse::{
 };
 use tempfile::{TempDir, tempdir};
 
-use crate::templates::{LapsePreset, TemplateEntry};
+use crate::{
+  Generator as _,
+  templates::{LapsePreset, TemplateEntry},
+};
 
 pub struct TestTemplate {
   tempdir: TempDir,
@@ -15,7 +18,7 @@ pub struct TestTemplate {
 
 impl TestTemplate {
   pub fn load(&self) {
-    self.inner.load(self.tempdir.path().into()).unwrap();
+    self.inner.load(self.tempdir.path()).unwrap();
   }
   pub fn path(&self) -> &Path {
     self.tempdir.path()
