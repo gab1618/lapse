@@ -1,47 +1,10 @@
 pub mod error;
 
-use std::{fs, ops::Deref, sync::Arc};
+use std::{fs, sync::Arc};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{
-  Lapse,
-  env::EnvValue,
-  lua::lexer::{DocumentLexer, DocumentToken},
-  script::error::ScriptError,
-};
-
-pub struct Runtime(pub Lua);
-
-impl Deref for Runtime {
-  type Target = Lua;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
-impl Runtime {
-  pub fn eval(&self, doc: &str) -> crate::Result<String> {
-    let mut lexer = DocumentLexer::new(doc);
-    let tokens = lexer.tokenize();
-    let mut result = String::new();
-
-    for token in tokens {
-      match token {
-        DocumentToken::String(inner) => {
-          result.push_str(&inner);
-        }
-        DocumentToken::Expr(inner) => {
-          let value: EnvValue = self.load(inner).eval()?;
-          result.push_str(&value.to_string());
-        }
-      }
-    }
-
-    Ok(result)
-  }
-}
+use crate::{Lapse, script::error::ScriptError};
 
 struct LapseLuaApi {
   lapse: Arc<Lapse>,
@@ -58,7 +21,7 @@ impl UserData for LapseLuaApi {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
       this
         .lapse
-        .request_with(&name, Runtime(lua), Default::default())
+        .request_with(&name, lua, Default::default())
         .await
         .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))
     });
@@ -66,7 +29,7 @@ impl UserData for LapseLuaApi {
 }
 
 impl Lapse {
-  pub fn get_runtime(&self) -> crate::Result<Runtime> {
+  pub fn get_runtime(&self) -> crate::Result<Lua> {
     let runtime = Lua::new();
 
     let shared_lapse = Arc::new(self.clone());
@@ -80,7 +43,7 @@ impl Lapse {
 
     runtime.globals().set("lapse", lapse_api)?;
 
-    Ok(Runtime(runtime))
+    Ok(runtime)
   }
   pub async fn run_script(&self, name: &str) -> crate::Result<()> {
     let script_path = self.scripts_path().join(name).with_extension("lua");

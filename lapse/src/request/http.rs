@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
+use mlua::Lua;
+
 use crate::{
   Lapse,
   env::hook::Event,
   log::ResponseLog,
   request::runner::{RequestRunner, RunnerResponse},
-  script::Runtime,
 };
 
 impl Lapse {
@@ -32,7 +33,7 @@ impl Lapse {
   pub async fn request_with(
     &self,
     name: &str,
-    runtime: Runtime,
+    runtime: Lua,
     hooks: HashMap<Event, Vec<String>>,
   ) -> crate::Result<RunnerResponse> {
     let req = self.get_raw_request_http(name)?;

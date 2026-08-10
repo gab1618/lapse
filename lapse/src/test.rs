@@ -4,6 +4,7 @@ use tempfile::TempDir;
 use tempfile::tempdir;
 
 use crate::env::Env;
+use crate::request::runner::RequestRunner;
 use crate::{Lapse, env::EnvValue};
 
 pub struct TempLapse {
@@ -52,7 +53,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
   lapse.set_env(&env, "prod").unwrap();
   lapse.switch_env("prod").unwrap();
 
-  let ctx = lapse.get_runtime().unwrap();
+  let ctx = RequestRunner::new(lapse.get_runtime().unwrap(), Default::default());
 
   assert_eq!(ctx.eval("${env.name} is ${env.age}").unwrap(), "Jane is 30");
 }
@@ -61,7 +62,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
 fn test_get_eval_ctx_defaults_to_empty_without_current_env() {
   let lapse = TempLapse::new();
 
-  let ctx = lapse.get_runtime().unwrap();
+  let ctx = RequestRunner::new(lapse.get_runtime().unwrap(), Default::default());
 
   assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
 }

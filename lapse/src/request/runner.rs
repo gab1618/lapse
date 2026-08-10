@@ -1,19 +1,19 @@
 use std::{collections::HashMap, fmt::Display};
 
-use mlua::{IntoLua, Value};
+use mlua::{IntoLua, Lua, Value};
 use reqwest::Client;
 
 use crate::{
-  env::hook::Event,
+  env::{EnvValue, hook::Event},
+  lua::lexer::{DocumentLexer, DocumentToken},
   request::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
   },
-  script::Runtime,
 };
 
 pub struct RequestRunner {
-  runtime: Runtime,
+  runtime: Lua,
   hooks: HashMap<Event, Vec<String>>,
 }
 
@@ -48,8 +48,28 @@ impl Display for RunnerResponse {
 }
 
 impl RequestRunner {
-  pub fn new(runtime: Runtime, hooks: HashMap<Event, Vec<String>>) -> Self {
+  pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>) -> Self {
     Self { runtime, hooks }
+  }
+
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
+    let mut result = String::new();
+
+    for token in tokens {
+      match token {
+        DocumentToken::String(inner) => {
+          result.push_str(&inner);
+        }
+        DocumentToken::Expr(inner) => {
+          let value: EnvValue = self.runtime.load(inner).eval()?;
+          result.push_str(&value.to_string());
+        }
+      }
+    }
+
+    Ok(result)
   }
   pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
     if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
@@ -58,7 +78,7 @@ impl RequestRunner {
         loaded.exec_async().await.unwrap();
       }
     }
-    let resolved = self.runtime.eval(req)?;
+    let resolved = self.eval(req)?;
 
     let client = Client::builder()
       .cookie_store(true)
