@@ -1,10 +1,48 @@
 pub mod error;
 
-use std::{fs, sync::Arc};
+use std::{fs, ops::Deref, sync::Arc};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{Lapse, eval::EvalCtx, request::runner::RequestRunner, script::error::ScriptError};
+use crate::{
+  Lapse,
+  env::EnvValue,
+  eval::lexer::{DocumentLexer, DocumentToken},
+  request::runner::RequestRunner,
+  script::error::ScriptError,
+};
+
+pub struct Runtime(pub Lua);
+
+impl Deref for Runtime {
+  type Target = Lua;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl Runtime {
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
+    let mut result = String::new();
+
+    for token in tokens {
+      match token {
+        DocumentToken::String(inner) => {
+          result.push_str(&inner);
+        }
+        DocumentToken::Expr(inner) => {
+          let value: EnvValue = self.load(inner).eval()?;
+          result.push_str(&value.to_string());
+        }
+      }
+    }
+
+    Ok(result)
+  }
+}
 
 struct LapseLuaApi {
   lapse: Arc<Lapse>,
@@ -19,7 +57,7 @@ impl LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let runner = RequestRunner::new(EvalCtx::new(lua));
+      let runner = RequestRunner::new(Runtime(lua));
 
       let http = this
         .lapse
@@ -37,7 +75,7 @@ impl UserData for LapseLuaApi {
 }
 
 impl Lapse {
-  fn get_runtime(&self) -> crate::Result<Lua> {
+  pub fn get_runtime(&self) -> crate::Result<Runtime> {
     let runtime = Lua::new();
 
     let shared_lapse = Arc::new(self.clone());
@@ -54,7 +92,7 @@ impl Lapse {
 
     runtime.globals().set("lapse", lapse_api)?;
 
-    Ok(runtime)
+    Ok(Runtime(runtime))
   }
   pub async fn run_script(&self, name: &str) -> crate::Result<()> {
     let script_path = self.scripts_path().join(name).with_extension("lua");

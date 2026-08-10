@@ -4,15 +4,15 @@ use mlua::{IntoLua, Value};
 use reqwest::Client;
 
 use crate::{
-  eval::EvalCtx,
   request::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
   },
+  script::Runtime,
 };
 
 pub struct RequestRunner {
-  ctx: EvalCtx,
+  runtime: Runtime,
 }
 
 pub struct RunnerResponse {
@@ -45,11 +45,11 @@ impl Display for RunnerResponse {
 }
 
 impl RequestRunner {
-  pub fn new(ctx: EvalCtx) -> Self {
-    Self { ctx }
+  pub fn new(runtime: Runtime) -> Self {
+    Self { runtime }
   }
   pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
-    let resolved = self.ctx.eval(req)?;
+    let resolved = self.runtime.eval(req)?;
 
     let client = Client::builder()
       .cookie_store(true)

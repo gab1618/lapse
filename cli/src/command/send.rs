@@ -9,7 +9,7 @@ pub async fn send(request: Option<String>) -> crate::Result<()> {
   let flatlist_config = FlatlistReadConfig::default().files(true);
   let selected_request = select_tree_entry(&tree, request, flatlist_config)?;
 
-  let runner = RequestRunner::new(lapse.get_eval_ctx()?);
+  let runner = RequestRunner::new(lapse.get_runtime()?);
 
   let request_http = lapse.get_raw_request_http(&selected_request)?;
 
