@@ -106,8 +106,7 @@ impl Lapse {
       .ok();
 
     let hooks = hooks_f
-      .map(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
-      .flatten()
+      .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
       .unwrap_or_default();
 
     Ok(Env {
