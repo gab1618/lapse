@@ -17,6 +17,7 @@ pub struct RequestRunner {
   hooks: HashMap<Event, Vec<String>>,
 }
 
+#[derive(Clone)]
 pub struct RunnerResponse {
   pub text: String,
   pub status: u16,

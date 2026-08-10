@@ -8,7 +8,6 @@ use crate::{
   Lapse,
   env::EnvValue,
   lua::lexer::{DocumentLexer, DocumentToken},
-  request::runner::RequestRunner,
   script::error::ScriptError,
 };
 
@@ -57,19 +56,11 @@ impl LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let runner = RequestRunner::new(Runtime(lua), Default::default());
-
-      let http = this
+      this
         .lapse
-        .get_raw_request_http(&name)
-        .map_err(|_| mlua::Error::RuntimeError("Error getting the request".to_string()))?;
-
-      let response = runner
-        .execute(&http)
+        .request_with(&name, Runtime(lua), Default::default())
         .await
-        .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))?;
-
-      Ok(response)
+        .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))
     });
   }
 }

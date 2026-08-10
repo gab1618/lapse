@@ -1,3 +1,51 @@
+use std::collections::HashMap;
+
+use crate::{
+  Lapse,
+  env::hook::Event,
+  log::ResponseLog,
+  request::runner::{RequestRunner, RunnerResponse},
+  script::Runtime,
+};
+
+impl Lapse {
+  fn save_runner_log(&self, log: RunnerResponse, name: String) -> crate::Result<()> {
+    let log = ResponseLog {
+      request: name,
+      text: log.text,
+      status: log.status,
+      headers: log.headers,
+    };
+
+    self.save_log(&log)
+  }
+  pub async fn request(&self, name: &str) -> crate::Result<RunnerResponse> {
+    let req = self.get_raw_request_http(name)?;
+    let runner = RequestRunner::new(self.get_runtime()?, self.get_hooks_scripts()?);
+
+    let response = runner.execute(&req).await?;
+
+    self.save_runner_log(response.clone(), name.to_string())?;
+
+    Ok(response)
+  }
+  pub async fn request_with(
+    &self,
+    name: &str,
+    runtime: Runtime,
+    hooks: HashMap<Event, Vec<String>>,
+  ) -> crate::Result<RunnerResponse> {
+    let req = self.get_raw_request_http(name)?;
+    let runner = RequestRunner::new(runtime, hooks);
+
+    let response = runner.execute(&req).await?;
+
+    self.save_runner_log(response.clone(), name.to_string())?;
+
+    Ok(response)
+  }
+}
+
 #[cfg(test)]
 mod test {
   use crate::request::parsing::{ParsedRequest, parse_request_http};
