@@ -3,17 +3,26 @@ use std::{
   fs::{self, OpenOptions},
 };
 
-use crate::{Lapse, env::error::EnvError};
+use crate::{
+  Lapse,
+  env::{
+    error::EnvError,
+    hook::{Event, HookEntry},
+  },
+};
 
 #[cfg(test)]
 mod test;
 
 pub mod error;
+pub mod hook;
 
+#[cfg_attr(test, derive(PartialEq, Debug))]
 #[derive(Default)]
 pub struct Env {
   pub variables: HashMap<String, EnvValue>,
   pub secrets: HashMap<String, EnvValue>,
+  pub hooks: HashMap<Event, HookEntry>,
 }
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -81,15 +90,33 @@ impl Lapse {
       .unwrap_or_default()
   }
 
-  pub fn current_env(&self) -> crate::Result<String> {
-    let env_name = self.get_state("env")?.unwrap_or("default".to_string());
-    Ok(env_name)
+  pub fn current_env(&self) -> String {
+    self
+      .get_state("env")
+      .ok()
+      .flatten()
+      .unwrap_or("default".to_string())
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
+    let full_env_path = self.env_path().join(name);
+
     let variables = self.read_env_resource(name, "variables.json");
     let secrets = self.read_env_resource(name, "secrets.json");
 
-    Ok(Env { variables, secrets })
+    let hooks_f = OpenOptions::new()
+      .read(true)
+      .open(full_env_path.join("hooks.json"))
+      .ok();
+
+    let hooks = hooks_f
+      .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
+      .unwrap_or_default();
+
+    Ok(Env {
+      variables,
+      secrets,
+      hooks,
+    })
   }
   pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
     let full_env_path = self.env_path().join(name);
@@ -111,7 +138,16 @@ impl Lapse {
       .open(full_env_path.join("secrets.json"))
       .map_err(EnvError::OpenVariables)?;
 
-    serde_json::to_writer(secrets, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
+    serde_json::to_writer(secrets, &env.secrets).map_err(|_| EnvError::SerializeVariables)?;
+
+    let hooks = OpenOptions::new()
+      .write(true)
+      .truncate(true)
+      .create(true)
+      .open(full_env_path.join("hooks.json"))
+      .map_err(EnvError::OpenVariables)?;
+
+    serde_json::to_writer(hooks, &env.hooks).map_err(|_| EnvError::SerializeVariables)?;
 
     Ok(())
   }

@@ -1,17 +1,17 @@
 pub mod error;
 
-use std::{fs, sync::Arc};
+use std::fs;
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{Lapse, eval::EvalCtx, request::runner::RequestRunner, script::error::ScriptError};
+use crate::{Lapse, script::error::ScriptError};
 
 struct LapseLuaApi {
-  lapse: Arc<Lapse>,
+  lapse: Lapse,
 }
 
 impl LapseLuaApi {
-  pub fn new(lapse: Arc<Lapse>) -> Self {
+  pub fn new(lapse: Lapse) -> Self {
     Self { lapse }
   }
 }
@@ -19,35 +19,22 @@ impl LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let runner = RequestRunner::new(EvalCtx::new(lua));
-
-      let http = this
+      this
         .lapse
-        .get_raw_request_http(&name)
-        .map_err(|_| mlua::Error::RuntimeError("Error getting the request".to_string()))?;
-
-      let response = runner
-        .execute(&http)
+        .request_with(&name, lua, Default::default())
         .await
-        .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))?;
-
-      Ok(response)
+        .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))
     });
   }
 }
 
 impl Lapse {
-  fn get_runtime(&self) -> crate::Result<Lua> {
+  pub fn get_runtime(&self) -> crate::Result<Lua> {
     let runtime = Lua::new();
 
-    let shared_lapse = Arc::new(self.clone());
+    let lapse_api = LapseLuaApi::new(self.clone());
 
-    let lapse_api = LapseLuaApi::new(shared_lapse);
-
-    let env = self
-      .current_env()
-      .map(|name| self.get_env(&name).unwrap_or_default())
-      .unwrap_or_default();
+    let env = self.get_env(&self.current_env())?;
 
     runtime.globals().set("env", env.variables)?;
     runtime.globals().set("secret", env.secrets)?;

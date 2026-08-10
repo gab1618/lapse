@@ -23,8 +23,9 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 ├── .lapse
 ├── env
 │   └── default
-│       ├── variables.json
-│       └── secrets.json
+│       ├── hooks.json
+│       ├── secrets.json
+│       └── variables.json
 ├── requests
 │   └── httpbin.md
 └── scripts
@@ -79,6 +80,25 @@ Env variable files are just json files with values. Any json valid value is acce
   "name": "John"
 }
 ```
+
+Same goes for secrets.
+
+This is what a hooks file looks like
+
+```json
+{
+  "pre-request": {
+    "enabled": true,
+    "scripts": ["pre.lua"]
+  },
+  "post-request": {
+    "enabled": false,
+    "scripts": ["post.lua"]
+  }
+}
+```
+
+The keys are the event names. The scripts path is relative to the `scripts` folder, and the scripts are executed in the order they are passed to the array.
 
 ### Scripts
 

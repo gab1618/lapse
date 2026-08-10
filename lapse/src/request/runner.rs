@@ -1,10 +1,11 @@
 use std::{collections::HashMap, fmt::Display};
 
-use mlua::{IntoLua, Value};
+use mlua::{IntoLua, Lua, Value};
 use reqwest::Client;
 
 use crate::{
-  eval::EvalCtx,
+  env::{EnvValue, hook::Event},
+  lua::lexer::{DocumentLexer, DocumentToken},
   request::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
@@ -12,9 +13,11 @@ use crate::{
 };
 
 pub struct RequestRunner {
-  ctx: EvalCtx,
+  runtime: Lua,
+  hooks: HashMap<Event, Vec<String>>,
 }
 
+#[derive(Clone)]
 pub struct RunnerResponse {
   pub text: String,
   pub status: u16,
@@ -45,11 +48,37 @@ impl Display for RunnerResponse {
 }
 
 impl RequestRunner {
-  pub fn new(ctx: EvalCtx) -> Self {
-    Self { ctx }
+  pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>) -> Self {
+    Self { runtime, hooks }
+  }
+
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
+    let mut result = String::new();
+
+    for token in tokens {
+      match token {
+        DocumentToken::String(inner) => {
+          result.push_str(&inner);
+        }
+        DocumentToken::Expr(inner) => {
+          let value: EnvValue = self.runtime.load(inner).eval()?;
+          result.push_str(&value.to_string());
+        }
+      }
+    }
+
+    Ok(result)
   }
   pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
-    let resolved = self.ctx.eval(req)?;
+    if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
+      for hook in pre_request_hooks {
+        let loaded = self.runtime.load(hook);
+        loaded.exec_async().await?;
+      }
+    }
+    let resolved = self.eval(req)?;
 
     let client = Client::builder()
       .cookie_store(true)
@@ -122,6 +151,13 @@ impl RequestRunner {
       .text()
       .await
       .map_err(RequestError::GetResponseBody)?;
+
+    if let Some(post_request_hooks) = self.hooks.get(&Event::PostRequest) {
+      for hook in post_request_hooks {
+        let loaded = self.runtime.load(hook);
+        loaded.exec_async().await?;
+      }
+    }
 
     let response = RunnerResponse {
       text: response_body,
