@@ -1,5 +1,7 @@
 # Lapse
 
+[![License: GPL v3+](https://img.shields.io/badge/License-GPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+
 Http CLI focused on UX and git-heavy workflow
 
 ## Summary
@@ -266,3 +268,9 @@ for k, v in pairs(result.headers) do
 end
 ```
 
+## License
+
+This project is licensed under the GNU General Public License
+version 3 or later (GPL-3.0-or-later).
+
+See [LICENSE](LICENSE) for the full license text.
