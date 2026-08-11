@@ -1,5 +1,5 @@
 pub mod error;
-pub mod generators;
+pub mod openapi;
 pub mod templates;
 
 use std::{fmt::Display, path::Path};

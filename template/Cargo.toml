@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 lapse = { workspace = true }
+openapi = "0.1.5"
 thiserror = { workspace = true }
 
 [dev-dependencies]
