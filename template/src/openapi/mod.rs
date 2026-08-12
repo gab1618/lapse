@@ -8,7 +8,7 @@ use serde::Deserialize;
 pub struct OpenApi {
   pub openapi: String,
   pub info: Info,
-  pub paths: HashMap<String, PathItem>,
+  pub paths: HashMap<String, HashMap<PathMethod, Operation>>,
   pub servers: Option<Vec<Server>>,
 }
 
@@ -23,16 +23,24 @@ pub struct Server {
   pub url: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct PathItem {
-  pub get: Option<Operation>,
-  pub post: Option<Operation>,
-  pub put: Option<Operation>,
-  pub patch: Option<Operation>,
-  pub delete: Option<Operation>,
-  pub head: Option<Operation>,
-  pub options: Option<Operation>,
-  pub trace: Option<Operation>,
+#[derive(Debug, Deserialize, PartialEq, Eq, Hash)]
+pub enum PathMethod {
+  #[serde(rename = "get")]
+  Get,
+  #[serde(rename = "post")]
+  Post,
+  #[serde(rename = "patch")]
+  Patch,
+  #[serde(rename = "delete")]
+  Delete,
+  #[serde(rename = "put")]
+  Put,
+  #[serde(rename = "head")]
+  Head,
+  #[serde(rename = "options")]
+  Options,
+  #[serde(rename = "trace")]
+  Trace,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,7 +49,18 @@ pub struct Operation {
   pub description: Option<String>,
 }
 impl From<OpenApi> for TemplateCollection {
-  fn from(_value: OpenApi) -> Self {
+  fn from(value: OpenApi) -> Self {
+    let servers = value.servers.unwrap();
+    let main_server = servers.get(0).unwrap();
+    let base_url = &main_server.url;
+
+    for (path, details) in value.paths {
+      let full_url = format!("{}{}", base_url, path);
+
+      for (method, details) in details {
+        todo!()
+      }
+    }
     vec![].into()
   }
 }
