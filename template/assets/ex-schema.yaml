@@ -3,6 +3,12 @@ info:
   title: Example API
   version: 1.0.0
 
+servers:
+  - url: https://api.example.com
+    description: Production server
+  - url: https://staging-api.example.com
+    description: Staging server
+
 paths:
   /example:
     get:

@@ -9,12 +9,18 @@ pub struct OpenApi {
   pub openapi: String,
   pub info: Info,
   pub paths: HashMap<String, PathItem>,
+  pub servers: Option<Vec<Server>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Info {
   pub title: String,
   pub version: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Server {
+  pub url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,8 +40,8 @@ pub struct Operation {
   pub summary: Option<String>,
   pub description: Option<String>,
 }
-impl Into<TemplateCollection> for OpenApi {
-  fn into(self) -> TemplateCollection {
+impl From<OpenApi> for TemplateCollection {
+  fn from(_value: OpenApi) -> Self {
     vec![].into()
   }
 }
