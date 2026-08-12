@@ -1,19 +1,53 @@
-use crate::Generator;
+use std::collections::HashMap;
 
-pub struct OpenApiSpec {}
+use crate::templates::TemplateCollection;
 
-impl Generator for OpenApiSpec {
-  fn load<P: AsRef<std::path::Path>>(&self, path: P) -> crate::Result<()> {
-    let base_path = path.as_ref();
+use serde::Deserialize;
 
-    println!("{}", base_path.display());
+#[derive(Debug, Deserialize)]
+pub struct OpenApi {
+  pub openapi: String,
+  pub info: Info,
+  pub paths: HashMap<String, PathItem>,
+}
 
-    Ok(())
+#[derive(Debug, Deserialize)]
+pub struct Info {
+  pub title: String,
+  pub version: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PathItem {
+  pub get: Option<Operation>,
+  pub post: Option<Operation>,
+  pub put: Option<Operation>,
+  pub patch: Option<Operation>,
+  pub delete: Option<Operation>,
+  pub head: Option<Operation>,
+  pub options: Option<Operation>,
+  pub trace: Option<Operation>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Operation {
+  pub summary: Option<String>,
+  pub description: Option<String>,
+}
+impl Into<TemplateCollection> for OpenApi {
+  fn into(self) -> TemplateCollection {
+    vec![].into()
   }
 }
 
 #[cfg(test)]
 mod test {
+  use crate::openapi::OpenApi;
+
   #[test]
-  fn test_parse_example() {}
+  fn test_parse_example() {
+    let parsed: OpenApi =
+      serde_yaml::from_str(include_str!("../../assets/ex-schema.yaml")).unwrap();
+    assert_eq!(parsed.info.title, "Example API");
+  }
 }

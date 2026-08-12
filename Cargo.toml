@@ -10,3 +10,4 @@ members = [
 thiserror = "2.0.18"
 tempfile = "3.27.0"
 lapse = { path = "lapse" }
+serde = { version = "1.0.228", features = ["derive"] }
