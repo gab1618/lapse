@@ -1,26 +1,62 @@
-openapi: 3.0.4
+openapi: 3.0.3
 info:
-  title: Sample API
-  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
-  version: 0.1.9
-
-servers:
-  - url: http://api.example.com/v1
-    description: Optional server description, e.g. Main (production) server
-  - url: http://staging-api.example.com
-    description: Optional server description, e.g. Internal staging server for testing
+  title: Example API
+  version: 1.0.0
 
 paths:
-  /users:
+  /example:
     get:
-      summary: Returns a list of users.
-      description: Optional extended description in CommonMark or HTML.
+      summary: Get example
+      description: Retrieves an example resource.
       responses:
-        "200": # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+        '200':
+          description: OK
+
+    post:
+      summary: Create example
+      description: Creates a new example resource.
+      responses:
+        '201':
+          description: Created
+
+    put:
+      summary: Replace example
+      description: Replaces an existing example resource.
+      responses:
+        '200':
+          description: OK
+
+    patch:
+      summary: Update example
+      description: Partially updates an existing example resource.
+      responses:
+        '200':
+          description: OK
+
+    delete:
+      summary: Delete example
+      description: Deletes an existing example resource.
+      responses:
+        '204':
+          description: No Content
+
+    head:
+      summary: Check example
+      description: Returns the headers for an example resource without its body.
+      responses:
+        '200':
+          description: OK
+
+    options:
+      summary: Get allowed methods
+      description: Returns the HTTP methods supported by this endpoint.
+      responses:
+        '200':
+          description: OK
+
+    trace:
+      summary: Trace request
+      description: Echoes the received request for diagnostic purposes.
+      responses:
+        '200':
+          description: OK
