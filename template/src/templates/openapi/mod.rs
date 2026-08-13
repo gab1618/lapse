@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
-use crate::templates::{LapsePreset, TemplateEntry, request_file::RequestFile};
+use crate::templates::{
+  LapsePreset, TemplateEntry, openapi::error::OpenApiError, request_file::RequestFile,
+};
 
 use serde::Deserialize;
+
+pub mod error;
 
 #[derive(Debug, Deserialize)]
 pub struct OpenApi {
@@ -64,10 +68,13 @@ pub struct Operation {
   pub summary: Option<String>,
   pub description: Option<String>,
 }
-impl From<OpenApi> for LapsePreset {
-  fn from(value: OpenApi) -> Self {
-    let servers = value.servers.unwrap();
-    let main_server = servers.get(0).unwrap();
+
+impl TryFrom<OpenApi> for LapsePreset {
+  type Error = crate::Error;
+
+  fn try_from(value: OpenApi) -> Result<Self, Self::Error> {
+    let servers = value.servers.ok_or(OpenApiError::NoServerAvailable)?;
+    let main_server = servers.get(0).ok_or(OpenApiError::NoServerAvailable)?;
     let base_url = &main_server.url;
 
     let mut request_files = vec![];
@@ -95,16 +102,16 @@ impl From<OpenApi> for LapsePreset {
       }
     }
 
-    LapsePreset {
+    Ok(LapsePreset {
       requests: request_files.into(),
       ..Default::default()
-    }
+    })
   }
 }
 
 impl OpenApi {
   pub fn from_str_schema(schema: &str) -> crate::Result<Self> {
-    Ok(serde_yaml::from_str(schema).unwrap())
+    Ok(serde_yaml::from_str(schema).map_err(OpenApiError::ParseSchema)?)
   }
 }
 
@@ -127,7 +134,7 @@ mod test {
   fn test_load_preset() {
     let parsed: OpenApi =
       serde_yaml::from_str(include_str!("../../../assets/ex-schema.yaml")).unwrap();
-    let preset: LapsePreset = parsed.into();
+    let preset: LapsePreset = parsed.try_into().unwrap();
     let dir = tempdir().unwrap();
     preset.load(dir.path()).unwrap();
   }

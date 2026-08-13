@@ -10,16 +10,15 @@ pub fn init(preset: Option<AvailablePreset>, schema: Option<String>) -> crate::R
   Lapse::init(&curr_dir)?;
 
   let selected_preset = schema
-    .map(|subpath| {
+    .and_then(|subpath| {
       let schema_path = curr_dir.join(subpath);
       let raw_schema = fs::read_to_string(schema_path).ok()?;
 
-      let schema = OpenApi::from_str_schema(&raw_schema).unwrap();
-      let as_preset: LapsePreset = schema.into();
+      let schema = OpenApi::from_str_schema(&raw_schema).ok()?;
+      let as_preset: LapsePreset = schema.try_into().ok()?;
 
       Some(as_preset)
     })
-    .flatten()
     .unwrap_or_else(|| {
       preset
         .map(|entry| match entry {
