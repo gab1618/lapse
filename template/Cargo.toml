@@ -3,6 +3,10 @@ name = "lapse-template"
 version = "0.1.0"
 edition = "2024"
 authors = ["Gabriel C. Brandão <biel.brandao2004@gmailcom>"]
+repository = "https://github.com/gab1618/lapse"
+homepage = "https://github.com/gab1618/lapse"
+license = "GPLv3"
+exclude = ["assets"]
 
 [dependencies]
 lapse = { workspace = true }
