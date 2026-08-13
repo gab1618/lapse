@@ -13,6 +13,7 @@ impl Default for LapsePreset {
         .collect::<Vec<_>>()
         .into(),
       scripts: Default::default(),
+      envs: Default::default(),
     }
   }
 }

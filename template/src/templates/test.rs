@@ -15,7 +15,7 @@ pub struct TestTemplate {
 
 impl TestTemplate {
   pub fn load(&self) {
-    self.inner.load(self.tempdir.path().into()).unwrap();
+    self.inner.load(self.tempdir.path()).unwrap();
   }
   pub fn path(&self) -> &Path {
     self.tempdir.path()
@@ -52,6 +52,7 @@ fn test_load_template() {
       .into(),
     ]
     .into(),
+    envs: Default::default(),
   };
   let temp = TestTemplate::from(template);
   let lapse = Lapse::init(temp.path()).unwrap();
