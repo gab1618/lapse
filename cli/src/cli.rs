@@ -21,6 +21,8 @@ pub enum Command {
   Init {
     #[arg(short, long)]
     preset: Option<AvailablePreset>,
+    #[arg(short, long)]
+    schema: Option<String>,
   },
   /// Lists all requests
   #[command(about)]

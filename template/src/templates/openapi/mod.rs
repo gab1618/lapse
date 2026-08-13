@@ -102,6 +102,12 @@ impl From<OpenApi> for LapsePreset {
   }
 }
 
+impl OpenApi {
+  pub fn from_str_schema(schema: &str) -> crate::Result<Self> {
+    Ok(serde_yaml::from_str(schema).unwrap())
+  }
+}
+
 #[cfg(test)]
 mod test {
   use tempfile::tempdir;
