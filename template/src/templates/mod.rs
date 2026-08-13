@@ -1,16 +1,18 @@
 use std::{fs, path::Path};
 
-use crate::{Generator, error::Error};
+use crate::error::Error;
 
 #[cfg(test)]
 mod test;
 
 pub mod default;
 pub mod httpbin;
+pub mod openapi;
+pub mod request_file;
 
 pub struct TemplateEntry {
-  name: String,
-  content: String,
+  pub name: String,
+  pub content: String,
 }
 
 pub enum TemplateItem {
@@ -45,8 +47,8 @@ impl From<Vec<TemplateItem>> for TemplateCollection {
   }
 }
 
-impl Generator for TemplateCollection {
-  fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
+impl TemplateCollection {
+  pub fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
     let base = path.as_ref().join(&self.name);
     fs::create_dir_all(&base).map_err(Error::CreateCollection)?;
 
@@ -69,16 +71,18 @@ impl Generator for TemplateCollection {
 /// Presets are templates that can be used to initialize spaces. Since they import multiple types of
 /// resources, we can't use them to import into existing spaces, only initialize.
 pub struct LapsePreset {
-  scripts: TemplateCollection,
-  requests: TemplateCollection,
+  pub scripts: TemplateCollection,
+  pub requests: TemplateCollection,
+  pub envs: TemplateCollection,
 }
 
-impl Generator for LapsePreset {
-  fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
+impl LapsePreset {
+  pub fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
     let base = path.as_ref();
 
     self.scripts.load(base.join("scripts"))?;
     self.requests.load(base.join("requests"))?;
+    self.envs.load(base.join("env"))?;
 
     Ok(())
   }

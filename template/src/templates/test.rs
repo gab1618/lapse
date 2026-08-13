@@ -6,10 +6,7 @@ use lapse::{
 };
 use tempfile::{TempDir, tempdir};
 
-use crate::{
-  Generator as _,
-  templates::{LapsePreset, TemplateEntry},
-};
+use crate::templates::{LapsePreset, TemplateEntry};
 
 pub struct TestTemplate {
   tempdir: TempDir,
@@ -55,6 +52,7 @@ fn test_load_template() {
       .into(),
     ]
     .into(),
+    envs: Default::default(),
   };
   let temp = TestTemplate::from(template);
   let lapse = Lapse::init(temp.path()).unwrap();
