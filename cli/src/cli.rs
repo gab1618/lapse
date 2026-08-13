@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 
 use crate::completion::CliCompletionShell;
@@ -22,7 +24,7 @@ pub enum Command {
     #[arg(short, long)]
     preset: Option<AvailablePreset>,
     #[arg(short, long)]
-    schema: Option<String>,
+    schema: Option<PathBuf>,
   },
   /// Lists all requests
   #[command(about)]
