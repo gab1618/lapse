@@ -29,7 +29,7 @@ async fn entrypoint() -> error::Result<()> {
 
   match args.command {
     Command::Init { preset } => {
-      command::init(preset)?;
+      command::init::init(preset)?;
     }
     Command::Ls { path } => {
       command::ls(path)?;
