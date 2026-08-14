@@ -27,37 +27,31 @@ pub enum Command {
     schema: Option<PathBuf>,
   },
   /// Lists all requests
-  #[command(about)]
   Ls {
     /// Base path to list from
     path: Option<String>,
   },
   /// Sends a request
-  #[command(about)]
   Send { request: Option<String> },
   /// Runs a script
-  #[command(about)]
   Run { script: Option<String> },
   /// Logs a request's response logs history
-  #[command(about)]
   Log {
     /// Request name
     request: Option<String>,
   },
   /// Outputs a completion script
-  #[command(about)]
   Completion { shell: CliCompletionShell },
   /// Environment commands
-  #[command(subcommand, about)]
+  #[command(subcommand)]
   Env(EnvCommand),
   /// Script commands
-  #[command(subcommand, about)]
+  #[command(subcommand)]
   Script(ScriptCommand),
 }
 
 #[derive(Subcommand)]
 pub enum EnvCommand {
-  #[command(about)]
   /// Switches to another env
   Switch {
     /// Name of the environment
