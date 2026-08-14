@@ -130,33 +130,21 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn get_response_logs_names(&self, request: &str) -> crate::Result<Vec<String>> {
+  pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
     let request_logs_path = self.response_logs_path(request);
 
     let entries = fs::read_dir(request_logs_path).map_err(LogError::ListLogFiles)?;
 
-    Ok(
-      entries
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| !entry.path().is_dir())
-        .filter_map(|entry| {
-          let file_name = entry.file_name();
-          let str_name = file_name.to_str();
+    let mut entries_names = entries
+      .filter_map(|entry| entry.ok())
+      .filter(|entry| !entry.path().is_dir())
+      .filter_map(|entry| {
+        let file_name = entry.file_name();
+        let str_name = file_name.to_str();
 
-          str_name.map(|inner| inner.to_string())
-        })
-        .collect::<Vec<_>>(),
-    )
-  }
-  pub fn get_response_log_entry(&self, request: &str, entry_name: &str) -> crate::Result<String> {
-    let full_entry_path = self.response_logs_path(request).join(entry_name);
-
-    let content = fs::read_to_string(full_entry_path).map_err(LogError::ReadLogFile)?;
-
-    Ok(content)
-  }
-  pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
-    let mut entries_names = self.get_response_logs_names(request)?;
+        str_name.map(|inner| inner.to_string())
+      })
+      .collect::<Vec<_>>();
 
     entries_names.reverse();
 
