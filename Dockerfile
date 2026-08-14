@@ -9,3 +9,5 @@ RUN cargo build --release
 FROM archlinux
 
 COPY --from=builder /repo/target/release/lapse /bin
+
+CMD ["/bin/bash"]
