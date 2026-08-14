@@ -1,11 +1,12 @@
 [package]
 name = "lapse-cli"
-version = "0.1.0"
+description = "HTTP CLI focused on UX"
+version = { workspace = true }
 edition = "2024"
 authors = ["Gabriel C. Brandão <biel.brandao2004@gmailcom>"]
 repository = "https://github.com/gab1618/lapse"
 homepage = "https://github.com/gab1618/lapse"
-license = "GPLv3"
+license = "GPL-3.0"
 
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
@@ -17,7 +18,7 @@ thiserror = { workspace = true }
 nucleo-matcher = "0.3.1"
 minus = { version = "5.7.2", features = ["static_output"] }
 is-terminal = "0.4.17"
-lapse-template = { path = "../template" }
+lapse-template = { workspace = true }
 
 [[bin]]
 name = "lapse"
