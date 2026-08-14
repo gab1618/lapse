@@ -1,5 +1,6 @@
 [package]
 name = "lapse-cli"
+description = "HTTP CLI focused on UX"
 version = { workspace = true }
 edition = "2024"
 authors = ["Gabriel C. Brandão <biel.brandao2004@gmailcom>"]

@@ -1,5 +1,6 @@
 [package]
 name = "lapse"
+description = "Lapse core library"
 version = { workspace = true }
 edition = "2024"
 authors = ["Gabriel C. Brandão <biel.brandao2004@gmailcom>"]
