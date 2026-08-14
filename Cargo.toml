@@ -9,9 +9,9 @@ members = [
 [workspace.dependencies]
 thiserror = "2.0.18"
 tempfile = "3.27.0"
-lapse = { path = "lapse", version = "0.1.0" }
-lapse-template = { path = "template", version = "0.1.0" }
+lapse = { path = "lapse", version = "0.1.1" }
+lapse-template = { path = "template", version = "0.1.1" }
 serde = { version = "1.0.228", features = ["derive"] }
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
