@@ -72,7 +72,7 @@ impl Tree {
 
           if full_entry_path.is_dir() {
             let name = entry.file_name().to_string_lossy().into_owned();
-            let sub_tree = Self::read(prefix, &full_entry_path)?;
+            let sub_tree = Self::read(&prefix.join(&name), &full_entry_path)?;
             Ok(TreeEntry::Subtree(name, sub_tree))
           } else {
             let relative_path = full_entry_path
