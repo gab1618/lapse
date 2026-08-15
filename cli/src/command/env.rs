@@ -1,16 +1,27 @@
-use lapse::tree::{FlatTreeConfig, resource::Resource};
+use lapse::tree::{FlatTreeConfig, TraverseEntryKind, Tree, resource::Resource};
 
-use crate::{collection::output_tree, command::open_lapse, select::select_tree_entry};
+use crate::{command::open_lapse, select::select_tree_entry};
+
+fn output_env_tree(root: &Tree, current_env: String) {
+  root.traverse(0, &|entry| {
+    let depth_spacing = " ".repeat(entry.depth);
+    match entry.kind {
+      TraverseEntryKind::Entry => {}
+      TraverseEntryKind::Subtree => {
+        let marker = if current_env == entry.name { "*" } else { "" };
+        println!("{}{}{}", marker, depth_spacing, entry.name);
+      }
+    }
+  });
+}
 
 pub fn ls(path: Option<String>) -> crate::Result<()> {
-  // TODO: mark the current env you are in
   let lapse = open_lapse()?;
   let tree = lapse.get_resource_tree(Resource::Env, path)?;
 
-  let flatlist_config = FlatTreeConfig::default()
-    .include_dirs(true)
-    .include_files(false);
-  output_tree(&tree, flatlist_config);
+  let current_env = lapse.current_env();
+
+  output_env_tree(&tree, current_env);
   Ok(())
 }
 pub fn switch(name: Option<String>) -> crate::Result<()> {
