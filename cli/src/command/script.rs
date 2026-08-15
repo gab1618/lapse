@@ -18,7 +18,7 @@ pub fn ls(path: Option<String>) -> crate::Result<()> {
   let tree = lapse.get_resource_tree(Resource::Scripts, path)?;
 
   let flatlist_config = FlatTreeConfig::default().include_dirs(true);
-  output_tree(0, &tree, flatlist_config);
+  output_tree(&tree, flatlist_config);
 
   Ok(())
 }

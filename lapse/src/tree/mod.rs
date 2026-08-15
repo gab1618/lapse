@@ -49,6 +49,17 @@ impl Default for FlatTreeConfig {
   }
 }
 
+pub enum TraverseEntryKind {
+  Entry,
+  Subtree,
+}
+
+pub struct TraverseEntry {
+  pub name: String,
+  pub kind: TraverseEntryKind,
+  pub depth: usize,
+}
+
 impl Tree {
   pub fn read(prefix: &Path, path: &Path) -> crate::Result<Self> {
     let mut dir_entries = fs::read_dir(path)
@@ -108,6 +119,36 @@ impl Tree {
     }
 
     entries
+  }
+  pub fn traverse<F: Fn(TraverseEntry)>(&self, parent_name: String, depth: usize, f: &F) {
+    let prefix = if parent_name.is_empty() {
+      Default::default()
+    } else {
+      format!("{}/", parent_name)
+    };
+
+    for entry in self.iter() {
+      match entry {
+        TreeEntry::Entry(name) => {
+          let entry = TraverseEntry {
+            name: format!("{prefix}{name}"),
+            kind: TraverseEntryKind::Entry,
+            depth,
+          };
+
+          f(entry)
+        }
+        TreeEntry::Subtree(name, tree) => {
+          let entry = TraverseEntry {
+            name: format!("{prefix}{name}"),
+            kind: TraverseEntryKind::Subtree,
+            depth,
+          };
+          f(entry);
+          tree.traverse(format!("{prefix}{name}"), depth + 1, f);
+        }
+      }
+    }
   }
 }
 
