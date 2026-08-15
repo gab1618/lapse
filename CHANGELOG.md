@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 https://github.com/gab1618/lapse/compare/v0.1.1..HEAD
 
+## [0.2.0] - 2026-08-15
+
 ### Added
 
 - Environment inheritance. Now envs inherit values from their parents
