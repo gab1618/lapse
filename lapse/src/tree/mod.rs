@@ -1,6 +1,9 @@
 pub mod error;
 pub mod resource;
 
+#[cfg(test)]
+mod test;
+
 use std::{fs, ops::Deref, path::Path};
 
 use crate::{
@@ -20,6 +23,32 @@ impl Deref for Tree {
 
   fn deref(&self) -> &Self::Target {
     &self.0
+  }
+}
+
+#[derive(Clone, Copy)]
+pub struct FlatTreeConfig {
+  pub files: bool,
+  pub dirs: bool,
+}
+
+impl FlatTreeConfig {
+  pub fn include_files(mut self, val: bool) -> Self {
+    self.files = val;
+    self
+  }
+  pub fn include_dirs(mut self, val: bool) -> Self {
+    self.dirs = val;
+    self
+  }
+}
+
+impl Default for FlatTreeConfig {
+  fn default() -> Self {
+    Self {
+      files: true,
+      dirs: Default::default(),
+    }
   }
 }
 
@@ -58,6 +87,30 @@ impl Tree {
         })
         .collect::<crate::Result<Vec<_>>>()?,
     ))
+  }
+  pub fn as_flat(&self, config: FlatTreeConfig) -> Vec<String> {
+    let mut entries: Vec<String> = vec![];
+
+    for entry in self.iter() {
+      match entry {
+        TreeEntry::Entry(entry) => {
+          if config.files {
+            entries.push(entry.clone());
+          }
+        }
+        TreeEntry::Subtree(entry, items) => {
+          if config.dirs {
+            entries.push(entry.clone());
+          }
+          let sub_requests = items.as_flat(config);
+          for sub in sub_requests.into_iter() {
+            entries.push(sub);
+          }
+        }
+      }
+    }
+
+    entries
   }
 }
 
