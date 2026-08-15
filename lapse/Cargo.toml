@@ -20,4 +20,3 @@ thiserror = {workspace = true}
 
 [dev-dependencies]
 tempfile = {workspace = true}
-lapse-template = {workspace = true}

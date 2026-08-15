@@ -930,10 +930,9 @@ dependencies = [
 
 [[package]]
 name = "lapse"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "http",
- "lapse-template",
  "mlua",
  "reqwest",
  "serde",
@@ -945,7 +944,7 @@ dependencies = [
 
 [[package]]
 name = "lapse-cli"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "clap",
  "clap_complete",
@@ -961,7 +960,7 @@ dependencies = [
 
 [[package]]
 name = "lapse-template"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "lapse",
  "serde",
