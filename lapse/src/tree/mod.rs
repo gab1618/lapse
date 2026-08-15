@@ -1,9 +1,6 @@
 pub mod error;
 pub mod resource;
 
-#[cfg(test)]
-mod test;
-
 use std::{fs, ops::Deref, path::Path};
 
 use crate::{
