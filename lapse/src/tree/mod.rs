@@ -120,12 +120,18 @@ impl Tree {
 
     entries
   }
-  pub fn traverse<F: Fn(TraverseEntry)>(&self, depth: usize, f: &F) {
+  pub fn traverse<F: Fn(TraverseEntry)>(&self, parent_name: String, depth: usize, f: &F) {
+    let prefix = if parent_name.is_empty() {
+      Default::default()
+    } else {
+      format!("{}/", parent_name)
+    };
+
     for entry in self.iter() {
       match entry {
         TreeEntry::Entry(name) => {
           let entry = TraverseEntry {
-            name: name.to_string(),
+            name: format!("{prefix}{name}"),
             kind: TraverseEntryKind::Entry,
             depth,
           };
@@ -134,12 +140,12 @@ impl Tree {
         }
         TreeEntry::Subtree(name, tree) => {
           let entry = TraverseEntry {
-            name: name.to_string(),
+            name: format!("{prefix}{name}"),
             kind: TraverseEntryKind::Subtree,
             depth,
           };
           f(entry);
-          tree.traverse(depth + 1, f);
+          tree.traverse(format!("{prefix}{name}"), depth + 1, f);
         }
       }
     }

@@ -3,7 +3,7 @@ use lapse::tree::{FlatTreeConfig, TraverseEntryKind, Tree, resource::Resource};
 use crate::{command::open_lapse, select::select_tree_entry};
 
 fn output_env_tree(root: &Tree, current_env: String) {
-  root.traverse(0, &|entry| {
+  root.traverse(Default::default(), 0, &|entry| {
     let depth_spacing = " ".repeat(entry.depth);
     match entry.kind {
       TraverseEntryKind::Entry => {}
