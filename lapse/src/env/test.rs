@@ -1,19 +1,16 @@
 use std::collections::HashMap;
 
-use tempfile::tempdir;
-
 use crate::{
-  Lapse,
   env::{
     Env, EnvValue,
     hook::{Event, HookEntry},
   },
+  test::TempLapse,
 };
 
 #[test]
 fn test_switch_env() {
-  let temp_dir = tempdir().unwrap();
-  let lapse = Lapse::init(temp_dir.path()).unwrap();
+  let lapse = TempLapse::new();
 
   let ex_env = Env::default();
 
@@ -28,8 +25,7 @@ fn test_switch_env() {
 
 #[test]
 fn test_read_env() {
-  let temp_dir = tempdir().unwrap();
-  let lapse = Lapse::init(temp_dir.path()).unwrap();
+  let lapse = TempLapse::new();
 
   let mut ex_env = Env::default();
 

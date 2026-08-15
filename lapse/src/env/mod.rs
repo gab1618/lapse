@@ -1,7 +1,4 @@
-use std::{
-  collections::HashMap,
-  fs::{self, OpenOptions},
-};
+use std::{collections::HashMap, fs::OpenOptions};
 
 use crate::{
   Lapse,
@@ -117,38 +114,5 @@ impl Lapse {
       secrets,
       hooks,
     })
-  }
-  pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
-    let full_env_path = self.env_path().join(name);
-    fs::create_dir_all(&full_env_path).map_err(EnvError::Create)?;
-
-    let variables = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("variables.json"))
-      .map_err(EnvError::OpenVariables)?;
-
-    serde_json::to_writer(variables, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
-
-    let secrets = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("secrets.json"))
-      .map_err(EnvError::OpenVariables)?;
-
-    serde_json::to_writer(secrets, &env.secrets).map_err(|_| EnvError::SerializeVariables)?;
-
-    let hooks = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("hooks.json"))
-      .map_err(EnvError::OpenVariables)?;
-
-    serde_json::to_writer(hooks, &env.hooks).map_err(|_| EnvError::SerializeVariables)?;
-
-    Ok(())
   }
 }
