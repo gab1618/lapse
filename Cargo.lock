@@ -962,7 +962,6 @@ dependencies = [
 name = "lapse-template"
 version = "0.2.0"
 dependencies = [
- "lapse",
  "serde",
  "serde_yaml",
  "tempfile",

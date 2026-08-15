@@ -80,6 +80,11 @@ impl LapsePreset {
   pub fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
     let base = path.as_ref();
 
+    fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
+
     self.scripts.load(base.join("scripts"))?;
     self.requests.load(base.join("requests"))?;
     self.envs.load(base.join("env"))?;

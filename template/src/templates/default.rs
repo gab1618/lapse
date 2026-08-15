@@ -20,15 +20,12 @@ impl Default for LapsePreset {
 
 #[cfg(test)]
 mod tests {
-  use lapse::Lapse;
-
   use crate::templates::{LapsePreset, test::TestTemplate};
 
   #[test]
   fn test_load_httpbin_preset() {
     let template = LapsePreset::default();
     let test = TestTemplate::from(template);
-    Lapse::init(test.path()).unwrap();
     test.load();
   }
 }

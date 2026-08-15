@@ -30,14 +30,7 @@ impl LapsePreset {
         .map(|(name, content)| TemplateEntry { name, content }.into())
         .collect::<Vec<_>>()
         .into(),
-      scripts: vec![
-        TemplateEntry {
-          name: "test.lua".to_string(),
-          content: include_str!("../../templates/httpbin/scripts/test.lua").to_string(),
-        }
-        .into(),
-      ]
-      .into(),
+      scripts: Default::default(),
       envs: Default::default(),
     }
   }
@@ -45,15 +38,12 @@ impl LapsePreset {
 
 #[cfg(test)]
 mod tests {
-  use lapse::Lapse;
-
   use crate::templates::{LapsePreset, test::TestTemplate};
 
   #[test]
   fn test_load_httpbin_preset() {
     let template = LapsePreset::httpbin();
     let test = TestTemplate::from(template);
-    Lapse::init(test.path()).unwrap();
     test.load();
   }
 }
