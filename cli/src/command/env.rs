@@ -10,7 +10,7 @@ pub fn ls(path: Option<String>) -> crate::Result<()> {
   let flatlist_config = FlatTreeConfig::default()
     .include_dirs(true)
     .include_files(false);
-  output_tree(0, &tree, flatlist_config);
+  output_tree(&tree, flatlist_config);
   Ok(())
 }
 pub fn switch(name: Option<String>) -> crate::Result<()> {

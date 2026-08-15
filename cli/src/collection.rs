@@ -1,22 +1,19 @@
-use lapse::tree::{FlatTreeConfig, Tree, TreeEntry};
+use lapse::tree::{FlatTreeConfig, TraverseEntryKind, Tree};
 
-pub fn output_tree(level: usize, root: &Tree, config: FlatTreeConfig) {
-  let level_spacing = " ".repeat(level);
-
-  for entry in root.iter() {
-    match entry {
-      TreeEntry::Entry(name) => {
+pub fn output_tree(root: &Tree, config: FlatTreeConfig) {
+  root.traverse(0, &|entry| {
+    let depth_spacing = " ".repeat(entry.depth);
+    match entry.kind {
+      TraverseEntryKind::Entry => {
         if config.files {
-          println!("{}{}", level_spacing, name);
+          println!("{}{}", depth_spacing, entry.name);
         }
       }
-      TreeEntry::Subtree(name, items) => {
+      TraverseEntryKind::Subtree => {
         if config.dirs {
-          println!("{}{}", level_spacing, name);
+          println!("{}{}", depth_spacing, entry.name);
         }
-
-        output_tree(level + 1, items, config);
       }
     }
-  }
+  });
 }
