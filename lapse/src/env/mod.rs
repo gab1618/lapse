@@ -53,6 +53,11 @@ impl From<String> for EnvValue {
     Self::String(value)
   }
 }
+impl From<&str> for EnvValue {
+  fn from(value: &str) -> Self {
+    value.to_string().into()
+  }
+}
 impl From<HashMap<String, EnvValue>> for EnvValue {
   fn from(value: HashMap<String, EnvValue>) -> Self {
     Self::Object(value)
