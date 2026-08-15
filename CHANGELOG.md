@@ -12,6 +12,7 @@ https://github.com/gab1618/lapse/compare/v0.1.1..HEAD
 ### Fixed
 
 - Wrong author email on packages metadata
+- Invalid env names being queried on switch command, due to flaws on the tree logic
 
 ## [0.1.1] - 2026-08-14
 
