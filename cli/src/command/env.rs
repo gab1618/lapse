@@ -8,8 +8,8 @@ fn output_env_tree(root: &Tree, current_env: String) {
     match entry.kind {
       TraverseEntryKind::Entry => {}
       TraverseEntryKind::Subtree => {
-        let marker = if current_env == entry.name { "*" } else { "" };
-        println!("{}{}{}", marker, depth_spacing, entry.name);
+        let marker = if current_env == entry.name { " *" } else { "" };
+        println!("{}{}{}", depth_spacing, entry.name, marker);
       }
     }
   });
