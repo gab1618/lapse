@@ -45,15 +45,13 @@ impl Lapse {
 mod test {
   use std::fs;
 
-  use crate::Lapse;
-  use tempfile::tempdir;
+  use crate::test::TempLapse;
 
   #[test]
   fn test_get_httponly_req() {
-    let temp_dir = tempdir().unwrap();
-    let lapse = Lapse::init(temp_dir.path()).unwrap();
+    let lapse = TempLapse::new();
     let example_req_content = include_str!("../../assets/without-markdown.md");
-    let example_req_path = temp_dir.path().join("requests/without-markdown.md");
+    let example_req_path = lapse.path().join("requests/without-markdown.md");
     fs::write(example_req_path, example_req_content).unwrap();
 
     let request_http = lapse.get_raw_request_http("without-markdown").unwrap();

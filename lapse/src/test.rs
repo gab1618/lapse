@@ -2,6 +2,7 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::ops::Deref;
 
+use lapse_template::templates::LapsePreset;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
@@ -18,7 +19,11 @@ pub struct TempLapse {
 impl TempLapse {
   pub fn new() -> Self {
     let temp_dir = tempdir().unwrap();
-    let lapse = Lapse::init(temp_dir.path()).unwrap();
+
+    let preset = LapsePreset::default();
+    preset.load(temp_dir.path()).unwrap();
+
+    let lapse = Lapse::open(temp_dir.path()).unwrap();
 
     Self {
       _tempdir: temp_dir,
@@ -67,12 +72,6 @@ impl Deref for TempLapse {
   fn deref(&self) -> &Self::Target {
     &self.lapse
   }
-}
-
-#[test]
-fn test_init_space() {
-  let temp_dir = tempdir().unwrap();
-  Lapse::init(temp_dir.path()).unwrap();
 }
 
 #[test]
