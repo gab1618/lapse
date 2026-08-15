@@ -46,6 +46,10 @@ impl Lapse {
 
     Ok(Self { path: as_buf })
   }
+
+  pub fn path(&self) -> &PathBuf {
+    &self.path
+  }
   fn requests_path(&self) -> PathBuf {
     self.path.join("requests")
   }

@@ -1,9 +1,9 @@
-use lapse::{Lapse, tree::resource::Resource};
-
-use crate::{
-  Error,
-  collection::{FlatlistReadConfig, output_tree},
+use lapse::{
+  Lapse,
+  tree::{FlatTreeConfig, resource::Resource},
 };
+
+use crate::{Error, collection::output_tree};
 
 pub mod env;
 pub mod init;
@@ -20,7 +20,7 @@ pub fn ls(path: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let collection = lapse.get_resource_tree(Resource::Requests, path)?;
 
-  let flatlist_config = FlatlistReadConfig::default().files(true).dirs(true);
+  let flatlist_config = FlatTreeConfig::default().include_dirs(true);
   output_tree(0, &collection, flatlist_config);
 
   Ok(())
