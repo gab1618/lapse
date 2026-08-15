@@ -933,7 +933,6 @@ name = "lapse"
 version = "0.2.0"
 dependencies = [
  "http",
- "lapse-template",
  "mlua",
  "reqwest",
  "serde",
