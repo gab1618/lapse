@@ -74,7 +74,7 @@ impl TryFrom<OpenApi> for LapsePreset {
 
   fn try_from(value: OpenApi) -> Result<Self, Self::Error> {
     let servers = value.servers.ok_or(OpenApiError::NoServerAvailable)?;
-    let main_server = servers.get(0).ok_or(OpenApiError::NoServerAvailable)?;
+    let main_server = servers.first().ok_or(OpenApiError::NoServerAvailable)?;
     let base_url = &main_server.url;
 
     let mut request_files = vec![];
