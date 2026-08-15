@@ -26,25 +26,14 @@ impl From<LapsePreset> for TestTemplate {
 
 #[test]
 fn test_load_template() {
-  let template = LapsePreset {
-    scripts: vec![
-      TemplateEntry {
-        name: "script.lua".to_string(),
-        content: "print('hey')".to_string(),
-      }
-      .into(),
-    ]
-    .into(),
-    requests: vec![
-      TemplateEntry {
-        name: "request.md".to_string(),
-        content: "GET https://httpbin.org/get".to_string(),
-      }
-      .into(),
-    ]
-    .into(),
-    envs: Default::default(),
-  };
+  use TemplateEntry::File;
+  let template = LapsePreset::new(vec![
+    File("scripts/script.lua".into(), "print('hey')".into()),
+    File(
+      "requests/request.md".into(),
+      "GET https://httpbin.org/get".into(),
+    ),
+  ]);
   let temp = TestTemplate::from(template);
   temp.load();
   // TODO: validate further

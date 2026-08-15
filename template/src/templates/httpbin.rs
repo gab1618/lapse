@@ -2,37 +2,30 @@ use crate::templates::{LapsePreset, TemplateEntry};
 
 impl LapsePreset {
   pub fn httpbin() -> Self {
-    let requests: Vec<(String, String)> = vec![
-      (
+    use TemplateEntry::File;
+
+    Self::new(vec![
+      File(
         "get.md".to_string(),
         include_str!("../../templates/httpbin/requests/get.md").to_string(),
       ),
-      (
+      File(
         "post.md".to_string(),
         include_str!("../../templates/httpbin/requests/post.md").to_string(),
       ),
-      (
+      File(
         "patch.md".to_string(),
         include_str!("../../templates/httpbin/requests/patch.md").to_string(),
       ),
-      (
+      File(
         "delete.md".to_string(),
         include_str!("../../templates/httpbin/requests/delete.md").to_string(),
       ),
-      (
+      File(
         "put.md".to_string(),
         include_str!("../../templates/httpbin/requests/put.md").to_string(),
       ),
-    ];
-    Self {
-      requests: requests
-        .into_iter()
-        .map(|(name, content)| TemplateEntry { name, content }.into())
-        .collect::<Vec<_>>()
-        .into(),
-      scripts: Default::default(),
-      envs: Default::default(),
-    }
+    ])
   }
 }
 
