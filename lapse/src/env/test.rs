@@ -1,19 +1,16 @@
 use std::collections::HashMap;
 
-use tempfile::tempdir;
-
 use crate::{
-  Lapse,
   env::{
     Env, EnvValue,
     hook::{Event, HookEntry},
   },
+  test::TempLapse,
 };
 
 #[test]
 fn test_switch_env() {
-  let temp_dir = tempdir().unwrap();
-  let lapse = Lapse::init(temp_dir.path()).unwrap();
+  let lapse = TempLapse::new();
 
   let ex_env = Env::default();
 
@@ -28,8 +25,7 @@ fn test_switch_env() {
 
 #[test]
 fn test_read_env() {
-  let temp_dir = tempdir().unwrap();
-  let lapse = Lapse::init(temp_dir.path()).unwrap();
+  let lapse = TempLapse::new();
 
   let mut ex_env = Env::default();
 
@@ -63,4 +59,27 @@ fn test_parse_asset_env_json() {
     parsed.get("name").unwrap(),
     &EnvValue::String("John".into())
   );
+}
+
+#[test]
+fn test_env_inheritance() {
+  let lapse = TempLapse::new();
+
+  let mut child = Env::default();
+  let mut parent = Env::default();
+
+  child.variables.insert("auth".into(), true.into());
+  parent.variables.insert("auth".into(), false.into());
+  parent.variables.insert("name".into(), "John Doe".into());
+
+  lapse.set_env(&parent, "default").unwrap();
+  lapse.set_env(&child, "default/auth").unwrap();
+
+  let child = lapse.get_env("default/auth").unwrap();
+
+  let found_auth = child.variables.get("auth").unwrap();
+  assert_eq!(found_auth, &true.into());
+
+  let found_name = child.variables.get("name").unwrap();
+  assert_eq!(found_name, &EnvValue::String("John Doe".into()));
 }

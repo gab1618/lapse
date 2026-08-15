@@ -1,7 +1,4 @@
-use std::{
-  collections::HashMap,
-  fs::{self, OpenOptions},
-};
+use std::{collections::HashMap, fs::OpenOptions};
 
 use crate::{
   Lapse,
@@ -23,6 +20,27 @@ pub struct Env {
   pub variables: HashMap<String, EnvValue>,
   pub secrets: HashMap<String, EnvValue>,
   pub hooks: HashMap<Event, HookEntry>,
+}
+
+impl std::ops::Add for Env {
+  type Output = Env;
+
+  /// Adds two envs together, prioritizing the right operand
+  fn add(mut self, rhs: Self) -> Self::Output {
+    for (key, variable) in rhs.variables {
+      self.variables.insert(key, variable);
+    }
+
+    for (key, secret) in rhs.secrets {
+      self.secrets.insert(key, secret);
+    }
+
+    for (key, hook) in rhs.hooks {
+      self.hooks.insert(key, hook);
+    }
+
+    self
+  }
 }
 
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -54,6 +72,11 @@ impl From<i64> for EnvValue {
 impl From<String> for EnvValue {
   fn from(value: String) -> Self {
     Self::String(value)
+  }
+}
+impl From<&str> for EnvValue {
+  fn from(value: &str) -> Self {
+    value.to_string().into()
   }
 }
 impl From<HashMap<String, EnvValue>> for EnvValue {
@@ -112,43 +135,20 @@ impl Lapse {
       .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
       .unwrap_or_default();
 
-    Ok(Env {
+    let mut resulting_env = Env {
       variables,
       secrets,
       hooks,
-    })
-  }
-  pub fn set_env(&self, env: &Env, name: &str) -> crate::Result<()> {
-    let full_env_path = self.env_path().join(name);
-    fs::create_dir_all(&full_env_path).map_err(EnvError::Create)?;
+    };
 
-    let variables = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("variables.json"))
-      .map_err(EnvError::OpenVariables)?;
+    let mut env_name_segments = name.split('/').collect::<Vec<&str>>();
+    if env_name_segments.len() > 1 {
+      env_name_segments.pop();
+      let parent_name = env_name_segments.join("/");
+      let parent = self.get_env(&parent_name)?;
+      resulting_env = parent + resulting_env;
+    }
 
-    serde_json::to_writer(variables, &env.variables).map_err(|_| EnvError::SerializeVariables)?;
-
-    let secrets = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("secrets.json"))
-      .map_err(EnvError::OpenVariables)?;
-
-    serde_json::to_writer(secrets, &env.secrets).map_err(|_| EnvError::SerializeVariables)?;
-
-    let hooks = OpenOptions::new()
-      .write(true)
-      .truncate(true)
-      .create(true)
-      .open(full_env_path.join("hooks.json"))
-      .map_err(EnvError::OpenVariables)?;
-
-    serde_json::to_writer(hooks, &env.hooks).map_err(|_| EnvError::SerializeVariables)?;
-
-    Ok(())
+    Ok(resulting_env)
   }
 }
