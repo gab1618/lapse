@@ -102,9 +102,9 @@ impl Tree {
           if config.dirs {
             entries.push(entry.clone());
           }
-          let sub_requests = items.as_flat(config);
-          for sub in sub_requests.into_iter() {
-            entries.push(sub);
+          let sub_entries = items.as_flat(config);
+          for sub in sub_entries.into_iter() {
+            entries.push(format!("{entry}/{sub}"));
           }
         }
       }

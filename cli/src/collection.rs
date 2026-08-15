@@ -20,4 +20,3 @@ pub fn output_tree(level: usize, root: &Tree, config: FlatTreeConfig) {
     }
   }
 }
-
