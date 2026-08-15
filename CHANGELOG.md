@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 https://github.com/gab1618/lapse/compare/v0.1.1..HEAD
 
+### Changed
+
+- Move space initialization logic templates package
+
 ### Fixed
 
 - Minor clippy warnings
