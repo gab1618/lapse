@@ -10,7 +10,6 @@ license = "GPL-3.0"
 exclude = ["assets"]
 
 [dependencies]
-lapse = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_yaml = "0.9.34"

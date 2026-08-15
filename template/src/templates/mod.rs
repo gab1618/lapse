@@ -10,79 +10,49 @@ pub mod httpbin;
 pub mod openapi;
 pub mod request_file;
 
-pub struct TemplateEntry {
-  pub name: String,
-  pub content: String,
-}
-
-pub enum TemplateItem {
-  Template(TemplateEntry),
-  Collection(TemplateCollection),
-}
-
-impl From<TemplateEntry> for TemplateItem {
-  fn from(value: TemplateEntry) -> Self {
-    Self::Template(value)
-  }
-}
-
-impl From<TemplateCollection> for TemplateItem {
-  fn from(value: TemplateCollection) -> Self {
-    Self::Collection(value)
-  }
-}
-
-#[derive(Default)]
-pub struct TemplateCollection {
-  name: String,
-  items: Vec<TemplateItem>,
-}
-
-impl From<Vec<TemplateItem>> for TemplateCollection {
-  fn from(value: Vec<TemplateItem>) -> Self {
-    Self {
-      name: Default::default(),
-      items: value,
-    }
-  }
-}
-
-impl TemplateCollection {
-  pub fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
-    let base = path.as_ref().join(&self.name);
-    fs::create_dir_all(&base).map_err(Error::CreateCollection)?;
-
-    for entry in self.items.iter() {
-      match entry {
-        TemplateItem::Template(entry) => {
-          let entry_path = base.join(&entry.name);
-          fs::write(entry_path, &entry.content).map_err(Error::CreateTemplateFile)?;
-        }
-        TemplateItem::Collection(coll) => {
-          coll.load(&base)?;
-        }
-      }
-    }
-
-    Ok(())
-  }
+pub enum TemplateEntry {
+  File(String, String),
+  Dir(String),
 }
 
 /// Presets are templates that can be used to initialize spaces. Since they import multiple types of
 /// resources, we can't use them to import into existing spaces, only initialize.
 pub struct LapsePreset {
-  pub scripts: TemplateCollection,
-  pub requests: TemplateCollection,
-  pub envs: TemplateCollection,
+  entries: Vec<TemplateEntry>,
 }
 
 impl LapsePreset {
+  pub fn new(entries: Vec<TemplateEntry>) -> Self {
+    Self { entries }
+  }
+  pub fn load_empty<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
+    let base = path.as_ref();
+
+    fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
+
+    Ok(())
+  }
   pub fn load<P: AsRef<Path>>(&self, path: P) -> crate::Result<()> {
     let base = path.as_ref();
 
-    self.scripts.load(base.join("scripts"))?;
-    self.requests.load(base.join("requests"))?;
-    self.envs.load(base.join("env"))?;
+    self.load_empty(base)?;
+
+    fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
+
+    for entry in self.entries.iter() {
+      match entry {
+        TemplateEntry::File(name, content) => {
+          fs::write(base.join(name), content).map_err(Error::CreateTemplateFile)?
+        }
+        TemplateEntry::Dir(name) => fs::create_dir_all(name).map_err(Error::CreateCollection)?,
+      }
+    }
 
     Ok(())
   }

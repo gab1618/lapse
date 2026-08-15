@@ -90,22 +90,13 @@ impl TryFrom<OpenApi> for LapsePreset {
           description: details.description.unwrap_or_default(),
         };
         let request_file_content = format!("{}", request_file);
-        let file_name = format!("{}.md", method.to_string().to_lowercase());
+        let file_name = format!("requests/{}.md", method.to_string().to_lowercase());
 
-        request_files.push(
-          TemplateEntry {
-            name: file_name,
-            content: request_file_content,
-          }
-          .into(),
-        );
+        request_files.push(TemplateEntry::File(file_name, request_file_content));
       }
     }
 
-    Ok(LapsePreset {
-      requests: request_files.into(),
-      ..Default::default()
-    })
+    Ok(LapsePreset::new(request_files))
   }
 }
 

@@ -1,13 +1,11 @@
 use std::{fs, path::PathBuf};
 
-use lapse::Lapse;
 use lapse_template::templates::{LapsePreset, openapi::OpenApi};
 
 use crate::{Error, cli::AvailablePreset};
 
 pub fn init(preset: Option<AvailablePreset>, schema: Option<PathBuf>) -> crate::Result<()> {
   let curr_dir = std::env::current_dir().map_err(Error::GetCurrentDir)?;
-  Lapse::init(&curr_dir)?;
 
   let selected_preset = schema
     .and_then(|schema_path| {
