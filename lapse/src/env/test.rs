@@ -60,3 +60,26 @@ fn test_parse_asset_env_json() {
     &EnvValue::String("John".into())
   );
 }
+
+#[test]
+fn test_env_inheritance() {
+  let lapse = TempLapse::new();
+
+  let mut child = Env::default();
+  let mut parent = Env::default();
+
+  child.variables.insert("auth".into(), true.into());
+  parent.variables.insert("auth".into(), false.into());
+  parent.variables.insert("name".into(), "John Doe".into());
+
+  lapse.set_env(&parent, "default").unwrap();
+  lapse.set_env(&child, "default/auth").unwrap();
+
+  let child = lapse.get_env("default/auth").unwrap();
+
+  let found_auth = child.variables.get("auth").unwrap();
+  assert_eq!(found_auth, &true.into());
+
+  let found_name = child.variables.get("name").unwrap();
+  assert_eq!(found_name, &EnvValue::String("John Doe".into()));
+}

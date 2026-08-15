@@ -22,6 +22,27 @@ pub struct Env {
   pub hooks: HashMap<Event, HookEntry>,
 }
 
+impl std::ops::Add for Env {
+  type Output = Env;
+
+  /// Adds two envs together, prioritizing the right operand
+  fn add(mut self, rhs: Self) -> Self::Output {
+    for (key, variable) in rhs.variables {
+      self.variables.insert(key, variable);
+    }
+
+    for (key, secret) in rhs.secrets {
+      self.secrets.insert(key, secret);
+    }
+
+    for (key, hook) in rhs.hooks {
+      self.hooks.insert(key, hook);
+    }
+
+    self
+  }
+}
+
 #[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(untagged)]
 pub enum EnvValue {
@@ -114,10 +135,20 @@ impl Lapse {
       .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
       .unwrap_or_default();
 
-    Ok(Env {
+    let mut resulting_env = Env {
       variables,
       secrets,
       hooks,
-    })
+    };
+
+    let mut env_name_segments = name.split('/').collect::<Vec<&str>>();
+    if env_name_segments.len() > 1 {
+      env_name_segments.pop();
+      let parent_name = env_name_segments.join("/");
+      let parent = self.get_env(&parent_name)?;
+      resulting_env = parent + resulting_env;
+    }
+
+    Ok(resulting_env)
   }
 }
