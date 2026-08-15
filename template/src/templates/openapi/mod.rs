@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use crate::templates::{
   LapsePreset, TemplateEntry, openapi::error::OpenApiError, request_file::RequestFile,
@@ -47,9 +47,9 @@ pub enum PathMethod {
   Trace,
 }
 
-impl ToString for PathMethod {
-  fn to_string(&self) -> String {
-    match self {
+impl Display for PathMethod {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let as_str = match self {
       PathMethod::Get => "GET",
       PathMethod::Post => "POST",
       PathMethod::Patch => "PATCH",
@@ -58,8 +58,8 @@ impl ToString for PathMethod {
       PathMethod::Head => "HEAD",
       PathMethod::Options => "OPTIONS",
       PathMethod::Trace => "TRACE",
-    }
-    .to_string()
+    };
+    write!(f, "{as_str}")
   }
 }
 
