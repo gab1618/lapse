@@ -11,7 +11,8 @@ https://github.com/gab1618/lapse/compare/v0.1.1..HEAD
 
 ### Changed
 
-- Move space initialization logic templates package
+- Move space initialization logic to templates package
+- Simplify template creation API
 
 ### Fixed
 
