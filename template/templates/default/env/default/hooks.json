@@ -1,0 +1,10 @@
+{
+  "pre-request": {
+    "enabled": false,
+    "scripts": []
+  },
+  "post-request": {
+    "enabled": false,
+    "scripts": []
+  }
+}

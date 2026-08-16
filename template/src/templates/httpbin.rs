@@ -4,7 +4,9 @@ impl LapsePreset {
   pub fn httpbin() -> Self {
     use TemplateEntry::File;
 
-    Self::new(vec![
+    let base = Self::default();
+
+    let superset = Self::new(vec![
       File(
         "requests/get.md".to_string(),
         include_str!("../../templates/httpbin/requests/get.md").to_string(),
@@ -25,7 +27,9 @@ impl LapsePreset {
         "requests/put.md".to_string(),
         include_str!("../../templates/httpbin/requests/put.md").to_string(),
       ),
-    ])
+    ]);
+
+    base + superset
   }
 }
 
