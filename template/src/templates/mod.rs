@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, ops, path::Path};
 
 use crate::error::Error;
 
@@ -50,5 +50,18 @@ impl LapsePreset {
     }
 
     Ok(())
+  }
+}
+
+impl ops::Add for LapsePreset {
+  type Output = LapsePreset;
+
+  /// Adds together two presets
+  fn add(mut self, rhs: Self) -> Self::Output {
+    for entry in rhs.entries {
+      self.entries.push(entry);
+    }
+
+    self
   }
 }
