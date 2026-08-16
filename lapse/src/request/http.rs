@@ -16,6 +16,8 @@ impl Lapse {
       text: log.text,
       status: log.status,
       headers: log.headers,
+      duration: log.duration,
+      timestamp: log.timestamp,
     };
 
     self.save_log(&log)

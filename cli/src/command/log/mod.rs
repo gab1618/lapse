@@ -25,10 +25,9 @@ fn append_to_log_until_fills(
   entries: &mut MutexGuard<'_, ResponseLogsIter>,
 ) -> crate::Result<()> {
   while missing_lines > 0 {
-    if let Some((entry_name, new_log)) = entries.next() {
+    if let Some(new_log) = entries.next() {
       let lines_written = new_log.lines().count() + 1;
       missing_lines -= lines_written;
-      writeln!(thread_pager, "{}", entry_name).map_err(LogError::SendToPager)?;
       writeln!(thread_pager, "{}", new_log).map_err(LogError::SendToPager)?;
     } else {
       break;
@@ -89,8 +88,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
     let entries_iter = lapse.logs_iter(&selected_request);
-    for (name, entry) in entries_iter {
-      println!("{name}");
+    for entry in entries_iter {
       println!("{entry}");
     }
   }

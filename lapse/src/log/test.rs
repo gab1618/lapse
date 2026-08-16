@@ -9,14 +9,14 @@ fn test_retrieve_log() {
     request: "testing".to_string(),
     text: "{}".to_string(),
     status: 200,
-    headers: Default::default(),
+    ..Default::default()
   };
 
   let second_entry = ResponseLog {
     request: "testing".to_string(),
     text: "second".to_string(),
     status: 201,
-    headers: Default::default(),
+    ..Default::default()
   };
 
   lapse.save_log(&first_entry).unwrap();
@@ -24,8 +24,8 @@ fn test_retrieve_log() {
 
   let mut entries = lapse.logs_iter("testing");
 
-  let (_, last_log) = entries.next().unwrap();
-  let (_, first_log) = entries.next().unwrap();
+  let last_log = entries.next().unwrap();
+  let first_log = entries.next().unwrap();
 
   assert_eq!(ResponseLog::from_str(&last_log).unwrap(), second_entry);
 

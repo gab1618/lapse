@@ -16,15 +16,20 @@ use crate::{Lapse, log::error::LogError};
 mod test;
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Default)]
 pub struct ResponseLog {
   pub request: String,
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
+  pub duration: u128,
+  pub timestamp: u128,
 }
 
 impl Display for ResponseLog {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "{}", self.timestamp)?;
+    writeln!(f, "{}", self.duration)?;
     writeln!(f, "{} {}", self.request, self.status)?;
     for (header, value) in &self.headers {
       writeln!(f, "{}: {}", header, value)?;
@@ -39,6 +44,12 @@ impl FromStr for ResponseLog {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut lines = s.lines();
+    let raw_timestamp = lines.next().unwrap();
+    let raw_duration = lines.next().unwrap();
+
+    let timestamp = u128::from_str(raw_timestamp).unwrap();
+    let duration = u128::from_str(raw_duration).unwrap();
+
     let first = lines.next().ok_or(LogError::ParseHead)?;
     let (request, status) = first.split_once(" ").ok_or(LogError::ParseHead)?;
 
@@ -59,6 +70,8 @@ impl FromStr for ResponseLog {
 
     Ok(Self {
       request: request.to_string(),
+      duration,
+      timestamp,
       text: body,
       status,
       headers,
@@ -83,20 +96,15 @@ pub struct ResponseLogsIter {
 }
 
 impl Iterator for ResponseLogsIter {
-  type Item = (String, String);
+  type Item = String;
 
   fn next(&mut self) -> Option<Self::Item> {
     let name = self.src.pop()?;
-
     let full_entry_path = self.lapse.response_logs_path(&self.request).join(&name);
 
-    let mut log = OpenOptions::new().read(true).open(full_entry_path).ok()?;
+    let contents = fs::read_to_string(full_entry_path).ok()?;
 
-    let mut contents = String::new();
-
-    log.read_to_string(&mut contents).ok()?;
-
-    Some((name, contents))
+    Some(contents)
   }
 }
 
@@ -143,7 +151,7 @@ impl Lapse {
 
     let valid_entries = entries_paths.filter(|path| !path.is_dir());
 
-    let mut entries_names = valid_entries
+    let entries_names = valid_entries
       .filter_map(|entry| {
         let file_name = entry.file_name()?;
         let str_name = file_name.to_str()?;
