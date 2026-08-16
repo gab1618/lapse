@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 https://github.com/gab1618/lapse/compare/latest..HEAD
 
+### Added
+
+- gitignore to templates
+- default env files
+
+### Fixed
+
+- Template files being created on wrong paths
+- Template directories not working
+
 ## [0.2.2] - 2026-08-15
 
 ### Added

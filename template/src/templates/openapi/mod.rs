@@ -96,7 +96,7 @@ impl TryFrom<OpenApi> for LapsePreset {
       }
     }
 
-    Ok(LapsePreset::new(request_files))
+    Ok(LapsePreset::default() + LapsePreset::new(request_files))
   }
 }
 

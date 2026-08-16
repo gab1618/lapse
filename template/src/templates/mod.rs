@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, ops, path::Path};
 
 use crate::error::Error;
 
@@ -30,7 +30,7 @@ impl LapsePreset {
 
     fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
     fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
+    fs::create_dir_all(base.join("env")).map_err(crate::Error::CreateTemplateFile)?;
     fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
 
     Ok(())
@@ -40,20 +40,30 @@ impl LapsePreset {
 
     self.load_empty(base)?;
 
-    fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
-
     for entry in self.entries.iter() {
       match entry {
         TemplateEntry::File(name, content) => {
           fs::write(base.join(name), content).map_err(Error::CreateTemplateFile)?
         }
-        TemplateEntry::Dir(name) => fs::create_dir_all(name).map_err(Error::CreateCollection)?,
+        TemplateEntry::Dir(name) => {
+          fs::create_dir_all(base.join(name)).map_err(Error::CreateCollection)?
+        }
       }
     }
 
     Ok(())
+  }
+}
+
+impl ops::Add for LapsePreset {
+  type Output = LapsePreset;
+
+  /// Adds together two presets
+  fn add(mut self, rhs: Self) -> Self::Output {
+    for entry in rhs.entries {
+      self.entries.push(entry);
+    }
+
+    self
   }
 }
