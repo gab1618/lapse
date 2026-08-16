@@ -1,7 +1,7 @@
 pub mod error;
 
 use std::{
-  collections::HashMap,
+  collections::{BTreeSet, HashMap},
   fmt::Display,
   fs::{self, DirEntry, OpenOptions},
   io::{Read, Write},
@@ -171,13 +171,15 @@ impl Lapse {
 
     let valid_entries = entries_paths.filter(|path| !path.is_dir());
 
-    let entries_names = valid_entries
+    let ordered_entries_names = valid_entries
       .filter_map(|entry| {
         let file_name = entry.file_name()?;
         let str_name = file_name.to_str()?;
         Some(str_name.to_string())
       })
-      .collect::<Vec<_>>();
+      .collect::<BTreeSet<_>>();
+
+    let entries_names: Vec<String> = ordered_entries_names.into_iter().collect();
 
     RawResponseLogsIter {
       lapse: self.clone(),
