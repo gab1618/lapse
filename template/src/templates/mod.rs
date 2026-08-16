@@ -45,7 +45,9 @@ impl LapsePreset {
         TemplateEntry::File(name, content) => {
           fs::write(base.join(name), content).map_err(Error::CreateTemplateFile)?
         }
-        TemplateEntry::Dir(name) => fs::create_dir_all(name).map_err(Error::CreateCollection)?,
+        TemplateEntry::Dir(name) => {
+          fs::create_dir_all(base.join(name)).map_err(Error::CreateCollection)?
+        }
       }
     }
 
