@@ -5,7 +5,7 @@ impl Default for LapsePreset {
     use TemplateEntry::File;
 
     Self::new(vec![File(
-      "get.md".to_string(),
+      "requests/get.md".to_string(),
       include_str!("../../templates/default/requests/sample.md").to_string(),
     )])
   }
