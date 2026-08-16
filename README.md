@@ -11,7 +11,7 @@ Http CLI focused on UX and git-heavy workflow
 Making requests from CLI can be very intimidating. I myself have tried some tools, and I always ended up falling back to Insomnia.
 
 Lapse's design is built on top of files that will define the whole behavior.
-Not only this simplifies the whole proccess of using it, but it also lets you use your favorite VCS.
+Not only this simplifies the whole proccess of using it, but it also lets you use your favorite tools.
 
 ## Features
 
