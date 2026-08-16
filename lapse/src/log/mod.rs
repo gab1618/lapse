@@ -151,8 +151,6 @@ impl Lapse {
       })
       .collect::<Vec<_>>();
 
-    entries_names.reverse();
-
     ResponseLogsIter {
       lapse: self.clone(),
       request: request.to_string(),
