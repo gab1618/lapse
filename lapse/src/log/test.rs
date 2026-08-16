@@ -1,7 +1,4 @@
-use crate::{
-  log::{ResponseLog, ResponseLogsIter},
-  test::TempLapse,
-};
+use crate::{log::ResponseLog, test::TempLapse};
 
 #[test]
 fn test_retrieve_log() {
@@ -24,8 +21,7 @@ fn test_retrieve_log() {
   lapse.save_log(&first_entry).unwrap();
   lapse.save_log(&last_entry).unwrap();
 
-  let mut entries = lapse.logs_iter("testing");
-  let mut entries = ResponseLogsIter::new(&mut entries);
+  let mut entries = lapse.logs_iter("testing").into_parsed();
 
   assert_eq!(entries.next().unwrap(), last_entry);
   assert_eq!(entries.next().unwrap(), first_entry);

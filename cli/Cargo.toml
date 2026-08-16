@@ -19,6 +19,8 @@ nucleo-matcher = "0.3.1"
 minus = { version = "5.7.2", features = ["static_output"] }
 is-terminal = "0.4.17"
 lapse-template = { workspace = true }
+chrono = "0.4.45"
+colored = "3.1.1"
 
 [[bin]]
 name = "lapse"

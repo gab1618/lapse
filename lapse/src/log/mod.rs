@@ -94,17 +94,22 @@ pub struct RawResponseLogsIter {
   request: String,
   src: Vec<String>,
 }
-
-pub struct ResponseLogsIter<'a, I: Iterator<Item = String>> {
-  src: &'a mut I,
+impl RawResponseLogsIter {
+  pub fn into_parsed(self) -> ResponseLogsIter {
+    ResponseLogsIter::new(self)
+  }
 }
-impl<'a, I: Iterator<Item = String>> ResponseLogsIter<'a, I> {
-  pub fn new(src: &'a mut I) -> Self {
+
+pub struct ResponseLogsIter {
+  src: RawResponseLogsIter,
+}
+impl ResponseLogsIter {
+  pub fn new(src: RawResponseLogsIter) -> Self {
     Self { src }
   }
 }
 
-impl<'a, I: Iterator<Item = String>> Iterator for ResponseLogsIter<'a, I> {
+impl Iterator for ResponseLogsIter {
   type Item = ResponseLog;
 
   fn next(&mut self) -> Option<Self::Item> {
