@@ -3,7 +3,7 @@ pub mod error;
 use std::{
   collections::HashMap,
   fmt::Display,
-  fs::{self, OpenOptions},
+  fs::{self, DirEntry, OpenOptions},
   io::{Read, Write},
   path::PathBuf,
   str::FromStr,
@@ -133,16 +133,21 @@ impl Lapse {
   pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
     let request_logs_path = self.response_logs_path(request);
 
-    let entries = fs::read_dir(request_logs_path).map_err(LogError::ListLogFiles)?;
+    let entries: Vec<std::io::Result<DirEntry>> = fs::read_dir(request_logs_path)
+      .map(|inner| inner.collect())
+      .unwrap_or_default();
 
-    let mut entries_names = entries
-      .filter_map(|entry| entry.ok())
-      .filter(|entry| !entry.path().is_dir())
+    let entries_paths = entries
+      .into_iter()
+      .filter_map(|entry| entry.ok().map(|sub| sub.path()));
+
+    let valid_entries = entries_paths.filter(|path| !path.is_dir());
+
+    let mut entries_names = valid_entries
       .filter_map(|entry| {
-        let file_name = entry.file_name();
-        let str_name = file_name.to_str();
-
-        str_name.map(|inner| inner.to_string())
+        let file_name = entry.file_name()?;
+        let str_name = file_name.to_str()?;
+        Some(str_name.to_string())
       })
       .collect::<Vec<_>>();
 
