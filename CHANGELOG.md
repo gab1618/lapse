@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-https://github.com/gab1618/lapse/compare/v0.2.2..HEAD
+https://github.com/gab1618/lapse/compare/latest..HEAD
 
 ## [0.2.2] - 2026-08-15
 
