@@ -89,13 +89,33 @@ impl ResponseLog {
 }
 
 #[derive(Clone)]
-pub struct ResponseLogsIter {
+pub struct RawResponseLogsIter {
   lapse: Lapse,
   request: String,
   src: Vec<String>,
 }
 
-impl Iterator for ResponseLogsIter {
+pub struct ResponseLogsIter<'a, I: Iterator<Item = String>> {
+  src: &'a mut I,
+}
+impl<'a, I: Iterator<Item = String>> ResponseLogsIter<'a, I> {
+  pub fn new(src: &'a mut I) -> Self {
+    Self { src }
+  }
+}
+
+impl<'a, I: Iterator<Item = String>> Iterator for ResponseLogsIter<'a, I> {
+  type Item = ResponseLog;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let raw = self.src.next()?;
+    let parsed = ResponseLog::from_str(&raw).ok()?;
+
+    Some(parsed)
+  }
+}
+
+impl Iterator for RawResponseLogsIter {
   type Item = String;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -138,7 +158,7 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn logs_iter(&self, request: &str) -> ResponseLogsIter {
+  pub fn logs_iter(&self, request: &str) -> RawResponseLogsIter {
     let request_logs_path = self.response_logs_path(request);
 
     let entries: Vec<std::io::Result<DirEntry>> = fs::read_dir(request_logs_path)
@@ -159,7 +179,7 @@ impl Lapse {
       })
       .collect::<Vec<_>>();
 
-    ResponseLogsIter {
+    RawResponseLogsIter {
       lapse: self.clone(),
       request: request.to_string(),
       src: entries_names,

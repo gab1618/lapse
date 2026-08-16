@@ -6,7 +6,7 @@ use std::{
 
 use is_terminal::IsTerminal;
 use lapse::{
-  log::ResponseLogsIter,
+  log::RawResponseLogsIter,
   tree::{FlatTreeConfig, resource::Resource},
 };
 
@@ -22,7 +22,7 @@ pub mod error;
 fn append_to_log_until_fills(
   thread_pager: &mut Pager,
   mut missing_lines: usize,
-  entries: &mut MutexGuard<'_, ResponseLogsIter>,
+  entries: &mut MutexGuard<'_, RawResponseLogsIter>,
 ) -> crate::Result<()> {
   while missing_lines > 0 {
     if let Some(new_log) = entries.next() {
