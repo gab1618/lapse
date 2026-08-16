@@ -40,11 +40,6 @@ impl LapsePreset {
 
     self.load_empty(base)?;
 
-    fs::create_dir_all(base.join(".lapse")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("requests")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("env/default")).map_err(crate::Error::CreateTemplateFile)?;
-    fs::create_dir_all(base.join("scripts")).map_err(crate::Error::CreateTemplateFile)?;
-
     for entry in self.entries.iter() {
       match entry {
         TemplateEntry::File(name, content) => {
