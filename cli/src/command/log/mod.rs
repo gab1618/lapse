@@ -46,7 +46,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
   let selected_request = select_tree_entry(&tree, request, flatlist_config)?;
 
   if io::stdout().is_terminal() {
-    let entries_iter = lapse.logs_iter(&selected_request)?;
+    let entries_iter = lapse.logs_iter(&selected_request);
 
     let shared_entries_iter = Arc::new(Mutex::new(entries_iter));
     let pager = Pager::new();
@@ -88,7 +88,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
 
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
-    let entries_iter = lapse.logs_iter(&selected_request)?;
+    let entries_iter = lapse.logs_iter(&selected_request);
     for (name, entry) in entries_iter {
       println!("{name}");
       println!("{entry}");

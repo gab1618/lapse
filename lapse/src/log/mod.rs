@@ -130,7 +130,7 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
+  pub fn logs_iter(&self, request: &str) -> ResponseLogsIter {
     let request_logs_path = self.response_logs_path(request);
 
     let entries: Vec<std::io::Result<DirEntry>> = fs::read_dir(request_logs_path)
@@ -153,10 +153,10 @@ impl Lapse {
 
     entries_names.reverse();
 
-    Ok(ResponseLogsIter {
+    ResponseLogsIter {
       lapse: self.clone(),
       request: request.to_string(),
       src: entries_names,
-    })
+    }
   }
 }

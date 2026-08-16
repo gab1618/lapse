@@ -22,7 +22,7 @@ fn test_retrieve_log() {
   lapse.save_log(&first_entry).unwrap();
   lapse.save_log(&second_entry).unwrap();
 
-  let mut entries = lapse.logs_iter("testing").unwrap();
+  let mut entries = lapse.logs_iter("testing");
 
   let (_, last_log) = entries.next().unwrap();
   let (_, first_log) = entries.next().unwrap();
