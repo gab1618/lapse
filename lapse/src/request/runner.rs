@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{
+  collections::HashMap,
+  fmt::Display,
+  time::{SystemTime, UNIX_EPOCH},
+};
 
 use mlua::{IntoLua, Lua, Value};
 use reqwest::Client;
@@ -22,6 +26,8 @@ pub struct RunnerResponse {
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
+  pub timestamp: u128,
+  pub duration: u128,
 }
 
 impl IntoLua for RunnerResponse {
@@ -72,6 +78,12 @@ impl RequestRunner {
     Ok(result)
   }
   pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
+    let start_time = SystemTime::now();
+    let start_timestamp = start_time
+      .duration_since(UNIX_EPOCH)
+      .expect("Time should go forward")
+      .as_nanos();
+
     if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
       for hook in pre_request_hooks {
         let loaded = self.runtime.load(hook);
@@ -163,6 +175,11 @@ impl RequestRunner {
       text: response_body,
       status: status_code,
       headers: log_headers,
+      timestamp: start_timestamp,
+      duration: start_time
+        .elapsed()
+        .expect("Time should go forward")
+        .as_nanos(),
     };
 
     Ok(response)
