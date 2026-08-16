@@ -22,7 +22,7 @@ pub struct RequestRunner {
 }
 
 #[derive(Clone)]
-pub struct RunnerResponse {
+pub struct Response {
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
@@ -30,7 +30,7 @@ pub struct RunnerResponse {
   pub duration: u128,
 }
 
-impl IntoLua for RunnerResponse {
+impl IntoLua for Response {
   fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
     let table = lua.create_table()?;
 
@@ -42,7 +42,7 @@ impl IntoLua for RunnerResponse {
   }
 }
 
-impl Display for RunnerResponse {
+impl Display for Response {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{}", self.status)?;
     for (header, value) in &self.headers {
@@ -77,7 +77,7 @@ impl RequestRunner {
 
     Ok(result)
   }
-  pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
+  pub async fn execute(&self, req: &str) -> crate::Result<Response> {
     let start_time = SystemTime::now();
     let start_timestamp = start_time
       .duration_since(UNIX_EPOCH)
@@ -171,7 +171,7 @@ impl RequestRunner {
       }
     }
 
-    let response = RunnerResponse {
+    let response = Response {
       text: response_body,
       status: status_code,
       headers: log_headers,
