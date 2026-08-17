@@ -138,8 +138,9 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
 
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
-    let entries_iter = lapse.logs_iter(&selected_request);
-    for entry in entries_iter {
+    let entries_iter = lapse.logs_iter(&selected_request).into_parsed();
+    let pretty_entries = entries_iter.map(FormatedLogEntry);
+    for entry in pretty_entries {
       println!("{entry}");
     }
   }
