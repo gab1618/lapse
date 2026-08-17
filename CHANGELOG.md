@@ -13,11 +13,15 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 
 - gitignore to templates
 - default env files
+- Pretty colored log formatting
+- Timestamp and duration informations to log
 
 ### Fixed
 
 - Template files being created on wrong paths
 - Template directories not working
+- Broken log entries would break the pager instead of just being ignored
+- Trying to log request without logs would trigger an error instead of just showing no log
 
 ## [0.2.2] - 2026-08-15
 

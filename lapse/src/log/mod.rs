@@ -1,9 +1,9 @@
 pub mod error;
 
 use std::{
-  collections::HashMap,
+  collections::{BTreeSet, HashMap},
   fmt::Display,
-  fs::{self, OpenOptions},
+  fs::{self, DirEntry, OpenOptions},
   io::{Read, Write},
   path::PathBuf,
   str::FromStr,
@@ -16,15 +16,20 @@ use crate::{Lapse, log::error::LogError};
 mod test;
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Default)]
 pub struct ResponseLog {
   pub request: String,
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
+  pub duration: u128,
+  pub timestamp: u128,
 }
 
 impl Display for ResponseLog {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "{}", self.timestamp)?;
+    writeln!(f, "{}", self.duration)?;
     writeln!(f, "{} {}", self.request, self.status)?;
     for (header, value) in &self.headers {
       writeln!(f, "{}: {}", header, value)?;
@@ -39,6 +44,12 @@ impl FromStr for ResponseLog {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     let mut lines = s.lines();
+    let raw_timestamp = lines.next().unwrap();
+    let raw_duration = lines.next().unwrap();
+
+    let timestamp = u128::from_str(raw_timestamp).unwrap();
+    let duration = u128::from_str(raw_duration).unwrap();
+
     let first = lines.next().ok_or(LogError::ParseHead)?;
     let (request, status) = first.split_once(" ").ok_or(LogError::ParseHead)?;
 
@@ -59,6 +70,8 @@ impl FromStr for ResponseLog {
 
     Ok(Self {
       request: request.to_string(),
+      duration,
+      timestamp,
       text: body,
       status,
       headers,
@@ -76,27 +89,47 @@ impl ResponseLog {
 }
 
 #[derive(Clone)]
-pub struct ResponseLogsIter {
+pub struct RawResponseLogsIter {
   lapse: Lapse,
   request: String,
   src: Vec<String>,
 }
+impl RawResponseLogsIter {
+  pub fn into_parsed(self) -> ResponseLogsIter {
+    ResponseLogsIter::new(self)
+  }
+}
+
+pub struct ResponseLogsIter {
+  src: RawResponseLogsIter,
+}
+impl ResponseLogsIter {
+  pub fn new(src: RawResponseLogsIter) -> Self {
+    Self { src }
+  }
+}
 
 impl Iterator for ResponseLogsIter {
-  type Item = (String, String);
+  type Item = ResponseLog;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let raw = self.src.next()?;
+    let parsed = ResponseLog::from_str(&raw).ok()?;
+
+    Some(parsed)
+  }
+}
+
+impl Iterator for RawResponseLogsIter {
+  type Item = String;
 
   fn next(&mut self) -> Option<Self::Item> {
     let name = self.src.pop()?;
-
     let full_entry_path = self.lapse.response_logs_path(&self.request).join(&name);
 
-    let mut log = OpenOptions::new().read(true).open(full_entry_path).ok()?;
+    let contents = fs::read_to_string(full_entry_path).ok()?;
 
-    let mut contents = String::new();
-
-    log.read_to_string(&mut contents).ok()?;
-
-    Some((name, contents))
+    Some(contents)
   }
 }
 
@@ -130,28 +163,33 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn logs_iter(&self, request: &str) -> crate::Result<ResponseLogsIter> {
+  pub fn logs_iter(&self, request: &str) -> RawResponseLogsIter {
     let request_logs_path = self.response_logs_path(request);
 
-    let entries = fs::read_dir(request_logs_path).map_err(LogError::ListLogFiles)?;
+    let entries: Vec<std::io::Result<DirEntry>> = fs::read_dir(request_logs_path)
+      .map(|inner| inner.collect())
+      .unwrap_or_default();
 
-    let mut entries_names = entries
-      .filter_map(|entry| entry.ok())
-      .filter(|entry| !entry.path().is_dir())
+    let entries_paths = entries
+      .into_iter()
+      .filter_map(|entry| entry.ok().map(|sub| sub.path()));
+
+    let valid_entries = entries_paths.filter(|path| !path.is_dir());
+
+    let ordered_entries_names = valid_entries
       .filter_map(|entry| {
-        let file_name = entry.file_name();
-        let str_name = file_name.to_str();
-
-        str_name.map(|inner| inner.to_string())
+        let file_name = entry.file_name()?;
+        let str_name = file_name.to_str()?;
+        Some(str_name.to_string())
       })
-      .collect::<Vec<_>>();
+      .collect::<BTreeSet<_>>();
 
-    entries_names.reverse();
+    let entries_names: Vec<String> = ordered_entries_names.into_iter().collect();
 
-    Ok(ResponseLogsIter {
+    RawResponseLogsIter {
       lapse: self.clone(),
       request: request.to_string(),
       src: entries_names,
-    })
+    }
   }
 }

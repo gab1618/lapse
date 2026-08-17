@@ -6,21 +6,23 @@ use crate::{
   Lapse,
   env::hook::Event,
   log::ResponseLog,
-  request::runner::{RequestRunner, RunnerResponse},
+  request::runner::{RequestRunner, Response},
 };
 
 impl Lapse {
-  fn save_runner_log(&self, log: RunnerResponse, name: String) -> crate::Result<()> {
+  fn save_runner_log(&self, log: Response, name: String) -> crate::Result<()> {
     let log = ResponseLog {
       request: name,
       text: log.text,
       status: log.status,
       headers: log.headers,
+      duration: log.duration,
+      timestamp: log.timestamp,
     };
 
     self.save_log(&log)
   }
-  pub async fn request(&self, name: &str) -> crate::Result<RunnerResponse> {
+  pub async fn request(&self, name: &str) -> crate::Result<Response> {
     let req = self.get_raw_request_http(name)?;
     let runner = RequestRunner::new(self.get_runtime()?, self.get_hooks_scripts()?);
 
@@ -35,7 +37,7 @@ impl Lapse {
     name: &str,
     runtime: Lua,
     hooks: HashMap<Event, Vec<String>>,
-  ) -> crate::Result<RunnerResponse> {
+  ) -> crate::Result<Response> {
     let req = self.get_raw_request_http(name)?;
     let runner = RequestRunner::new(runtime, hooks);
 

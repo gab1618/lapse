@@ -1,33 +1,28 @@
-use std::str::FromStr as _;
-
 use crate::{log::ResponseLog, test::TempLapse};
 
 #[test]
 fn test_retrieve_log() {
   let lapse = TempLapse::new();
+
   let first_entry = ResponseLog {
     request: "testing".to_string(),
     text: "{}".to_string(),
     status: 200,
-    headers: Default::default(),
+    ..Default::default()
   };
 
-  let second_entry = ResponseLog {
+  let last_entry = ResponseLog {
     request: "testing".to_string(),
     text: "second".to_string(),
     status: 201,
-    headers: Default::default(),
+    ..Default::default()
   };
 
   lapse.save_log(&first_entry).unwrap();
-  lapse.save_log(&second_entry).unwrap();
+  lapse.save_log(&last_entry).unwrap();
 
-  let mut entries = lapse.logs_iter("testing").unwrap();
+  let mut entries = lapse.logs_iter("testing").into_parsed();
 
-  let (_, last_log) = entries.next().unwrap();
-  let (_, first_log) = entries.next().unwrap();
-
-  assert_eq!(ResponseLog::from_str(&last_log).unwrap(), second_entry);
-
-  assert_eq!(ResponseLog::from_str(&first_log).unwrap(), first_entry);
+  assert_eq!(entries.next().unwrap(), last_entry);
+  assert_eq!(entries.next().unwrap(), first_entry);
 }

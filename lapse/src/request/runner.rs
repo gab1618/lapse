@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{
+  collections::HashMap,
+  fmt::Display,
+  time::{SystemTime, UNIX_EPOCH},
+};
 
 use mlua::{IntoLua, Lua, Value};
 use reqwest::Client;
@@ -18,13 +22,15 @@ pub struct RequestRunner {
 }
 
 #[derive(Clone)]
-pub struct RunnerResponse {
+pub struct Response {
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
+  pub timestamp: u128,
+  pub duration: u128,
 }
 
-impl IntoLua for RunnerResponse {
+impl IntoLua for Response {
   fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
     let table = lua.create_table()?;
 
@@ -36,7 +42,7 @@ impl IntoLua for RunnerResponse {
   }
 }
 
-impl Display for RunnerResponse {
+impl Display for Response {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{}", self.status)?;
     for (header, value) in &self.headers {
@@ -71,7 +77,13 @@ impl RequestRunner {
 
     Ok(result)
   }
-  pub async fn execute(&self, req: &str) -> crate::Result<RunnerResponse> {
+  pub async fn execute(&self, req: &str) -> crate::Result<Response> {
+    let start_time = SystemTime::now();
+    let start_timestamp = start_time
+      .duration_since(UNIX_EPOCH)
+      .expect("Time should go forward")
+      .as_nanos();
+
     if let Some(pre_request_hooks) = self.hooks.get(&Event::PreRequest) {
       for hook in pre_request_hooks {
         let loaded = self.runtime.load(hook);
@@ -159,10 +171,15 @@ impl RequestRunner {
       }
     }
 
-    let response = RunnerResponse {
+    let response = Response {
       text: response_body,
       status: status_code,
       headers: log_headers,
+      timestamp: start_timestamp,
+      duration: start_time
+        .elapsed()
+        .expect("Time should go forward")
+        .as_nanos(),
     };
 
     Ok(response)
