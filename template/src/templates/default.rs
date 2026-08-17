@@ -26,6 +26,7 @@ impl Default for LapsePreset {
         ".gitignore".to_string(),
         include_str!("../../templates/default/gitignore").to_string(),
       ),
+      File(".lapse/.gitkeep".to_string(), Default::default()),
     ])
   }
 }
