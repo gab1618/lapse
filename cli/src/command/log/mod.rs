@@ -6,7 +6,7 @@ use std::{
 };
 
 use chrono::DateTime;
-use colored::Colorize as _;
+use colored::{Color, Colorize as _};
 
 use is_terminal::IsTerminal;
 use lapse::{
@@ -31,6 +31,14 @@ impl FormatedLogEntry {
   }
 }
 
+fn status_color(status: u16) -> colored::Color {
+  match status {
+    200 | 201 | 204 => Color::Green,
+    500 | 503 | 400 | 404 | 403 | 401 => Color::Red,
+    _ => Color::Blue,
+  }
+}
+
 impl Display for FormatedLogEntry {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{} {}", "Request".black(), self.0.request.green())?;
@@ -52,8 +60,8 @@ impl Display for FormatedLogEntry {
       f,
       "{} {}\n",
       "Status:".black(),
-      self.0.status.to_string().blue()
-    )?; // TODO: add color based on actual status
+      self.0.status.to_string().color(status_color(self.0.status))
+    )?;
 
     writeln!(f, "{}\n", "Headers".red())?;
 
