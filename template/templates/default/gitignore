@@ -1,1 +1,3 @@
+.lapse/log/*
+.lapse/state/*
 secrets.json

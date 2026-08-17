@@ -22,6 +22,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - Template directories not working
 - Broken log entries would break the pager instead of just being ignored
 - Trying to log request without logs would trigger an error instead of just showing no log
+- Missing entries on .gitignore
 
 ## [0.2.2] - 2026-08-15
 
