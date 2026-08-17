@@ -5,7 +5,7 @@ use std::{
   time::Duration,
 };
 
-use chrono::DateTime;
+use chrono::{DateTime, Local};
 use colored::{Color, Colorize as _};
 
 use is_terminal::IsTerminal;
@@ -43,7 +43,10 @@ impl Display for FormatedLogEntry {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{} {}", "Request".black(), self.0.request.green())?;
 
-    let dt = DateTime::from_timestamp_nanos(self.0.timestamp as i64);
+    let curr_time = Local::now();
+    let curr_timezone = curr_time.timezone();
+
+    let dt = DateTime::from_timestamp_nanos(self.0.timestamp as i64).with_timezone(&curr_timezone);
     let formated_date = dt.format("%d-%m-%Y %H:%M:%S").to_string();
     writeln!(f, "{} {}", "Date:".black(), formated_date.cyan())?;
 
