@@ -10,7 +10,7 @@ use crate::{
 };
 
 impl Lapse {
-  fn save_runner_log(&self, log: Response, name: String) -> crate::Result<()> {
+  fn save_runner_log(&self, log: Response, name: String) -> crate::Result<ResponseLog> {
     let log = ResponseLog {
       request: name,
       text: log.text,
@@ -20,32 +20,29 @@ impl Lapse {
       timestamp: log.timestamp,
     };
 
-    self.save_log(&log)
+    self.save_log(&log)?;
+
+    Ok(log)
   }
-  pub async fn request(&self, name: &str) -> crate::Result<Response> {
-    let req = self.get_raw_request_http(name)?;
-    let runner = RequestRunner::new(self.get_runtime()?, self.get_hooks_scripts()?);
-
-    let response = runner.execute(&req).await?;
-
-    self.save_runner_log(response.clone(), name.to_string())?;
-
-    Ok(response)
+  pub async fn request(&self, name: &str) -> crate::Result<ResponseLog> {
+    self
+      .request_with(name, self.get_runtime()?, self.get_hooks_scripts()?)
+      .await
   }
   pub async fn request_with(
     &self,
     name: &str,
     runtime: Lua,
     hooks: HashMap<Event, Vec<String>>,
-  ) -> crate::Result<Response> {
+  ) -> crate::Result<ResponseLog> {
     let req = self.get_raw_request_http(name)?;
     let runner = RequestRunner::new(runtime, hooks);
 
     let response = runner.execute(&req).await?;
 
-    self.save_runner_log(response.clone(), name.to_string())?;
+    let log = self.save_runner_log(response.clone(), name.to_string())?;
 
-    Ok(response)
+    Ok(log)
   }
 }
 
