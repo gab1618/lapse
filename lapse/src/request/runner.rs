@@ -19,6 +19,7 @@ use crate::{
 pub struct RequestRunner {
   runtime: Lua,
   hooks: HashMap<Event, Vec<String>>,
+  default_scheme: String,
 }
 
 #[derive(Clone)]
@@ -54,8 +55,8 @@ impl Display for Response {
 }
 
 impl RequestRunner {
-  pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>) -> Self {
-    Self { runtime, hooks }
+  pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>, default_scheme: String) -> Self {
+    Self { runtime, hooks, default_scheme }
   }
 
   pub fn eval(&self, doc: &str) -> crate::Result<String> {
@@ -97,7 +98,7 @@ impl RequestRunner {
       .build()
       .map_err(RequestError::CreateClient)?;
 
-    let request = parse_request_http(&resolved)?;
+    let request = parse_request_http(&resolved, &self.default_scheme)?;
 
     let response = match request {
       ParsedRequest::Multipart(request) => {

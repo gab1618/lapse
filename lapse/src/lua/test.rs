@@ -8,7 +8,11 @@ fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<RequestRunner
 
   runtime.globals().set("env", variables)?;
 
-  Ok(RequestRunner::new(runtime, Default::default()))
+  Ok(RequestRunner::new(
+    runtime,
+    Default::default(),
+    Default::default(),
+  ))
 }
 
 #[test]
