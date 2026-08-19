@@ -1,18 +1,13 @@
 use std::fmt::Display;
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Default)]
 pub enum DefaultScheme {
   #[serde(rename = "https")]
   Https,
   #[serde(rename = "http")]
+  #[default]
   Http,
-}
-
-impl Default for DefaultScheme {
-  fn default() -> Self {
-    Self::Http
-  }
 }
 
 impl Display for DefaultScheme {
