@@ -15,6 +15,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - default env files
 - Pretty colored log formatting
 - Timestamp and duration informations to log
+- Response showing pretty response log
 
 ### Fixed
 

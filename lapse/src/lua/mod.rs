@@ -92,6 +92,8 @@ impl IntoLua for ResponseLog {
     table.set("text", self.text)?;
     table.set("headers", self.headers)?;
     table.set("request", self.request)?;
+    table.set("duration", self.duration)?;
+    table.set("timestamp", self.timestamp)?;
 
     Ok(Value::Table(table))
   }

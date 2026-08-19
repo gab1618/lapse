@@ -23,7 +23,7 @@ use minus::{Pager, hooks::Hook};
 
 pub mod error;
 
-pub struct FormatedLogEntry(ResponseLog);
+pub struct FormatedLogEntry(pub ResponseLog);
 
 impl FormatedLogEntry {
   pub fn new(src: ResponseLog) -> Self {
