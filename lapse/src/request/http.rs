@@ -36,7 +36,8 @@ impl Lapse {
     hooks: HashMap<Event, Vec<String>>,
   ) -> crate::Result<ResponseLog> {
     let req = self.get_raw_request_http(name)?;
-    let runner = RequestRunner::new(runtime, hooks, "https://".to_string());
+    let env = self.get_env(&self.current_env()).unwrap_or_default();
+    let runner = RequestRunner::new(runtime, hooks, env.config.default_scheme.to_string());
 
     let response = runner.execute(&req).await?;
 

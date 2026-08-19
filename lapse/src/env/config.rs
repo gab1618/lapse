@@ -2,22 +2,22 @@ use std::fmt::Display;
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
 #[derive(serde::Deserialize)]
-pub enum DefaultSchema {
+pub enum DefaultScheme {
   #[serde(rename = "https")]
   Https,
   #[serde(rename = "http")]
   Http,
 }
 
-impl Default for DefaultSchema {
+impl Default for DefaultScheme {
   fn default() -> Self {
     Self::Http
   }
 }
 
-impl Display for DefaultSchema {
+impl Display for DefaultScheme {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    use DefaultSchema::{Http, Https};
+    use DefaultScheme::{Http, Https};
 
     match self {
       Https => write!(f, "https://")?,
@@ -31,5 +31,5 @@ impl Display for DefaultSchema {
 #[cfg_attr(test, derive(PartialEq, Debug))]
 #[derive(serde::Deserialize, Default)]
 pub struct EnvConfig {
-  pub default_schema: DefaultSchema,
+  pub default_scheme: DefaultScheme,
 }
