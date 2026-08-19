@@ -3,6 +3,7 @@ use std::{collections::HashMap, fs::OpenOptions};
 use crate::{
   Lapse,
   env::{
+    config::EnvConfig,
     error::EnvError,
     hook::{Event, HookEntry},
   },
@@ -11,6 +12,7 @@ use crate::{
 #[cfg(test)]
 mod test;
 
+pub mod config;
 pub mod error;
 pub mod hook;
 
@@ -20,6 +22,7 @@ pub struct Env {
   pub variables: HashMap<String, EnvValue>,
   pub secrets: HashMap<String, EnvValue>,
   pub hooks: HashMap<Event, HookEntry>,
+  pub config: EnvConfig,
 }
 
 impl std::ops::Add for Env {
@@ -135,10 +138,19 @@ impl Lapse {
       .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
       .unwrap_or_default();
 
+    let config_f = OpenOptions::new()
+      .read(true)
+      .open(full_env_path.join("config.json"))
+      .ok();
+    let config: EnvConfig = config_f
+      .and_then(|f| serde_json::from_reader(f).ok())
+      .unwrap_or_default();
+
     let mut resulting_env = Env {
       variables,
       secrets,
       hooks,
+      config,
     };
 
     let mut env_name_segments = name.split('/').collect::<Vec<&str>>();

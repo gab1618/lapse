@@ -133,13 +133,15 @@ impl MultipartRequest {
   }
 }
 
-pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
+pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<ParsedRequest> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
 
   let request_line = lines.next().ok_or(RequestError::EmptyRequestFile)?;
   let mut request_parts = request_line.split_whitespace();
   let method = request_parts.next().ok_or(RequestError::MissingMethod)?;
   let uri = request_parts.next().ok_or(RequestError::MissingUri)?;
+  let mut url_parser = UrlParser::new(uri, default_scheme);
+  let parsed_uri = url_parser.parse();
 
   let mut headers = HashMap::new();
 
@@ -157,7 +159,7 @@ pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
   match method {
     "MULTIPART" => Ok(
       MultipartRequest {
-        url: uri.to_owned(),
+        url: parsed_uri,
         headers,
         body: parse_multipart_http_body(raw_body)?,
       }
@@ -165,7 +167,7 @@ pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
     ),
     "GRAPHQL" => Ok(
       GraphQLRequest {
-        url: uri.to_owned(),
+        url: parsed_uri,
         query: raw_body,
         headers,
       }
@@ -173,7 +175,7 @@ pub fn parse_request_http(doc: &str) -> crate::Result<ParsedRequest> {
     ),
     method => Ok(
       HttpRequest {
-        url: uri.to_owned(),
+        url: parsed_uri,
         method: method.to_owned(),
         headers,
         body: raw_body,
@@ -262,9 +264,66 @@ impl<'a> MultipartValueParser<'a> {
   }
 }
 
+pub struct UrlParser<'a> {
+  src: &'a str,
+  pos: usize,
+  default_scheme: &'a str,
+}
+
+impl<'a> UrlParser<'a> {
+  pub fn new(src: &'a str, default_scheme: &'a str) -> Self {
+    Self {
+      src,
+      pos: 0,
+      default_scheme,
+    }
+  }
+  fn peek_n(&self, n: usize) -> String {
+    let elements = self.src[self.pos..].chars().take(n);
+    elements.collect()
+  }
+  /// Consumes until delimiter.
+  fn consume_until_delimiter(&mut self, delimiter: &str) -> Option<String> {
+    let initial_pos = self.pos;
+
+    loop {
+      let next = self.peek_n(delimiter.len());
+      self.bump_n(1);
+
+      if next == delimiter {
+        // Found delimiter, consuming string from initial pos to current pos
+        let s: String = self.src[initial_pos..self.pos].chars().collect();
+        return Some(s);
+      }
+      if next.is_empty() {
+        break;
+      }
+    }
+
+    // Delimiter not found. Resetting position and returning None
+    self.pos = initial_pos;
+    None
+  }
+  // Returns the default scheme if none was found
+  fn consume_scheme(&mut self) -> String {
+    self
+      .consume_until_delimiter("://")
+      .unwrap_or(String::from(self.default_scheme))
+  }
+  fn bump_n(&mut self, n: usize) {
+    self.pos += n;
+  }
+  fn parse(&mut self) -> String {
+    let scheme = self.consume_scheme();
+    let remaining_chars: String = self.src[self.pos..].chars().collect();
+
+    format!("{scheme}{remaining_chars}")
+  }
+}
+
 #[cfg(test)]
 mod test {
-  use crate::request::parsing::{MultipartRequestValue, ParsedRequest};
+  use crate::request::parsing::{MultipartRequestValue, ParsedRequest, UrlParser};
 
   use super::parse_request_http;
 
@@ -272,7 +331,7 @@ mod test {
   fn parses_multipart_req() {
     let raw_req = include_str!("../../assets/with-multipart.md");
     let http_portion = raw_req.split_once("---").unwrap().0;
-    let parsed = parse_request_http(http_portion).unwrap();
+    let parsed = parse_request_http(http_portion, "https://").unwrap();
     match parsed {
       ParsedRequest::Multipart(req) => {
         assert_eq!(req.url, "https://example.com/comments");
@@ -292,6 +351,82 @@ mod test {
         );
       }
       _ => panic!("It was supposed to be a multipart request"),
+    }
+  }
+
+  #[test]
+  fn parses_url_without_scheme() {
+    let mut parser = UrlParser::new("localhost:3000", "http://");
+    let parsed = parser.parse();
+    assert_eq!(parsed, "http://localhost:3000");
+  }
+
+  #[test]
+  fn test_parses_sample_request() {
+    let file_http = include_str!("../../assets/request.md")
+      .split_once("---")
+      .unwrap()
+      .0;
+
+    match parse_request_http(file_http, "https://").unwrap() {
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "POST");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert_eq!(
+          request.headers.get("content-type").unwrap(),
+          "application/json"
+        );
+        assert_eq!(request.body.trim(), "{\n  \"name\": \"sample\"\n}");
+      }
+
+      _ => panic!("This was supposed to be a plain http request"),
+    }
+  }
+
+  #[test]
+  fn test_parses_request_without_body() {
+    match parse_request_http(
+      "GET https://example.com/comments\ncontent-type: application/json\n",
+      "https://",
+    )
+    .unwrap()
+    {
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "GET");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert_eq!(
+          request.headers.get("content-type").unwrap(),
+          "application/json"
+        );
+        assert!(request.body.is_empty());
+      }
+      _ => panic!("This was supposed to be a plain http request"),
+    }
+  }
+
+  #[test]
+  fn test_parses_request_without_headers_or_body() {
+    match parse_request_http("DELETE https://example.com/comments\n", "https://").unwrap() {
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "DELETE");
+        assert_eq!(request.url, "https://example.com/comments");
+        assert!(request.headers.is_empty());
+        assert!(request.body.is_empty());
+      }
+
+      _ => panic!("This was supposed to be a plain http request"),
+    }
+  }
+
+  #[test]
+  fn test_ignores_leading_blank_lines() {
+    match parse_request_http("\n\nPUT https://example.com/comments\n", "https://").unwrap() {
+      ParsedRequest::Http(request) => {
+        assert_eq!(request.method, "PUT");
+        assert_eq!(request.url, "https://example.com/comments");
+      }
+
+      _ => panic!("This was supposed to be a plain http request"),
     }
   }
 }
