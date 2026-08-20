@@ -4,7 +4,7 @@ use std::{fs, ops::Deref};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{Lapse, request::runner::RequestRunner, script::error::ScriptError};
+use crate::{Lapse, runner::RequestRunner, script::error::ScriptError};
 
 struct LapseLuaApi(pub Lapse);
 impl Deref for LapseLuaApi {

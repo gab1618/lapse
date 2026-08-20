@@ -7,7 +7,6 @@ use std::{
 pub mod error;
 pub mod http;
 pub mod parsing;
-pub mod runner;
 
 impl Lapse {
   pub fn get_raw_request_http(&self, name: &str) -> crate::Result<String> {

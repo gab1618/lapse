@@ -1,7 +1,7 @@
 use crate::{
   Lapse,
   log::ResponseLog,
-  request::runner::{RequestRunner, Response},
+  runner::{RequestRunner, Response},
 };
 
 impl Lapse {

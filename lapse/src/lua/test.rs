@@ -1,6 +1,6 @@
 use mlua::Lua;
 
-use crate::{env::EnvValue, request::runner::RequestRunner};
+use crate::{env::EnvValue, runner::RequestRunner};
 use std::collections::HashMap;
 
 fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<RequestRunner> {

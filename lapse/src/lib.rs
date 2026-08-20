@@ -8,6 +8,7 @@ pub mod request;
 pub mod script;
 pub mod state;
 pub mod tree;
+pub mod runner;
 
 pub use error::{Error, Result};
 

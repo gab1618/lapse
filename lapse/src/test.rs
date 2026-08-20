@@ -8,7 +8,7 @@ use tempfile::tempdir;
 
 use crate::env::Env;
 use crate::env::error::EnvError;
-use crate::request::runner::RequestRunner;
+use crate::runner::RequestRunner;
 use crate::{Lapse, env::EnvValue};
 
 pub struct TempLapse {
