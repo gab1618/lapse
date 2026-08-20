@@ -1,3 +1,5 @@
+use crate::{env::EnvValue, runner::RequestRunner};
+
 #[derive(PartialEq, Debug)]
 pub enum DocumentToken {
   String(String),
@@ -103,6 +105,28 @@ impl<'a> DocumentLexer<'a> {
     let c = self.peek()?;
     self.pos += c.len_utf8();
     Some(c)
+  }
+}
+
+impl RequestRunner {
+  pub fn eval(&self, doc: &str) -> crate::Result<String> {
+    let mut lexer = DocumentLexer::new(doc);
+    let tokens = lexer.tokenize();
+    let mut result = String::new();
+
+    for token in tokens {
+      match token {
+        DocumentToken::String(inner) => {
+          result.push_str(&inner);
+        }
+        DocumentToken::Expr(inner) => {
+          let value: EnvValue = self.runtime.load(inner).eval()?;
+          result.push_str(&value.to_string());
+        }
+      }
+    }
+
+    Ok(result)
   }
 }
 

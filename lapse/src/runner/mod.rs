@@ -1,3 +1,4 @@
+pub mod eval;
 pub mod http;
 pub mod runtime;
 
@@ -5,10 +6,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use mlua::{IntoLua, Lua, Value};
 
-use crate::{
-  env::{EnvValue, hook::Event},
-  lua::lexer::{DocumentLexer, DocumentToken},
-};
+use crate::env::hook::Event;
 
 pub struct RequestRunner {
   runtime: Lua,
@@ -55,25 +53,5 @@ impl RequestRunner {
       hooks,
       default_scheme,
     }
-  }
-
-  pub fn eval(&self, doc: &str) -> crate::Result<String> {
-    let mut lexer = DocumentLexer::new(doc);
-    let tokens = lexer.tokenize();
-    let mut result = String::new();
-
-    for token in tokens {
-      match token {
-        DocumentToken::String(inner) => {
-          result.push_str(&inner);
-        }
-        DocumentToken::Expr(inner) => {
-          let value: EnvValue = self.runtime.load(inner).eval()?;
-          result.push_str(&value.to_string());
-        }
-      }
-    }
-
-    Ok(result)
   }
 }
