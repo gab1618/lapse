@@ -4,8 +4,8 @@ pub enum LogError {
   EnsureLogsDir(#[source] std::io::Error),
   #[error("Could not open log file: {0}")]
   OpenLogFile(#[source] std::io::Error),
-  #[error("Could not save log file: {0}")]
-  SaveLogfile(#[source] std::io::Error),
+  #[error("Could not save log file")]
+  SaveLogfile,
   #[error("Could not read log file: {0}")]
   ReadLogFile(#[source] std::io::Error),
   #[error("Could not list log files: {0}")]

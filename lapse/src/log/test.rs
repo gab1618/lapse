@@ -1,4 +1,4 @@
-use crate::{log::ResponseLog, test::TempLapse};
+use crate::{log::ResponseLog, runner::ExecutionResult, test::TempLapse};
 
 #[test]
 fn test_retrieve_log() {
@@ -6,16 +6,20 @@ fn test_retrieve_log() {
 
   let first_entry = ResponseLog {
     request: "testing".to_string(),
-    text: "{}".to_string(),
-    status: 200,
-    ..Default::default()
+    result: ExecutionResult {
+      status: 200,
+      text: "{}".to_string(),
+      ..Default::default()
+    },
   };
 
   let last_entry = ResponseLog {
     request: "testing".to_string(),
-    text: "second".to_string(),
-    status: 201,
-    ..Default::default()
+    result: ExecutionResult {
+      status: 201,
+      text: "second".to_string(),
+      ..Default::default()
+    },
   };
 
   lapse.save_log(&first_entry).unwrap();

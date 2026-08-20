@@ -18,7 +18,8 @@ pub struct Runner {
   default_scheme: String,
 }
 
-#[derive(Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ExecutionResult {
   pub text: String,
   pub status: u16,

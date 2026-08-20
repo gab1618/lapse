@@ -40,11 +40,12 @@ impl Display for FormatedLogEntry {
     let curr_time = Local::now();
     let curr_timezone = curr_time.timezone();
 
-    let dt = DateTime::from_timestamp_nanos(self.0.timestamp as i64).with_timezone(&curr_timezone);
+    let dt =
+      DateTime::from_timestamp_nanos(self.0.result.timestamp as i64).with_timezone(&curr_timezone);
     let formated_date = dt.format("%d-%m-%Y %H:%M:%S").to_string();
     writeln!(f, "{} {}", "Date:".black(), formated_date.cyan())?;
 
-    let base_duration = Duration::from_nanos_u128(self.0.duration);
+    let base_duration = Duration::from_nanos_u128(self.0.result.duration);
     let duration_milis = base_duration.as_millis();
     writeln!(
       f,
@@ -57,17 +58,22 @@ impl Display for FormatedLogEntry {
       f,
       "{} {}\n",
       "Status:".black(),
-      self.0.status.to_string().color(status_color(self.0.status))
+      self
+        .0
+        .result
+        .status
+        .to_string()
+        .color(status_color(self.0.result.status))
     )?;
 
     writeln!(f, "{}\n", "Headers".red())?;
 
-    for (key, val) in &self.0.headers {
+    for (key, val) in &self.0.result.headers {
       writeln!(f, "{}: {}", key.bright_black(), val.yellow())?;
     }
 
     writeln!(f)?;
-    writeln!(f, "{}", self.0.text)?;
+    writeln!(f, "{}", self.0.result.text)?;
 
     Ok(())
   }

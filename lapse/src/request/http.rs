@@ -8,11 +8,7 @@ impl Lapse {
   fn save_runner_log(&self, log: ExecutionResult, name: String) -> crate::Result<ResponseLog> {
     let log = ResponseLog {
       request: name,
-      text: log.text,
-      status: log.status,
-      headers: log.headers,
-      duration: log.duration,
-      timestamp: log.timestamp,
+      result: log,
     };
 
     self.save_log(&log)?;

@@ -1,7 +1,6 @@
 use std::{
   collections::BTreeSet,
   fs::{self, DirEntry},
-  str::FromStr as _,
 };
 
 use crate::{Lapse, log::ResponseLog};
@@ -31,7 +30,7 @@ impl Iterator for ResponseLogsIter {
 
   fn next(&mut self) -> Option<Self::Item> {
     let raw = self.src.next()?;
-    let parsed = ResponseLog::from_str(&raw).ok()?;
+    let parsed: ResponseLog = serde_json::from_str(&raw).ok()?;
 
     Some(parsed)
   }
