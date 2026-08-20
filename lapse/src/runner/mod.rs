@@ -1,6 +1,7 @@
 pub mod eval;
 pub mod http;
 pub mod runtime;
+pub mod value;
 
 use std::{collections::HashMap, fmt::Display};
 

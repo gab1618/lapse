@@ -1,4 +1,4 @@
-use crate::{env::EnvValue, runner::Runner};
+use crate::runner::{Runner, value::Value};
 
 #[derive(PartialEq, Debug)]
 pub enum DocumentToken {
@@ -120,7 +120,7 @@ impl Runner {
           result.push_str(&inner);
         }
         DocumentToken::Expr(inner) => {
-          let value: EnvValue = self.runtime.load(inner).eval()?;
+          let value: Value = self.runtime.load(inner).eval()?;
           result.push_str(&value.to_string());
         }
       }

@@ -7,6 +7,7 @@ use crate::{
     error::EnvError,
     hook::{Event, HookEntry},
   },
+  runner::value::Value,
 };
 
 #[cfg(test)]
@@ -19,8 +20,8 @@ pub mod hook;
 #[cfg_attr(test, derive(PartialEq, Debug))]
 #[derive(Default)]
 pub struct Env {
-  pub variables: HashMap<String, EnvValue>,
-  pub secrets: HashMap<String, EnvValue>,
+  pub variables: HashMap<String, Value>,
+  pub secrets: HashMap<String, Value>,
   pub hooks: HashMap<Event, HookEntry>,
   pub config: EnvConfig,
 }
@@ -46,48 +47,6 @@ impl std::ops::Add for Env {
   }
 }
 
-#[derive(PartialEq, Clone, Debug, serde::Deserialize, serde::Serialize)]
-#[serde(untagged)]
-pub enum EnvValue {
-  Null,
-  Boolean(bool),
-  Integer(i64),
-  Number(f64),
-  String(String),
-  Object(HashMap<String, EnvValue>),
-}
-
-impl From<bool> for EnvValue {
-  fn from(value: bool) -> Self {
-    Self::Boolean(value)
-  }
-}
-impl From<f64> for EnvValue {
-  fn from(value: f64) -> Self {
-    Self::Number(value)
-  }
-}
-impl From<i64> for EnvValue {
-  fn from(value: i64) -> Self {
-    Self::Integer(value)
-  }
-}
-impl From<String> for EnvValue {
-  fn from(value: String) -> Self {
-    Self::String(value)
-  }
-}
-impl From<&str> for EnvValue {
-  fn from(value: &str) -> Self {
-    value.to_string().into()
-  }
-}
-impl From<HashMap<String, EnvValue>> for EnvValue {
-  fn from(value: HashMap<String, EnvValue>) -> Self {
-    Self::Object(value)
-  }
-}
-
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
     let env_path = self.env_path().join(name);
@@ -102,7 +61,7 @@ impl Lapse {
 
   /// Every file is optional. If it doesn't exist, we just treat it as if it was empty. Therefore,
   /// it is impossible to face some error when dealing with these files
-  fn read_env_resource(&self, env: &str, name: &str) -> HashMap<String, EnvValue> {
+  fn read_env_resource(&self, env: &str, name: &str) -> HashMap<String, Value> {
     let full_env_path = self.env_path().join(env);
 
     let f = OpenOptions::new()

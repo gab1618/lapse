@@ -6,10 +6,11 @@ use lapse_template::templates::LapsePreset;
 use tempfile::TempDir;
 use tempfile::tempdir;
 
+use crate::Lapse;
 use crate::env::Env;
 use crate::env::error::EnvError;
 use crate::runner::Runner;
-use crate::{Lapse, env::EnvValue};
+use crate::runner::value::Value;
 
 pub struct TempLapse {
   pub _tempdir: TempDir,
@@ -90,10 +91,8 @@ fn test_get_eval_ctx_loads_current_env_variables() {
   let mut env = Env::default();
   env
     .variables
-    .insert("name".to_string(), EnvValue::String("Jane".to_string()));
-  env
-    .variables
-    .insert("age".to_string(), EnvValue::Number(30.0));
+    .insert("name".to_string(), Value::String("Jane".to_string()));
+  env.variables.insert("age".to_string(), Value::Number(30.0));
 
   lapse.set_env(&env, "prod").unwrap();
   lapse.switch_env("prod").unwrap();
