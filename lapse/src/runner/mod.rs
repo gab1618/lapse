@@ -3,6 +3,9 @@ pub mod http;
 pub mod runtime;
 pub mod value;
 
+#[cfg(test)]
+mod test;
+
 use std::{collections::HashMap, fmt::Display};
 
 use mlua::{IntoLua, Lua, Value};
