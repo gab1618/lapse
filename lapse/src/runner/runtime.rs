@@ -19,14 +19,17 @@ impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
       let curr_env_name = this.current_env();
-      let curr_env = this.get_env(&curr_env_name).unwrap();
+      let curr_env = this.get_env(&curr_env_name).ok().unwrap_or_default();
+
       let runner = Runner::new(
         lua,
         Default::default(),
         curr_env.config.default_scheme.to_string(),
       );
 
-      let req = this.get_raw_request_http(&name).unwrap();
+      let req = this
+        .get_raw_request_http(&name)
+        .map_err(|_| mlua::Error::RuntimeError(format!("Could not find request {}", name)))?;
 
       runner
         .execute(&req)
