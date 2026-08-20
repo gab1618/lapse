@@ -30,6 +30,8 @@ impl IntoLua for Response {
     table.set("status", self.status)?;
     table.set("text", self.text)?;
     table.set("headers", self.headers)?;
+    table.set("timestamp", self.timestamp)?;
+    table.set("duration", self.duration)?;
 
     Ok(Value::Table(table))
   }
