@@ -2,7 +2,7 @@ use mlua::Lua;
 
 use crate::{Lapse, runner::RequestRunner};
 
-use std::ops::Deref;
+use std::{fs, ops::Deref};
 
 use mlua::{UserData, UserDataMethods};
 
@@ -49,7 +49,23 @@ impl RequestRunner {
 
     runtime.globals().set("lapse", lapse_api)?;
 
-    let hooks = space.get_hooks_scripts()?;
+    let hooks = env
+      .hooks
+      .into_iter()
+      .filter_map(|(event, entry)| {
+        if !entry.enabled {
+          return None;
+        }
+        let scripts = entry
+          .scripts
+          .iter()
+          .map(|entry| space.scripts_path().join(entry))
+          .filter_map(|path| fs::read_to_string(path).ok())
+          .collect::<Vec<String>>();
+
+        Some((event, scripts))
+      })
+      .collect();
 
     Ok(Self {
       runtime,
