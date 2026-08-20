@@ -1,27 +1,35 @@
 pub mod error;
 
-use std::fs;
+use std::{fs, ops::Deref};
 
 use mlua::{Lua, UserData, UserDataMethods};
 
-use crate::{Lapse, script::error::ScriptError};
+use crate::{Lapse, request::runner::RequestRunner, script::error::ScriptError};
 
-struct LapseLuaApi {
-  lapse: Lapse,
-}
+struct LapseLuaApi(pub Lapse);
+impl Deref for LapseLuaApi {
+  type Target = Lapse;
 
-impl LapseLuaApi {
-  pub fn new(lapse: Lapse) -> Self {
-    Self { lapse }
+  fn deref(&self) -> &Self::Target {
+    &self.0
   }
 }
 
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      this
-        .lapse
-        .request_with(&name, lua, Default::default())
+      let curr_env_name = this.current_env();
+      let curr_env = this.get_env(&curr_env_name).unwrap();
+      let runner = RequestRunner::new(
+        lua,
+        Default::default(),
+        curr_env.config.default_scheme.to_string(),
+      );
+
+      let req = this.get_raw_request_http(&name).unwrap();
+
+      runner
+        .execute(&req)
         .await
         .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))
     });
@@ -32,7 +40,7 @@ impl Lapse {
   pub fn get_runtime(&self) -> crate::Result<Lua> {
     let runtime = Lua::new();
 
-    let lapse_api = LapseLuaApi::new(self.clone());
+    let lapse_api = LapseLuaApi(self.clone());
 
     let env = self.get_env(&self.current_env())?;
 

@@ -56,7 +56,11 @@ impl Display for Response {
 
 impl RequestRunner {
   pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>, default_scheme: String) -> Self {
-    Self { runtime, hooks, default_scheme }
+    Self {
+      runtime,
+      hooks,
+      default_scheme,
+    }
   }
 
   pub fn eval(&self, doc: &str) -> crate::Result<String> {
