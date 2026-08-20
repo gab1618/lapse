@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use crate::{
   env::{
-    Env, EnvValue,
+    Env,
     hook::{Event, HookEntry},
   },
+  runner::value::Value,
   test::TempLapse,
 };
 
@@ -31,7 +32,7 @@ fn test_read_env() {
 
   ex_env
     .variables
-    .insert("name".to_string(), EnvValue::String("John".to_string()));
+    .insert("name".to_string(), Value::String("John".to_string()));
 
   ex_env.hooks.insert(
     Event::PreRequest,
@@ -53,12 +54,9 @@ fn test_parse_asset_env_json() {
   let content =
     std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/env.json")).unwrap();
 
-  let parsed: HashMap<String, EnvValue> = serde_json::from_str(&content).unwrap();
+  let parsed: HashMap<String, Value> = serde_json::from_str(&content).unwrap();
 
-  assert_eq!(
-    parsed.get("name").unwrap(),
-    &EnvValue::String("John".into())
-  );
+  assert_eq!(parsed.get("name").unwrap(), &Value::String("John".into()));
 }
 
 #[test]
@@ -81,5 +79,5 @@ fn test_env_inheritance() {
   assert_eq!(found_auth, &true.into());
 
   let found_name = child.variables.get("name").unwrap();
-  assert_eq!(found_name, &EnvValue::String("John Doe".into()));
+  assert_eq!(found_name, &Value::String("John Doe".into()));
 }

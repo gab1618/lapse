@@ -7,7 +7,9 @@ use std::{
 pub mod error;
 pub mod http;
 pub mod parsing;
-pub mod runner;
+
+#[cfg(test)]
+mod test;
 
 impl Lapse {
   pub fn get_raw_request_http(&self, name: &str) -> crate::Result<String> {
@@ -38,25 +40,5 @@ impl Lapse {
     let http_content = resolved_lines.join("\n");
 
     Ok(http_content)
-  }
-}
-
-#[cfg(test)]
-mod test {
-  use std::fs;
-
-  use crate::test::TempLapse;
-
-  #[test]
-  fn test_get_httponly_req() {
-    let lapse = TempLapse::new();
-    let example_req_content = include_str!("../../assets/without-markdown.md");
-    let example_req_path = lapse.path().join("requests/without-markdown.md");
-    fs::write(example_req_path, example_req_content).unwrap();
-
-    let request_http = lapse.get_raw_request_http("without-markdown").unwrap();
-
-    assert!(!request_http.is_empty());
-    assert_eq!(request_http.trim(), example_req_content.trim());
   }
 }

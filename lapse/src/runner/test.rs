@@ -1,18 +1,46 @@
-use mlua::Lua;
-
-use crate::{env::EnvValue, request::runner::RequestRunner};
 use std::collections::HashMap;
 
-fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<RequestRunner> {
+use mlua::Lua;
+
+use crate::{
+  env::Env,
+  runner::{Runner, value::Value},
+  test::TempLapse,
+};
+
+#[test]
+fn test_get_eval_ctx_loads_current_env_variables() {
+  let lapse = TempLapse::new();
+
+  let mut env = Env::default();
+  env
+    .variables
+    .insert("name".to_string(), Value::String("Jane".to_string()));
+  env.variables.insert("age".to_string(), Value::Number(30.0));
+
+  lapse.set_env(&env, "prod").unwrap();
+  lapse.switch_env("prod").unwrap();
+
+  let ctx = Runner::from_space(&lapse).unwrap();
+
+  assert_eq!(ctx.eval("${env.name} is ${env.age}").unwrap(), "Jane is 30");
+}
+
+#[test]
+fn test_get_eval_ctx_defaults_to_empty_without_current_env() {
+  let lapse = TempLapse::new();
+
+  let ctx = Runner::from_space(&lapse).unwrap();
+
+  assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
+}
+
+fn eval_ctx(variables: HashMap<String, Value>) -> crate::Result<Runner> {
   let runtime = Lua::new();
 
   runtime.globals().set("env", variables)?;
 
-  Ok(RequestRunner::new(
-    runtime,
-    Default::default(),
-    Default::default(),
-  ))
+  Ok(Runner::new(runtime, Default::default(), Default::default()))
 }
 
 #[test]
@@ -29,7 +57,7 @@ fn test_evaluates_plain_string() {
 fn test_evaluates_var_expression() {
   let ctx = eval_ctx(HashMap::from([(
     "name".to_string(),
-    EnvValue::String("John".to_string()),
+    Value::String("John".to_string()),
   )]))
   .unwrap();
 
@@ -55,9 +83,9 @@ fn test_evaluates_number_var_expression() {
 
 #[test]
 fn test_evaluates_object_var_expression() {
-  let object = EnvValue::Object(HashMap::from([(
+  let object = Value::Object(HashMap::from([(
     "city".to_string(),
-    EnvValue::String("NYC".to_string()),
+    Value::String("NYC".to_string()),
   )]));
   let ctx = eval_ctx(HashMap::from([("address".to_string(), object)])).unwrap();
 
@@ -90,8 +118,8 @@ fn test_evaluates_table_expression() {
 
 #[test]
 fn test_env_variable_display() {
-  assert_eq!(EnvValue::Null.to_string(), "null");
-  assert_eq!(EnvValue::Boolean(true).to_string(), "true");
-  assert_eq!(EnvValue::Integer(42).to_string(), "42");
-  assert_eq!(EnvValue::String("hi".to_owned()).to_string(), "hi");
+  assert_eq!(Value::Null.to_string(), "null");
+  assert_eq!(Value::Boolean(true).to_string(), "true");
+  assert_eq!(Value::Integer(42).to_string(), "42");
+  assert_eq!(Value::String("hi".to_owned()).to_string(), "hi");
 }
