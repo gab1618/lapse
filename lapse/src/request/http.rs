@@ -25,7 +25,7 @@ impl Lapse {
 
     let response = runner.execute(&req).await?;
 
-    let log = self.save_runner_log(response.clone(), name.to_string())?;
+    let log = self.save_runner_log(response, name.to_string())?;
 
     Ok(log)
   }
