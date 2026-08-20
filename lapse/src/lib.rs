@@ -3,7 +3,6 @@ use std::path::PathBuf;
 pub mod env;
 pub mod error;
 pub mod log;
-pub mod lua;
 pub mod request;
 pub mod runner;
 pub mod script;

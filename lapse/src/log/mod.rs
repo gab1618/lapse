@@ -10,6 +10,8 @@ use std::{
   time::{SystemTime, UNIX_EPOCH},
 };
 
+use mlua::{IntoLua, Lua, Value as LuaValue};
+
 use crate::{Lapse, log::error::LogError};
 
 #[cfg(test)]
@@ -76,6 +78,21 @@ impl FromStr for ResponseLog {
       status,
       headers,
     })
+  }
+}
+
+impl IntoLua for ResponseLog {
+  fn into_lua(self, lua: &Lua) -> mlua::Result<LuaValue> {
+    let table = lua.create_table()?;
+
+    table.set("status", self.status)?;
+    table.set("text", self.text)?;
+    table.set("headers", self.headers)?;
+    table.set("request", self.request)?;
+    table.set("duration", self.duration)?;
+    table.set("timestamp", self.timestamp)?;
+
+    Ok(LuaValue::Table(table))
   }
 }
 
