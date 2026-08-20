@@ -9,7 +9,7 @@ use chrono::{DateTime, Local};
 use colored::{Color, Colorize as _};
 
 use is_terminal::IsTerminal;
-use lapse::log::{ResponseLog, ResponseLogsIter};
+use lapse::log::{ResponseLog, iter::ResponseLogsIter};
 
 use crate::command::{log::error::LogError, open_lapse};
 
