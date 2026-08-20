@@ -57,4 +57,11 @@ impl RequestRunner {
       default_scheme: env.config.default_scheme.to_string(),
     })
   }
+
+  pub async fn run(&self, content: &str) -> crate::Result<()> {
+    let loaded = self.runtime.load(content);
+    loaded.exec_async().await?;
+
+    Ok(())
+  }
 }

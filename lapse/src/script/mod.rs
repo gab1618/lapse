@@ -55,10 +55,9 @@ impl Lapse {
     let script_path = self.scripts_path().join(name).with_extension("lua");
 
     let script_content = fs::read_to_string(script_path).map_err(ScriptError::ReadScriptFile)?;
-    let runtime = self.get_runtime()?;
+    let runner = RequestRunner::from_space(self)?;
 
-    let loaded = runtime.load(script_content);
-    loaded.exec_async().await?;
+    runner.run(&script_content).await?;
 
     Ok(())
   }
