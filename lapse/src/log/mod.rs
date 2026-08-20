@@ -5,7 +5,6 @@ use std::{
   fmt::Display,
   fs::{self, DirEntry, OpenOptions},
   io::{Read, Write},
-  path::PathBuf,
   str::FromStr,
   time::{SystemTime, UNIX_EPOCH},
 };
@@ -108,7 +107,6 @@ impl ResponseLog {
 #[derive(Clone)]
 pub struct RawResponseLogsIter {
   lapse: Lapse,
-  request: String,
   src: Vec<String>,
 }
 impl RawResponseLogsIter {
@@ -142,7 +140,7 @@ impl Iterator for RawResponseLogsIter {
 
   fn next(&mut self) -> Option<Self::Item> {
     let name = self.src.pop()?;
-    let full_entry_path = self.lapse.response_logs_path(&self.request).join(&name);
+    let full_entry_path = self.lapse.logs_path().join(&name);
 
     let contents = fs::read_to_string(full_entry_path).ok()?;
 
@@ -151,14 +149,9 @@ impl Iterator for RawResponseLogsIter {
 }
 
 impl Lapse {
-  fn response_logs_path(&self, request: &str) -> PathBuf {
-    self.logs_path().join(request)
-  }
   pub fn save_log(&self, log: &ResponseLog) -> crate::Result<()> {
-    let request_logs_path = self.response_logs_path(&log.request);
-
     // Ensure logs path exists
-    fs::create_dir_all(&request_logs_path).map_err(LogError::EnsureLogsDir)?;
+    fs::create_dir_all(self.logs_path()).map_err(LogError::EnsureLogsDir)?;
 
     let curr_time = SystemTime::now()
       .duration_since(UNIX_EPOCH)
@@ -166,7 +159,7 @@ impl Lapse {
 
     let filename = curr_time.as_nanos().to_string();
 
-    let full_file_path = request_logs_path.join(filename);
+    let full_file_path = self.logs_path().join(filename);
 
     let mut f = OpenOptions::new()
       .write(true)
@@ -180,8 +173,8 @@ impl Lapse {
     Ok(())
   }
 
-  pub fn logs_iter(&self, request: &str) -> RawResponseLogsIter {
-    let request_logs_path = self.response_logs_path(request);
+  pub fn logs_iter(&self) -> RawResponseLogsIter {
+    let request_logs_path = self.logs_path();
 
     let entries: Vec<std::io::Result<DirEntry>> = fs::read_dir(request_logs_path)
       .map(|inner| inner.collect())
@@ -205,7 +198,6 @@ impl Lapse {
 
     RawResponseLogsIter {
       lapse: self.clone(),
-      request: request.to_string(),
       src: entries_names,
     }
   }

@@ -36,10 +36,7 @@ pub enum Command {
   /// Runs a script
   Run { script: Option<String> },
   /// Logs a request's response logs history
-  Log {
-    /// Request name
-    request: Option<String>,
-  },
+  Log,
   /// Outputs a completion script
   Completion { shell: CliCompletionShell },
   /// Environment commands

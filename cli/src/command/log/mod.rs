@@ -9,15 +9,9 @@ use chrono::{DateTime, Local};
 use colored::{Color, Colorize as _};
 
 use is_terminal::IsTerminal;
-use lapse::{
-  log::{ResponseLog, ResponseLogsIter},
-  tree::{FlatTreeConfig, resource::Resource},
-};
+use lapse::log::{ResponseLog, ResponseLogsIter};
 
-use crate::{
-  command::{log::error::LogError, open_lapse},
-  select::select_tree_entry,
-};
+use crate::command::{log::error::LogError, open_lapse};
 
 use minus::{Pager, hooks::Hook};
 
@@ -99,15 +93,11 @@ fn append_to_log_until_fills(
   Ok(())
 }
 
-pub fn log(request: Option<String>) -> crate::Result<()> {
+pub fn log() -> crate::Result<()> {
   let lapse = Arc::new(open_lapse()?);
-  let tree = lapse.get_resource_tree(Resource::Requests, None)?;
-
-  let flatlist_config = FlatTreeConfig::default();
-  let selected_request = select_tree_entry(&tree, request, flatlist_config)?;
 
   if io::stdout().is_terminal() {
-    let entries_iter = lapse.logs_iter(&selected_request).into_parsed();
+    let entries_iter = lapse.logs_iter().into_parsed();
 
     let shared_entries_iter = Arc::new(Mutex::new(entries_iter));
     let pager = Pager::new();
@@ -149,7 +139,7 @@ pub fn log(request: Option<String>) -> crate::Result<()> {
 
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
-    let entries_iter = lapse.logs_iter(&selected_request).into_parsed();
+    let entries_iter = lapse.logs_iter().into_parsed();
     let pretty_entries = entries_iter.map(FormatedLogEntry);
     for entry in pretty_entries {
       println!("{entry}");
