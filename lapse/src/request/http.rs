@@ -1,11 +1,11 @@
 use crate::{
   Lapse,
   log::ResponseLog,
-  runner::{Response, Runner},
+  runner::{ExecutionResult, Runner},
 };
 
 impl Lapse {
-  fn save_runner_log(&self, log: Response, name: String) -> crate::Result<ResponseLog> {
+  fn save_runner_log(&self, log: ExecutionResult, name: String) -> crate::Result<ResponseLog> {
     let log = ResponseLog {
       request: name,
       text: log.text,

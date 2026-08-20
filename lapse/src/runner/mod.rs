@@ -19,15 +19,16 @@ pub struct Runner {
 }
 
 #[derive(Clone)]
-pub struct Response {
+pub struct ExecutionResult {
   pub text: String,
   pub status: u16,
   pub headers: HashMap<String, String>,
   pub timestamp: u128,
   pub duration: u128,
+  pub resolved_request: String,
 }
 
-impl IntoLua for Response {
+impl IntoLua for ExecutionResult {
   fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
     let table = lua.create_table()?;
 
@@ -36,12 +37,13 @@ impl IntoLua for Response {
     table.set("headers", self.headers)?;
     table.set("timestamp", self.timestamp)?;
     table.set("duration", self.duration)?;
+    table.set("resolved_request", self.resolved_request)?;
 
     Ok(Value::Table(table))
   }
 }
 
-impl Display for Response {
+impl Display for ExecutionResult {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{}", self.status)?;
     for (header, value) in &self.headers {

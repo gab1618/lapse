@@ -11,11 +11,11 @@ use crate::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
   },
-  runner::{Response, Runner},
+  runner::{ExecutionResult, Runner},
 };
 
 impl Runner {
-  pub async fn execute(&self, req: &str) -> crate::Result<Response> {
+  pub async fn execute(&self, req: &str) -> crate::Result<ExecutionResult> {
     let start_time = SystemTime::now();
     let start_timestamp = start_time
       .duration_since(UNIX_EPOCH)
@@ -109,11 +109,12 @@ impl Runner {
       }
     }
 
-    let response = Response {
+    let response = ExecutionResult {
       text: response_body,
       status: status_code,
       headers: log_headers,
       timestamp: start_timestamp,
+      resolved_request: resolved,
       duration: start_time
         .elapsed()
         .expect("Time should go forward")
