@@ -1,18 +1,14 @@
 use mlua::Lua;
 
-use crate::{env::EnvValue, runner::RequestRunner};
+use crate::{env::EnvValue, runner::Runner};
 use std::collections::HashMap;
 
-fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<RequestRunner> {
+fn eval_ctx(variables: HashMap<String, EnvValue>) -> crate::Result<Runner> {
   let runtime = Lua::new();
 
   runtime.globals().set("env", variables)?;
 
-  Ok(RequestRunner::new(
-    runtime,
-    Default::default(),
-    Default::default(),
-  ))
+  Ok(Runner::new(runtime, Default::default(), Default::default()))
 }
 
 #[test]

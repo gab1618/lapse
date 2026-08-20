@@ -8,7 +8,7 @@ use mlua::{IntoLua, Lua, Value};
 
 use crate::env::hook::Event;
 
-pub struct RequestRunner {
+pub struct Runner {
   runtime: Lua,
   hooks: HashMap<Event, Vec<String>>,
   default_scheme: String,
@@ -48,7 +48,7 @@ impl Display for Response {
   }
 }
 
-impl RequestRunner {
+impl Runner {
   pub fn new(runtime: Lua, hooks: HashMap<Event, Vec<String>>, default_scheme: String) -> Self {
     Self {
       runtime,

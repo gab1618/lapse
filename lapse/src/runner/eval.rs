@@ -1,4 +1,4 @@
-use crate::{env::EnvValue, runner::RequestRunner};
+use crate::{env::EnvValue, runner::Runner};
 
 #[derive(PartialEq, Debug)]
 pub enum DocumentToken {
@@ -108,7 +108,7 @@ impl<'a> DocumentLexer<'a> {
   }
 }
 
-impl RequestRunner {
+impl Runner {
   pub fn eval(&self, doc: &str) -> crate::Result<String> {
     let mut lexer = DocumentLexer::new(doc);
     let tokens = lexer.tokenize();

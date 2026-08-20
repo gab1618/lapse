@@ -1,6 +1,6 @@
 use mlua::Lua;
 
-use crate::{Lapse, runner::RequestRunner};
+use crate::{Lapse, runner::Runner};
 
 use std::{fs, ops::Deref};
 
@@ -20,7 +20,7 @@ impl UserData for LapseLuaApi {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
       let curr_env_name = this.current_env();
       let curr_env = this.get_env(&curr_env_name).unwrap();
-      let runner = RequestRunner::new(
+      let runner = Runner::new(
         lua,
         Default::default(),
         curr_env.config.default_scheme.to_string(),
@@ -36,7 +36,7 @@ impl UserData for LapseLuaApi {
   }
 }
 
-impl RequestRunner {
+impl Runner {
   pub fn from_space(space: &Lapse) -> crate::Result<Self> {
     let runtime = Lua::new();
 

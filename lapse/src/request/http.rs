@@ -1,7 +1,7 @@
 use crate::{
   Lapse,
   log::ResponseLog,
-  runner::{RequestRunner, Response},
+  runner::{Response, Runner},
 };
 
 impl Lapse {
@@ -21,7 +21,7 @@ impl Lapse {
   }
   pub async fn request(&self, name: &str) -> crate::Result<ResponseLog> {
     let req = self.get_raw_request_http(name)?;
-    let runner = RequestRunner::from_space(self)?;
+    let runner = Runner::from_space(self)?;
 
     let response = runner.execute(&req).await?;
 

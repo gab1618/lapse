@@ -11,10 +11,10 @@ use crate::{
     error::RequestError,
     parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
   },
-  runner::{RequestRunner, Response},
+  runner::{Response, Runner},
 };
 
-impl RequestRunner {
+impl Runner {
   pub async fn execute(&self, req: &str) -> crate::Result<Response> {
     let start_time = SystemTime::now();
     let start_timestamp = start_time
