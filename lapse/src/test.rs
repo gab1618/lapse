@@ -98,11 +98,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
   lapse.set_env(&env, "prod").unwrap();
   lapse.switch_env("prod").unwrap();
 
-  let ctx = RequestRunner::new(
-    lapse.get_runtime().unwrap(),
-    Default::default(),
-    "https://".to_string(),
-  );
+  let ctx = RequestRunner::from_space(&lapse).unwrap();
 
   assert_eq!(ctx.eval("${env.name} is ${env.age}").unwrap(), "Jane is 30");
 }
@@ -111,11 +107,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
 fn test_get_eval_ctx_defaults_to_empty_without_current_env() {
   let lapse = TempLapse::new();
 
-  let ctx = RequestRunner::new(
-    lapse.get_runtime().unwrap(),
-    Default::default(),
-    "https://".to_string(),
-  );
+  let ctx = RequestRunner::from_space(&lapse).unwrap();
 
   assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
 }

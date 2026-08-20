@@ -1,0 +1,60 @@
+use mlua::Lua;
+
+use crate::{Lapse, runner::RequestRunner};
+
+use std::ops::Deref;
+
+use mlua::{UserData, UserDataMethods};
+
+struct LapseLuaApi(pub Lapse);
+impl Deref for LapseLuaApi {
+  type Target = Lapse;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl UserData for LapseLuaApi {
+  fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+    methods.add_async_method_mut("request", |lua, this, name: String| async move {
+      let curr_env_name = this.current_env();
+      let curr_env = this.get_env(&curr_env_name).unwrap();
+      let runner = RequestRunner::new(
+        lua,
+        Default::default(),
+        curr_env.config.default_scheme.to_string(),
+      );
+
+      let req = this.get_raw_request_http(&name).unwrap();
+
+      runner
+        .execute(&req)
+        .await
+        .map_err(|_| mlua::Error::RuntimeError("Error when executing request".to_string()))
+    });
+  }
+}
+
+impl RequestRunner {
+  pub fn from_space(space: &Lapse) -> crate::Result<Self> {
+    let runtime = Lua::new();
+
+    let lapse_api = LapseLuaApi(space.clone());
+
+    let env = space.get_env(&space.current_env())?;
+
+    runtime.globals().set("env", env.variables)?;
+    runtime.globals().set("secret", env.secrets)?;
+
+    runtime.globals().set("lapse", lapse_api)?;
+
+    let hooks = space.get_hooks_scripts()?;
+
+    Ok(Self {
+      runtime,
+      hooks,
+      default_scheme: env.config.default_scheme.to_string(),
+    })
+  }
+}
