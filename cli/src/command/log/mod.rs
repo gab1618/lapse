@@ -1,14 +1,20 @@
 use std::{
   fmt::Write as _,
   io,
+  iter::Enumerate,
   sync::{Arc, Mutex, MutexGuard},
 };
+
+use colored::Colorize as _;
 
 use is_terminal::IsTerminal;
 use lapse::log::iter::ResponseLogsIter;
 
 use crate::command::{
-  log::{display::InlineLogEntry, error::LogError},
+  log::{
+    display::{DetailedLogEntry, InlineLogEntry},
+    error::LogError,
+  },
   open_lapse,
 };
 
@@ -20,12 +26,12 @@ pub mod error;
 fn append_to_log_until_fills(
   thread_pager: &mut Pager,
   mut missing_lines: usize,
-  entries: &mut MutexGuard<'_, ResponseLogsIter>,
+  entries: &mut MutexGuard<'_, Enumerate<ResponseLogsIter>>,
 ) -> crate::Result<()> {
   while missing_lines > 0 {
-    if let Some(new_log) = entries.next() {
+    if let Some((index, new_log)) = entries.next() {
       let formated = InlineLogEntry(new_log);
-      let content = format!("{formated}");
+      let content = format!("{}{} {formated}", "@".purple(), index.to_string().purple());
       let lines_written = content.lines().count() + 1;
       missing_lines -= lines_written;
       writeln!(thread_pager, "{}", content).map_err(LogError::SendToPager)?;
@@ -37,11 +43,18 @@ fn append_to_log_until_fills(
   Ok(())
 }
 
-pub fn log() -> crate::Result<()> {
+pub fn log(entry: Option<usize>) -> crate::Result<()> {
+  match entry {
+    Some(entry) => log_details(entry),
+    None => log_list(),
+  }
+}
+
+fn log_list() -> crate::Result<()> {
   let lapse = Arc::new(open_lapse()?);
 
   if io::stdout().is_terminal() {
-    let entries_iter = lapse.logs_iter().into_parsed();
+    let entries_iter = lapse.logs_iter().into_parsed().enumerate();
 
     let shared_entries_iter = Arc::new(Mutex::new(entries_iter));
     let pager = Pager::new();
@@ -90,5 +103,17 @@ pub fn log() -> crate::Result<()> {
     }
   }
 
+  Ok(())
+}
+
+fn log_details(entry: usize) -> crate::Result<()> {
+  let lapse = Arc::new(open_lapse()?);
+  let mut logs = lapse.logs_iter().into_parsed();
+  let target_log = logs.nth(entry);
+
+  if let Some(log) = target_log {
+    let detailed = DetailedLogEntry(log);
+    print!("{detailed}");
+  }
   Ok(())
 }

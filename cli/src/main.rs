@@ -60,7 +60,7 @@ async fn entrypoint() -> error::Result<()> {
         command::script::ls(path)?;
       }
     },
-    Command::Log => command::log::log()?,
+    Command::Log { entry } => command::log::log(entry)?,
   }
 
   Ok(())
