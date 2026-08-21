@@ -1,7 +1,7 @@
 use lapse::tree::resource::Resource;
 
 use crate::{
-  command::{log::FormatedLogEntry, open_lapse},
+  command::{log::display::DetailedLogEntry, open_lapse},
   select::select_tree_entry,
 };
 
@@ -13,7 +13,7 @@ pub async fn send(request: Option<String>) -> crate::Result<()> {
 
   let response = lapse.request(&selected_request).await?;
 
-  let formated = FormatedLogEntry(response);
+  let formated = DetailedLogEntry(response);
 
   print!("{}", formated);
 

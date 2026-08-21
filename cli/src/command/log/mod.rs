@@ -1,83 +1,21 @@
 use std::{
-  fmt::{Display, Write as _},
+  fmt::Write as _,
   io,
   sync::{Arc, Mutex, MutexGuard},
-  time::Duration,
 };
 
-use chrono::{DateTime, Local};
-use colored::{Color, Colorize as _};
-
 use is_terminal::IsTerminal;
-use lapse::log::{ResponseLog, iter::ResponseLogsIter};
+use lapse::log::iter::ResponseLogsIter;
 
-use crate::command::{log::error::LogError, open_lapse};
+use crate::command::{
+  log::{display::InlineLogEntry, error::LogError},
+  open_lapse,
+};
 
 use minus::{Pager, hooks::Hook};
 
+pub mod display;
 pub mod error;
-
-pub struct FormatedLogEntry(pub ResponseLog);
-
-impl FormatedLogEntry {
-  pub fn new(src: ResponseLog) -> Self {
-    Self(src)
-  }
-}
-
-fn status_color(status: u16) -> colored::Color {
-  match status {
-    200 | 201 | 204 => Color::Green,
-    500 | 503 | 400 | 404 | 403 | 401 => Color::Red,
-    _ => Color::Blue,
-  }
-}
-
-impl Display for FormatedLogEntry {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "{} {}", "Request".black(), self.0.request.green())?;
-
-    let curr_time = Local::now();
-    let curr_timezone = curr_time.timezone();
-
-    let dt =
-      DateTime::from_timestamp_nanos(self.0.result.timestamp as i64).with_timezone(&curr_timezone);
-    let formated_date = dt.format("%d-%m-%Y %H:%M:%S").to_string();
-    writeln!(f, "{} {}", "Date:".black(), formated_date.cyan())?;
-
-    let base_duration = Duration::from_nanos_u128(self.0.result.duration);
-    let duration_milis = base_duration.as_millis();
-    writeln!(
-      f,
-      "{} {}{}",
-      "Duration:".black(),
-      duration_milis.to_string().purple(),
-      "ms".purple()
-    )?;
-    writeln!(
-      f,
-      "{} {}\n",
-      "Status:".black(),
-      self
-        .0
-        .result
-        .status
-        .to_string()
-        .color(status_color(self.0.result.status))
-    )?;
-
-    writeln!(f, "{}\n", "Headers".red())?;
-
-    for (key, val) in &self.0.result.headers {
-      writeln!(f, "{}: {}", key.bright_black(), val.yellow())?;
-    }
-
-    writeln!(f)?;
-    writeln!(f, "{}", self.0.result.text)?;
-
-    Ok(())
-  }
-}
 
 fn append_to_log_until_fills(
   thread_pager: &mut Pager,
@@ -86,7 +24,7 @@ fn append_to_log_until_fills(
 ) -> crate::Result<()> {
   while missing_lines > 0 {
     if let Some(new_log) = entries.next() {
-      let formated = FormatedLogEntry::new(new_log);
+      let formated = InlineLogEntry(new_log);
       let content = format!("{formated}");
       let lines_written = content.lines().count() + 1;
       missing_lines -= lines_written;
@@ -146,7 +84,7 @@ pub fn log() -> crate::Result<()> {
     minus::page_all(pager).map_err(LogError::SetupPagerConfig)?;
   } else {
     let entries_iter = lapse.logs_iter().into_parsed();
-    let pretty_entries = entries_iter.map(FormatedLogEntry);
+    let pretty_entries = entries_iter.map(InlineLogEntry);
     for entry in pretty_entries {
       println!("{entry}");
     }
