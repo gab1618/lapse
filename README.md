@@ -29,19 +29,12 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 │   └── default
 │       ├── hooks.json
 │       ├── secrets.json
+│       ├── config.json
 │       └── variables.json
 ├── requests
 │   └── httpbin.md
 └── scripts
     └── test.lua
-```
-
-I recommend to ignore these entries in your VCS:
-
-```.gitignore
-.lapse/log/*
-.lapse/state/*
-secrets.json
 ```
 
 ### Request files
