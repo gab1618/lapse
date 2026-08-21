@@ -1,10 +1,7 @@
 pub mod error;
 pub mod iter;
 
-use std::{
-  fs::{self, OpenOptions},
-  time::{SystemTime, UNIX_EPOCH},
-};
+use std::fs::{self, OpenOptions};
 
 use crate::{Lapse, log::error::LogError, runner::ExecutionResult};
 
@@ -23,11 +20,7 @@ impl Lapse {
     // Ensure logs path exists
     fs::create_dir_all(self.logs_path()).map_err(LogError::EnsureLogsDir)?;
 
-    let curr_time = SystemTime::now()
-      .duration_since(UNIX_EPOCH)
-      .expect("time should go forward");
-
-    let filename = curr_time.as_nanos().to_string();
+    let filename = log.result.timestamp.to_string();
 
     let full_file_path = self.logs_path().join(filename);
 
