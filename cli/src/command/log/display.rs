@@ -30,9 +30,19 @@ impl Display for InlineLogEntry {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let mut request_lines = self.0.result.resolved_request.lines();
     let request_head = request_lines.next().unwrap_or_default();
-    if let Some((method, url)) = request_head.split_once(' ') {
-      write!(f, "{} {}", method.color(method_color(method)), url)?;
-    }
+
+    let (method, url) = request_head.split_once(' ').unwrap_or(("", ""));
+    let curr_time = Local::now();
+    let dt = DateTime::from_timestamp_nanos(self.0.result.timestamp as i64)
+      .with_timezone(&curr_time.timezone());
+    let formated_date = dt.format("%d-%m-%Y %H:%M:%S").to_string();
+    write!(
+      f,
+      "{} {} {}",
+      formated_date.black(),
+      method.color(method_color(method)),
+      url
+    )?;
 
     Ok(())
   }
