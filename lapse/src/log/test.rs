@@ -9,7 +9,6 @@ fn test_retrieve_log() {
     result: ExecutionResult {
       status: 200,
       text: "{}".to_string(),
-      timestamp: 1,
       ..Default::default()
     },
   };
@@ -19,7 +18,6 @@ fn test_retrieve_log() {
     result: ExecutionResult {
       status: 201,
       text: "second".to_string(),
-      timestamp: 2,
       ..Default::default()
     },
   };
