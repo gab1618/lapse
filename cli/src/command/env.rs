@@ -1,3 +1,4 @@
+use colored::{Color, Colorize as _};
 use lapse::tree::{FlatTreeConfig, TraverseEntryKind, Tree, resource::Resource};
 
 use crate::{command::open_lapse, select::select_tree_entry};
@@ -8,8 +9,12 @@ fn output_env_tree(root: &Tree, current_env: String) {
     match entry.kind {
       TraverseEntryKind::Entry => {}
       TraverseEntryKind::Subtree => {
-        let marker = if current_env == entry.name { " *" } else { "" };
-        println!("{}{}{}", depth_spacing, entry.name, marker);
+        let color = if current_env == entry.name {
+          Color::Cyan
+        } else {
+          Color::White
+        };
+        println!("{}{}", depth_spacing, entry.name.color(color));
       }
     }
   });
