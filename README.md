@@ -26,7 +26,11 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 ```
 ├── .lapse
 ├── env
-│   └── default
+│   ├── hooks.json
+│   ├── secrets.json
+│   ├── config.json
+│   ├── variables.json
+│   └── other-env
 │       ├── hooks.json
 │       ├── secrets.json
 │       ├── config.json
