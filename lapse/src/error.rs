@@ -12,7 +12,7 @@ pub enum Error {
   #[error("Could not write sample file: {0}")]
   WriteSampleFile(#[source] std::io::Error),
   #[error("Could not find lapse space")]
-  GetParentDir,
+  LapseNotFound,
   #[error(transparent)]
   Env(#[from] EnvError),
   #[error(transparent)]

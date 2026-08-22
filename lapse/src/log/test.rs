@@ -5,7 +5,7 @@ fn test_retrieve_log() {
   let lapse = TempLapse::new();
 
   let first_entry = ResponseLog {
-    request: "testing".to_string(),
+    request: Some("testing".to_string()),
     result: ExecutionResult {
       status: 200,
       text: "{}".to_string(),
@@ -15,7 +15,7 @@ fn test_retrieve_log() {
   };
 
   let last_entry = ResponseLog {
-    request: "testing".to_string(),
+    request: Some("testing".to_string()),
     result: ExecutionResult {
       status: 201,
       text: "second".to_string(),

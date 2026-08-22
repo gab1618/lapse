@@ -11,7 +11,7 @@ mod test;
 #[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct ResponseLog {
-  pub request: String,
+  pub request: Option<String>,
   pub result: ExecutionResult,
 }
 

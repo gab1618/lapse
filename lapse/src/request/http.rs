@@ -7,7 +7,7 @@ use crate::{
 impl Lapse {
   fn save_runner_log(&self, log: ExecutionResult, name: String) -> crate::Result<ResponseLog> {
     let log = ResponseLog {
-      request: name,
+      request: Some(name),
       result: log,
     };
 

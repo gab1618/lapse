@@ -50,7 +50,11 @@ impl Display for InlineLogEntry {
 
 impl Display for DetailedLogEntry {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "{} {}", "Request".black(), self.0.request.green())?;
+    if let Some(request) = &self.0.request {
+      writeln!(f, "{} {}", "Request".black(), request.green())?;
+    } else {
+      writeln!(f, "{}", "Inline request".purple())?;
+    }
 
     let curr_time = Local::now();
     let curr_timezone = curr_time.timezone();
