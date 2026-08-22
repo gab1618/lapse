@@ -15,6 +15,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - See logs details
 - Lua script typings
 - Inline request
+- Base `env` dir now serves as default env
 
 ### Fixed
 
