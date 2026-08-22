@@ -26,7 +26,11 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 ```
 ├── .lapse
 ├── env
-│   └── default
+│   ├── hooks.json
+│   ├── secrets.json
+│   ├── config.json
+│   ├── variables.json
+│   └── other-env
 │       ├── hooks.json
 │       ├── secrets.json
 │       ├── config.json
@@ -46,7 +50,7 @@ POST httpbin.org/post
 Content-Type: application/json
 
 {
-  "name": "${env.name}"
+  "name": "${Env.name}"
 }
 
 ---

@@ -19,7 +19,7 @@ fn test_switch_env() {
 
   lapse.switch_env("prod").unwrap();
 
-  assert_eq!(lapse.current_env(), "prod");
+  assert_eq!(lapse.current_env(), Some("prod".to_string()));
 
   lapse.switch_env("dev").unwrap_err();
 }
@@ -34,6 +34,8 @@ fn test_read_env() {
     .variables
     .insert("name".to_string(), Value::String("John".to_string()));
 
+  let base_env = lapse.get_env("").unwrap();
+
   ex_env.hooks.insert(
     Event::PreRequest,
     HookEntry {
@@ -46,7 +48,7 @@ fn test_read_env() {
 
   let found_env = lapse.get_env("env").unwrap();
 
-  assert_eq!(ex_env, found_env);
+  assert_eq!(base_env + ex_env, found_env);
 }
 
 #[test]
