@@ -14,6 +14,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - List inline logs
 - See logs details
 - Lua script typings
+- Inline request
 
 ### Fixed
 
