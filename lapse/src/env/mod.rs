@@ -50,7 +50,7 @@ impl std::ops::Add for Env {
 }
 
 impl Env {
-  fn read_env_resource<T: DeserializeOwned + Default, P: AsRef<Path>>(full_path: P) -> T {
+  fn read_resource<T: DeserializeOwned + Default, P: AsRef<Path>>(full_path: P) -> T {
     let f = OpenOptions::new().read(true).open(full_path);
 
     f.map(|f| serde_json::from_reader(f).ok())
@@ -64,16 +64,11 @@ impl Env {
   pub fn read<P: AsRef<Path>>(path: P) -> Self {
     let path = path.as_ref();
 
-    let variables = Self::read_env_resource(path.join("variables.json"));
-    let secrets = Self::read_env_resource(path.join("secrets.json"));
-    let hooks = Self::read_env_resource(path.join("hooks.json"));
-    let config = Self::read_env_resource(path.join("config.json"));
-
     Self {
-      variables,
-      secrets,
-      hooks,
-      config,
+      variables: Self::read_resource(path.join("variables.json")),
+      secrets: Self::read_resource(path.join("secrets.json")),
+      hooks: Self::read_resource(path.join("hooks.json")),
+      config: Self::read_resource(path.join("config.json")),
     }
   }
 }
