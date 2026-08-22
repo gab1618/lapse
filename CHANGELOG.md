@@ -11,9 +11,9 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 
 ### Changed
 
-### Added
-
 - Base `env` dir now serves as default env and always applies
+
+### Added
 
 - List inline logs
 - See logs details
@@ -24,6 +24,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 
 - Logs sometimes having wrong order
 - Inline requests matching against help and version commands
+- Inline requests matching on wrong arguments
 
 ## [0.3.0] - 2026-08-19
 
