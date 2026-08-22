@@ -95,15 +95,20 @@ impl Lapse {
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name);
-    let base_env = Env::read(self.env_path());
 
-    let mut resulting_env = base_env + Env::read(full_env_path);
+    let mut resulting_env = Env::read(full_env_path);
 
     let mut env_name_segments = name.split('/').collect::<Vec<&str>>();
+
+    // Env is not root, therefore we read the parent as well
     if env_name_segments.len() > 1 {
       env_name_segments.pop();
       let parent_name = env_name_segments.join("/");
       let parent = self.get_env(&parent_name)?;
+      resulting_env = parent + resulting_env;
+    } else {
+      // Env is root, so we read the base env as a parent
+      let parent = Env::read(self.env_path());
       resulting_env = parent + resulting_env;
     }
 
