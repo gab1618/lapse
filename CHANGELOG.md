@@ -15,6 +15,10 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - See logs details
 - Lua script typings
 
+### Fixed
+
+- Logs sometimes having wrong order
+
 ## [0.3.0] - 2026-08-19
 
 ### Added
