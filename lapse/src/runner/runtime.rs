@@ -40,6 +40,13 @@ impl UserData for LapseLuaApi {
 }
 
 impl Runner {
+  pub fn standalone() -> Self {
+    Self {
+      runtime: Lua::new(),
+      hooks: Default::default(),
+      default_scheme: "http://".to_string(),
+    }
+  }
   pub fn from_space(space: &Lapse) -> crate::Result<Self> {
     let runtime = Lua::new();
 
