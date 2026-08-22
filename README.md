@@ -253,7 +253,7 @@ POST https://auth.com/${secret.password}
 Sends a request, and returns a table that represents a response log.
 
 ```lua
-local result = lapse:request("httpbin/get")
+local result = Lapse:request("httpbin/get")
 print(result.status)
 print(result.text)
 print(result.request)
