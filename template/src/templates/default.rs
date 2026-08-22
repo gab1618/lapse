@@ -9,18 +9,17 @@ impl Default for LapsePreset {
         "requests/get.md".to_string(),
         include_str!("../../templates/default/requests/sample.md").to_string(),
       ),
-      Dir("env/default".to_string()),
       File(
-        "env/default/variables.json".to_string(),
-        include_str!("../../templates/default/env/default/variables.json").to_string(),
+        "env/variables.json".to_string(),
+        include_str!("../../templates/default/env/variables.json").to_string(),
       ),
       File(
-        "env/default/secrets.json".to_string(),
-        include_str!("../../templates/default/env/default/secrets.json").to_string(),
+        "env/secrets.json".to_string(),
+        include_str!("../../templates/default/env/secrets.json").to_string(),
       ),
       File(
-        "env/default/hooks.json".to_string(),
-        include_str!("../../templates/default/env/default/hooks.json").to_string(),
+        "env/hooks.json".to_string(),
+        include_str!("../../templates/default/env/hooks.json").to_string(),
       ),
       File(
         ".gitignore".to_string(),
