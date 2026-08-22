@@ -26,7 +26,19 @@ impl Default for LapsePreset {
         ".gitignore".to_string(),
         include_str!("../../templates/default/gitignore").to_string(),
       ),
-      File(".lapse/.gitkeep".to_string(), Default::default()),
+      File(
+        ".luarc.json".to_string(),
+        include_str!("../../templates/default/.luarc.json").to_string(),
+      ),
+      Dir(".lapse/typings".to_string()),
+      File(
+        ".lapse/typings/api.lua".to_string(),
+        include_str!("../../templates/default/.lapse/typings/api.lua").to_string(),
+      ),
+      File(
+        ".lapse/typings/globals.lua".to_string(),
+        include_str!("../../templates/default/.lapse/typings/globals.lua").to_string(),
+      ),
     ])
   }
 }
