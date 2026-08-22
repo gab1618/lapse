@@ -26,61 +26,77 @@ async fn main() {
   }
 }
 
-async fn entrypoint() -> error::Result<()> {
-  if let Ok(args) = Cli::try_parse() {
-    match args.command {
-      Command::Init { preset, schema } => {
-        command::init::init(preset, schema)?;
+pub async fn execute_cli(args: Cli) -> error::Result<()> {
+  match args.command {
+    Command::Init { preset, schema } => {
+      command::init::init(preset, schema)?;
+    }
+    Command::Ls { path } => {
+      command::ls(path)?;
+    }
+    Command::Send { request } => {
+      command::send::send(request).await?;
+    }
+    Command::Completion { shell } => {
+      let mut out = stdout();
+      generate_completion(shell, &mut out);
+    }
+    Command::Env(env_command) => match env_command {
+      cli::EnvCommand::Switch { name } => {
+        command::env::switch(name)?;
       }
-      Command::Ls { path } => {
-        command::ls(path)?;
+      cli::EnvCommand::Ls { path } => {
+        command::env::ls(path)?;
       }
-      Command::Send { request } => {
-        command::send::send(request).await?;
-      }
-      Command::Completion { shell } => {
-        let mut out = stdout();
-        generate_completion(shell, &mut out);
-      }
-      Command::Env(env_command) => match env_command {
-        cli::EnvCommand::Switch { name } => {
-          command::env::switch(name)?;
-        }
-        cli::EnvCommand::Ls { path } => {
-          command::env::ls(path)?;
-        }
-      },
-      Command::Run { script } => {
+    },
+    Command::Run { script } => {
+      command::script::run(script).await?;
+    }
+    Command::Script(script_command) => match script_command {
+      ScriptCommand::Run { script } => {
         command::script::run(script).await?;
       }
-      Command::Script(script_command) => match script_command {
-        ScriptCommand::Run { script } => {
-          command::script::run(script).await?;
+      ScriptCommand::Ls { path } => {
+        command::script::ls(path)?;
+      }
+    },
+    Command::Log { entry } => command::log::log(entry)?,
+  }
+  Ok(())
+}
+pub async fn execute_inline() {}
+
+async fn entrypoint() -> error::Result<()> {
+  use clap::error::ErrorKind;
+
+  match Cli::try_parse() {
+    Ok(args) => execute_cli(args).await?,
+    Err(err) => match err.kind() {
+      ErrorKind::DisplayHelp
+      | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+      | ErrorKind::DisplayVersion => {
+        Cli::parse();
+      }
+      _ => {
+        let args_iter = std::env::args().skip(1);
+        let args: Vec<_> = args_iter.collect();
+        let request = args.join(" ");
+
+        let runner = Runner::standalone();
+        let result = runner.execute(&request).await?;
+
+        let log = ResponseLog {
+          request: None,
+          result,
+        };
+
+        if let Ok(lapse) = open_lapse() {
+          lapse.save_log(&log)?;
         }
-        ScriptCommand::Ls { path } => {
-          command::script::ls(path)?;
-        }
-      },
-      Command::Log { entry } => command::log::log(entry)?,
-    }
-  } else {
-    let args_iter = std::env::args().skip(1);
-    let args: Vec<_> = args_iter.collect();
-    let request = args.join(" ");
-
-    let runner = Runner::standalone();
-    let result = runner.execute(&request).await?;
-
-    let log = ResponseLog {
-      request: None,
-      result,
-    };
-
-    if let Ok(lapse) = open_lapse() {
-      lapse.save_log(&log)?;
-    }
-    let detailed_log = DetailedLogEntry(log);
-    print!("{detailed_log}");
+        let detailed_log = DetailedLogEntry(log);
+        print!("{detailed_log}");
+      }
+    },
   }
 
   Ok(())
