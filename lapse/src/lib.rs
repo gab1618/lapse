@@ -25,7 +25,7 @@ impl Lapse {
 
     let space_dir_path = as_buf.join(".lapse");
     if !space_dir_path.exists() {
-      let parent_path = as_buf.parent().ok_or(Error::GetParentDir)?;
+      let parent_path = as_buf.parent().ok_or(Error::LapseNotFound)?;
       return Self::open(parent_path);
     }
 
