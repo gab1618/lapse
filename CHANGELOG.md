@@ -19,6 +19,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 ### Fixed
 
 - Logs sometimes having wrong order
+- Inline requests matching against help and version commands
 
 ## [0.3.0] - 2026-08-19
 
