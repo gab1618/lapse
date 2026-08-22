@@ -23,7 +23,7 @@ fn test_get_eval_ctx_loads_current_env_variables() {
 
   let ctx = Runner::from_space(&lapse).unwrap();
 
-  assert_eq!(ctx.eval("${env.name} is ${env.age}").unwrap(), "Jane is 30");
+  assert_eq!(ctx.eval("${Env.name} is ${Env.age}").unwrap(), "Jane is 30");
 }
 
 #[test]
@@ -32,13 +32,13 @@ fn test_get_eval_ctx_defaults_to_empty_without_current_env() {
 
   let ctx = Runner::from_space(&lapse).unwrap();
 
-  assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
+  assert_eq!(ctx.eval("${Env.missing}").unwrap(), "null");
 }
 
 fn eval_ctx(variables: HashMap<String, Value>) -> crate::Result<Runner> {
   let runtime = Lua::new();
 
-  runtime.globals().set("env", variables)?;
+  runtime.globals().set("Env", variables)?;
 
   Ok(Runner::new(runtime, Default::default(), Default::default()))
 }
@@ -62,7 +62,7 @@ fn test_evaluates_var_expression() {
   .unwrap();
 
   assert_eq!(
-    ctx.eval("{\n  \"name\": ${env.name}\n}").unwrap(),
+    ctx.eval("{\n  \"name\": ${Env.name}\n}").unwrap(),
     "{\n  \"name\": John\n}"
   );
 }
@@ -71,14 +71,14 @@ fn test_evaluates_var_expression() {
 fn test_var_missing_returns_null() {
   let ctx = eval_ctx(Default::default()).unwrap();
 
-  assert_eq!(ctx.eval("${env.missing}").unwrap(), "null");
+  assert_eq!(ctx.eval("${Env.missing}").unwrap(), "null");
 }
 
 #[test]
 fn test_evaluates_number_var_expression() {
   let ctx = eval_ctx(HashMap::from([("age".to_string(), 42.into())])).unwrap();
 
-  assert_eq!(ctx.eval("${env.age}").unwrap(), "42");
+  assert_eq!(ctx.eval("${Env.age}").unwrap(), "42");
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn test_evaluates_object_var_expression() {
   )]));
   let ctx = eval_ctx(HashMap::from([("address".to_string(), object)])).unwrap();
 
-  assert_eq!(ctx.eval("${env.address}").unwrap(), "{\"city\":NYC}");
+  assert_eq!(ctx.eval("${Env.address}").unwrap(), "{\"city\":NYC}");
 }
 
 #[test]

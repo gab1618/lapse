@@ -47,10 +47,10 @@ impl Runner {
 
     let env = space.get_env(&space.current_env())?;
 
-    runtime.globals().set("env", env.variables)?;
-    runtime.globals().set("secret", env.secrets)?;
+    runtime.globals().set("Env", env.variables)?;
+    runtime.globals().set("Secret", env.secrets)?;
 
-    runtime.globals().set("lapse", lapse_api)?;
+    runtime.globals().set("Lapse", lapse_api)?;
 
     let hooks = env
       .hooks
