@@ -46,7 +46,7 @@ POST httpbin.org/post
 Content-Type: application/json
 
 {
-  "name": "${env.name}"
+  "name": "${Env.name}"
 }
 
 ---
