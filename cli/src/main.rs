@@ -48,6 +48,9 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
       cli::EnvCommand::Ls { path } => {
         command::env::ls(path)?;
       }
+      cli::EnvCommand::Unset => {
+        command::env::unset()?;
+      }
     },
     Command::Run { script } => {
       command::script::run(script).await?;

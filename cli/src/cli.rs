@@ -54,6 +54,8 @@ pub enum EnvCommand {
     /// Name of the environment
     name: Option<String>,
   },
+  /// Exit from current env
+  Unset,
   /// Lists all environments
   Ls {
     /// Base path to list environments

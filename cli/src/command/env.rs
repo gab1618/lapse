@@ -38,3 +38,10 @@ pub fn switch(name: Option<String>) -> crate::Result<()> {
 
   Ok(())
 }
+
+pub fn unset() -> crate::Result<()> {
+  let lapse = open_lapse()?;
+  lapse.switch_env("")?;
+
+  Ok(())
+}
