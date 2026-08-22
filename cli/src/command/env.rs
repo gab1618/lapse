@@ -21,7 +21,7 @@ pub fn ls(path: Option<String>) -> crate::Result<()> {
 
   let current_env = lapse.current_env();
 
-  output_env_tree(&tree, current_env);
+  output_env_tree(&tree, current_env.unwrap_or_default());
   Ok(())
 }
 pub fn switch(name: Option<String>) -> crate::Result<()> {

@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fs::OpenOptions};
+use std::{collections::HashMap, fs::OpenOptions, path::Path};
+
+use serde::de::DeserializeOwned;
 
 use crate::{
   Lapse,
@@ -47,6 +49,35 @@ impl std::ops::Add for Env {
   }
 }
 
+impl Env {
+  fn read_env_resource<T: DeserializeOwned + Default, P: AsRef<Path>>(full_path: P) -> T {
+    let f = OpenOptions::new().read(true).open(full_path);
+
+    f.map(|f| serde_json::from_reader(f).ok())
+      .ok()
+      .flatten()
+      .unwrap_or_default()
+  }
+
+  /// Every file is optional. If it doesn't exist, we just treat it as if it was empty. Therefore,
+  /// it is impossible to face some error when dealing with these files
+  pub fn read<P: AsRef<Path>>(path: P) -> Self {
+    let path = path.as_ref();
+
+    let variables = Self::read_env_resource(path.join("variables.json"));
+    let secrets = Self::read_env_resource(path.join("secrets.json"));
+    let hooks = Self::read_env_resource(path.join("hooks.json"));
+    let config = Self::read_env_resource(path.join("config.json"));
+
+    Self {
+      variables,
+      secrets,
+      hooks,
+      config,
+    }
+  }
+}
+
 impl Lapse {
   pub fn switch_env(&self, name: &str) -> crate::Result<()> {
     let env_path = self.env_path().join(name);
@@ -59,58 +90,13 @@ impl Lapse {
     Ok(())
   }
 
-  /// Every file is optional. If it doesn't exist, we just treat it as if it was empty. Therefore,
-  /// it is impossible to face some error when dealing with these files
-  fn read_env_resource(&self, env: &str, name: &str) -> HashMap<String, Value> {
-    let full_env_path = self.env_path().join(env);
-
-    let f = OpenOptions::new()
-      .read(true)
-      .open(full_env_path.join(name))
-      .map_err(EnvError::OpenVariables);
-
-    f.map(|inner| serde_json::from_reader(inner).ok())
-      .ok()
-      .flatten()
-      .unwrap_or_default()
-  }
-
-  pub fn current_env(&self) -> String {
-    self
-      .get_state("env")
-      .ok()
-      .flatten()
-      .unwrap_or("default".to_string())
+  pub fn current_env(&self) -> Option<String> {
+    self.get_state("env").ok().flatten()
   }
   pub fn get_env(&self, name: &str) -> crate::Result<Env> {
     let full_env_path = self.env_path().join(name);
 
-    let variables = self.read_env_resource(name, "variables.json");
-    let secrets = self.read_env_resource(name, "secrets.json");
-
-    let hooks_f = OpenOptions::new()
-      .read(true)
-      .open(full_env_path.join("hooks.json"))
-      .ok();
-
-    let hooks = hooks_f
-      .and_then(|f| serde_json::from_reader::<_, HashMap<Event, HookEntry>>(f).ok())
-      .unwrap_or_default();
-
-    let config_f = OpenOptions::new()
-      .read(true)
-      .open(full_env_path.join("config.json"))
-      .ok();
-    let config: EnvConfig = config_f
-      .and_then(|f| serde_json::from_reader(f).ok())
-      .unwrap_or_default();
-
-    let mut resulting_env = Env {
-      variables,
-      secrets,
-      hooks,
-      config,
-    };
+    let mut resulting_env = Env::read(full_env_path);
 
     let mut env_name_segments = name.split('/').collect::<Vec<&str>>();
     if env_name_segments.len() > 1 {

@@ -18,7 +18,7 @@ impl Deref for LapseLuaApi {
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let curr_env_name = this.current_env();
+      let curr_env_name = this.current_env().unwrap_or_default();
       let curr_env = this.get_env(&curr_env_name).ok().unwrap_or_default();
 
       let runner = Runner::new(
@@ -52,7 +52,7 @@ impl Runner {
 
     let lapse_api = LapseLuaApi(space.clone());
 
-    let env = space.get_env(&space.current_env())?;
+    let env = space.get_env(&space.current_env().unwrap_or_default())?;
 
     runtime.globals().set("Env", env.variables)?;
     runtime.globals().set("Secret", env.secrets)?;

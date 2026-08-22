@@ -19,7 +19,7 @@ fn test_switch_env() {
 
   lapse.switch_env("prod").unwrap();
 
-  assert_eq!(lapse.current_env(), "prod");
+  assert_eq!(lapse.current_env(), Some("prod".to_string()));
 
   lapse.switch_env("dev").unwrap_err();
 }
