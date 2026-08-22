@@ -113,6 +113,14 @@ Secrets are just like env variables, but they are not supposed to be tracked by 
 
 ## Commands
 
+### Inline requests
+
+```lapse
+lapse GET localhost:3000
+```
+
+Every command that is not part of the CLI commands is treated as an inline request, which follows the same syntax as normal requests
+
 ### Init
 
 Initializes Lapse space at current dir, setting up some files and directories as well.
@@ -206,10 +214,10 @@ lapse env switch [query]
 
 ### Log
 
-Logs the response logs for a given request
+Lists the latest requests. If a index is given, it lists detailed info about the log
 
 ```shell
-lapse log [query]
+lapse log [index]
 ```
 
 ## Evaluation API
