@@ -74,32 +74,30 @@ async fn entrypoint() -> error::Result<()> {
 
   match Cli::try_parse() {
     Ok(args) => execute_cli(args).await?,
-    Err(err) => match err.kind() {
-      ErrorKind::DisplayHelp
-      | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
-      | ErrorKind::DisplayVersion => {
-        Cli::parse();
+    Err(err) => {
+      if err.kind() != ErrorKind::InvalidSubcommand {
+        err.print().unwrap();
+        return Ok(());
       }
-      _ => {
-        let args_iter = std::env::args().skip(1);
-        let args: Vec<_> = args_iter.collect();
-        let request = args.join(" ");
 
-        let runner = Runner::standalone();
-        let result = runner.execute(&request).await?;
+      let args_iter = std::env::args().skip(1);
+      let args: Vec<_> = args_iter.collect();
+      let request = args.join(" ");
 
-        let log = ResponseLog {
-          request: None,
-          result,
-        };
+      let runner = Runner::standalone();
+      let result = runner.execute(&request).await?;
 
-        if let Ok(lapse) = open_lapse() {
-          lapse.save_log(&log)?;
-        }
-        let detailed_log = DetailedLogEntry(log);
-        print!("{detailed_log}");
+      let log = ResponseLog {
+        request: None,
+        result,
+      };
+
+      if let Ok(lapse) = open_lapse() {
+        lapse.save_log(&log)?;
       }
-    },
+      let detailed_log = DetailedLogEntry(log);
+      print!("{detailed_log}");
+    }
   }
 
   Ok(())
