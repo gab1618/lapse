@@ -1,36 +1,13 @@
 use std::{collections::HashMap, str::FromStr};
 
-use http::HeaderMap;
 use reqwest::{
   Body, Method, Request, Url,
   header::{HeaderName, HeaderValue},
 };
 
-use crate::request::error::RequestError;
-
-pub struct HttpRequest {
-  pub url: String,
-  pub method: String,
-  pub headers: HashMap<String, String>,
-  pub body: String,
-}
-
-#[cfg_attr(test, derive(Debug, PartialEq))]
-pub enum MultipartRequestValue {
-  File(String),
-  Text(String),
-}
-pub struct MultipartRequest {
-  pub url: String,
-  pub headers: HashMap<String, String>,
-  pub body: HashMap<String, MultipartRequestValue>,
-}
-
-pub struct GraphQLRequest {
-  pub url: String,
-  pub query: String,
-  pub headers: HashMap<String, String>,
-}
+use crate::request::{
+  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
+};
 
 pub enum ParsedRequest {
   Http(HttpRequest),
@@ -88,48 +65,6 @@ impl TryFrom<GraphQLRequest> for reqwest::Request {
 
     body.replace(parsed_body);
     Ok(req)
-  }
-}
-
-impl TryFrom<HttpRequest> for reqwest::Request {
-  type Error = crate::Error;
-
-  fn try_from(value: HttpRequest) -> Result<Self, Self::Error> {
-    let mut req = Request::new(
-      Method::from_str(&value.method).map_err(RequestError::ParseMethod)?,
-      Url::from_str(&value.url).map_err(|_| RequestError::ParseUrl)?,
-    );
-    let headers = req.headers_mut();
-
-    for (name, value) in value.headers {
-      headers.insert(
-        HeaderName::from_str(&name).map_err(|_| RequestError::ParseHeader)?,
-        HeaderValue::from_str(&value).map_err(|_| RequestError::ParseHeader)?,
-      );
-    }
-
-    let body = req.body_mut();
-    let parsed_body = Body::from(value.body);
-
-    body.replace(parsed_body);
-    Ok(req)
-  }
-}
-
-impl MultipartRequest {
-  pub fn headers(&self) -> crate::Result<HeaderMap> {
-    let headers = self
-      .headers
-      .iter()
-      .map(|(key, value)| {
-        Ok((
-          HeaderName::from_str(key).map_err(|_| RequestError::ParseHeader)?,
-          HeaderValue::from_str(value).map_err(|_| RequestError::ParseHeader)?,
-        ))
-      })
-      .collect::<crate::Result<HeaderMap>>()?;
-
-    Ok(headers)
   }
 }
 

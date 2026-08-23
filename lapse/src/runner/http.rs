@@ -8,8 +8,9 @@ use reqwest::Client;
 use crate::{
   env::hook::Event,
   request::{
+    MultipartRequestValue,
     error::RequestError,
-    parsing::{MultipartRequestValue, ParsedRequest, parse_request_http},
+    parsing::{ParsedRequest, parse_request_http},
   },
   runner::{ExecutionResult, Runner},
 };
