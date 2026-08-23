@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
 use crate::request::{
-  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
-  parsing::url::UrlParser,
+  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
+  error::RequestError,
+  parsing::{inline_body::InlineBodyParamParser, url::UrlParser},
 };
 
+pub mod inline_body;
 pub mod url;
 
 #[cfg(test)]
@@ -42,6 +44,17 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
   let mut url_parser = UrlParser::new(uri, default_scheme);
   let parsed_uri = url_parser.parse();
 
+  let inline_params: Vec<_> = request_parts.collect();
+  let parsed_inline_params = inline_params
+    .into_iter()
+    .map(|entry| {
+      let mut parser = InlineBodyParamParser::new(entry);
+      let (key, val) = parser.parse();
+
+      (key, val)
+    })
+    .collect::<HashMap<_, _>>();
+
   let mut headers = HashMap::new();
 
   // Parse headers
@@ -54,20 +67,25 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
   }
 
   let raw_body = lines.collect::<Vec<&str>>().join("\n");
+  let http_body = if parsed_inline_params.is_empty() {
+    raw_body
+  } else {
+    serde_json::to_string(&parsed_inline_params).unwrap()
+  };
 
   match method {
     "MULTIPART" => Ok(
       MultipartRequest {
         url: parsed_uri,
         headers,
-        body: parse_multipart_http_body(raw_body)?,
+        body: parse_multipart_http_body(http_body)?,
       }
       .into(),
     ),
     "GRAPHQL" => Ok(
       GraphQLRequest {
         url: parsed_uri,
-        query: raw_body,
+        query: http_body,
         headers,
       }
       .into(),
@@ -77,7 +95,7 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
         url: parsed_uri,
         method: method.to_owned(),
         headers,
-        body: raw_body,
+        body: http_body,
       }
       .into(),
     ),
@@ -99,6 +117,33 @@ fn parse_multipart_http_body(raw: String) -> crate::Result<HashMap<String, Multi
       Ok((name.trim().to_owned(), parsed_value))
     })
     .collect::<crate::Result<HashMap<String, MultipartRequestValue>>>()
+}
+
+pub trait BaseParser<'a> {
+  fn src(&self) -> &'a str;
+  fn position(&self) -> usize;
+  fn position_mut(&mut self) -> &mut usize;
+
+  fn bump_n(&mut self, n: usize) {
+    *self.position_mut() += n;
+  }
+
+  fn consume_until(&mut self, predicate: impl Fn(char) -> bool) -> Option<&'a str> {
+    let start = self.position();
+
+    loop {
+      if let Some(c) = self.src()[self.position()..].chars().next() {
+        if predicate(c) {
+          return Some(&self.src()[start..self.position()]);
+        }
+
+        self.bump_n(c.len_utf8());
+      } else {
+        *self.position_mut() = start;
+        return None;
+      }
+    }
+  }
 }
 
 pub struct MultipartValueParser<'a> {
