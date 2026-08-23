@@ -1,13 +1,11 @@
-use std::{collections::HashMap, str::FromStr};
-
-use reqwest::{
-  Body, Method, Request, Url,
-  header::{HeaderName, HeaderValue},
-};
+use std::collections::HashMap;
 
 use crate::request::{
   GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
+  parsing::url::UrlParser,
 };
+
+pub mod url;
 
 #[cfg(test)]
 mod test;
@@ -31,43 +29,6 @@ impl From<MultipartRequest> for ParsedRequest {
 impl From<GraphQLRequest> for ParsedRequest {
   fn from(value: GraphQLRequest) -> Self {
     Self::GraphQL(value)
-  }
-}
-
-#[derive(serde::Serialize)]
-struct GraphQLQueryBody {
-  pub query: String,
-  pub variables: HashMap<String, String>,
-}
-impl TryFrom<GraphQLRequest> for reqwest::Request {
-  type Error = crate::Error;
-
-  fn try_from(value: GraphQLRequest) -> Result<Self, Self::Error> {
-    let mut req = Request::new(
-      Method::POST,
-      Url::from_str(&value.url).map_err(|_| RequestError::ParseUrl)?,
-    );
-    let headers = req.headers_mut();
-
-    for (name, value) in value.headers {
-      headers.insert(
-        HeaderName::from_str(&name).map_err(|_| RequestError::ParseHeader)?,
-        HeaderValue::from_str(&value).map_err(|_| RequestError::ParseHeader)?,
-      );
-    }
-
-    let body = req.body_mut();
-
-    let query_body = GraphQLQueryBody {
-      query: value.query,
-      variables: Default::default(),
-    };
-
-    let body_query = serde_json::to_string(&query_body).unwrap();
-    let parsed_body = Body::from(body_query);
-
-    body.replace(parsed_body);
-    Ok(req)
   }
 }
 
@@ -199,62 +160,5 @@ impl<'a> MultipartValueParser<'a> {
     }
 
     content
-  }
-}
-
-pub struct UrlParser<'a> {
-  src: &'a str,
-  pos: usize,
-  default_scheme: &'a str,
-}
-
-impl<'a> UrlParser<'a> {
-  pub fn new(src: &'a str, default_scheme: &'a str) -> Self {
-    Self {
-      src,
-      pos: 0,
-      default_scheme,
-    }
-  }
-  fn peek_n(&self, n: usize) -> String {
-    let elements = self.src[self.pos..].chars().take(n);
-    elements.collect()
-  }
-  /// Consumes until delimiter.
-  fn consume_until_delimiter(&mut self, delimiter: &str) -> Option<String> {
-    let initial_pos = self.pos;
-
-    loop {
-      let next = self.peek_n(delimiter.len());
-      self.bump_n(1);
-
-      if next == delimiter {
-        // Found delimiter, consuming string from initial pos to current pos
-        let s: String = self.src[initial_pos..self.pos].chars().collect();
-        return Some(s);
-      }
-      if next.is_empty() {
-        break;
-      }
-    }
-
-    // Delimiter not found. Resetting position and returning None
-    self.pos = initial_pos;
-    None
-  }
-  // Returns the default scheme if none was found
-  fn consume_scheme(&mut self) -> String {
-    self
-      .consume_until_delimiter("://")
-      .unwrap_or(String::from(self.default_scheme))
-  }
-  fn bump_n(&mut self, n: usize) {
-    self.pos += n;
-  }
-  fn parse(&mut self) -> String {
-    let scheme = self.consume_scheme();
-    let remaining_chars: String = self.src[self.pos..].chars().collect();
-
-    format!("{scheme}{remaining_chars}")
   }
 }
