@@ -32,7 +32,11 @@ pub enum Command {
     path: Option<String>,
   },
   /// Sends a request
-  Send { request: Option<String> },
+  Send {
+    request: Option<String>,
+    #[arg(long, default_value_t = false)]
+    body: bool,
+  },
   /// Runs a script
   Run { script: Option<String> },
   /// Logs a request's response logs history

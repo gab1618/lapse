@@ -34,8 +34,8 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
     Command::Ls { path } => {
       command::ls(path)?;
     }
-    Command::Send { request } => {
-      command::send::send(request).await?;
+    Command::Send { request, body } => {
+      command::send::send(request, body).await?;
     }
     Command::Completion { shell } => {
       let mut out = stdout();

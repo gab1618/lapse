@@ -5,13 +5,18 @@ use crate::{
   select::select_tree_entry,
 };
 
-pub async fn send(request: Option<String>) -> crate::Result<()> {
+pub async fn send(request: Option<String>, body_only: bool) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let tree = lapse.get_resource_tree(Resource::Requests, None)?;
 
   let selected_request = select_tree_entry(&tree, request, Default::default())?;
 
   let response = lapse.request(&selected_request).await?;
+
+  if body_only {
+    print!("{}", response.result.text);
+    return Ok(());
+  }
 
   let formated = DetailedLogEntry(response);
 
