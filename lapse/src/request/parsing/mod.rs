@@ -264,7 +264,7 @@ mod test {
 
   #[test]
   fn parses_multipart_req() {
-    let raw_req = include_str!("../../assets/with-multipart.md");
+    let raw_req = include_str!("../../../assets/with-multipart.md");
     let http_portion = raw_req.split_once("---").unwrap().0;
     let parsed = parse_request_http(http_portion, "https://").unwrap();
     match parsed {
@@ -298,7 +298,7 @@ mod test {
 
   #[test]
   fn test_parses_sample_request() {
-    let file_http = include_str!("../../assets/request.md")
+    let file_http = include_str!("../../../assets/request.md")
       .split_once("---")
       .unwrap()
       .0;
