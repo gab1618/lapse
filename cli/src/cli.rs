@@ -34,6 +34,7 @@ pub enum Command {
   /// Sends a request
   Send {
     request: Option<String>,
+    /// Prints only response body
     #[arg(long, default_value_t = false)]
     body: bool,
   },
