@@ -24,10 +24,7 @@ impl<'a> InlineBodyParamParser<'a> {
     Self { src, pos: 0 }
   }
   pub fn parse(&mut self) -> (String, Value) {
-    let param_name = self
-      .consume_until(|c| c == '=' || c == ':')
-      .unwrap()
-      .to_string();
+    let param_name = self.consume_until(|c| c == '=' || c == ':').to_string();
     let separator = self.src[self.pos..].chars().next().unwrap();
     self.bump_n(1);
     let raw_value: String = self.src[self.pos..].chars().collect();
@@ -47,7 +44,7 @@ impl<'a> InlineBodyParamParser<'a> {
 
 #[cfg(test)]
 mod test {
-  use crate::request::parsing::inline_body::InlineBodyParamParser;
+  use super::InlineBodyParamParser;
 
   #[test]
   fn test_parses_inline_body_param() {

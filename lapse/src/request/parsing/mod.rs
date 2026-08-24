@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use crate::request::{
   GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
   error::RequestError,
-  parsing::{inline_body::InlineBodyParamParser, url::UrlParser},
+  parsing::{inline::body::InlineBodyParamParser, url::UrlParser},
 };
 
-pub mod inline_body;
+pub mod inline;
 pub mod url;
 
 #[cfg(test)]
@@ -127,22 +127,20 @@ pub trait BaseParser<'a> {
   fn bump_n(&mut self, n: usize) {
     *self.position_mut() += n;
   }
-
-  fn consume_until(&mut self, predicate: impl Fn(char) -> bool) -> Option<&'a str> {
+  fn consume_until(&mut self, predicate: impl Fn(char) -> bool) -> &'a str {
     let start = self.position();
 
-    loop {
-      if let Some(c) = self.src()[self.position()..].chars().next() {
-        if predicate(c) {
-          return Some(&self.src()[start..self.position()]);
-        }
-
-        self.bump_n(c.len_utf8());
-      } else {
-        *self.position_mut() = start;
-        return None;
+    while let Some(c) = self.peek() {
+      if predicate(c) {
+        break;
       }
+      *self.position_mut() += c.len_utf8();
     }
+
+    &self.src()[start..self.position()]
+  }
+  fn peek(&self) -> Option<char> {
+    self.src()[self.position()..].chars().next()
   }
 }
 
