@@ -31,8 +31,8 @@ impl<'a> InlineBodyParamParser<'a> {
 
     let parsed_value = match separator {
       ':' => {
-        let num: f64 = raw_value.parse().unwrap();
-        Value::Number(num)
+        let parsed: Value = serde_json::from_str(&raw_value).unwrap();
+        parsed
       }
       '=' => Value::String(raw_value),
       _ => todo!(),
@@ -61,6 +61,6 @@ mod test {
     let (key, val) = parser.parse();
 
     assert_eq!(key, "age");
-    assert_eq!(val, 32.0.into());
+    assert_eq!(val, 32.into());
   }
 }
