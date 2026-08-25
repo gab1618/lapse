@@ -49,11 +49,11 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
     .into_iter()
     .map(|entry| {
       let mut parser = InlineBodyParamParser::new(entry);
-      let parsed = parser.parse();
+      let parsed = parser.parse()?;
 
-      (parsed.key, parsed.value)
+      Ok((parsed.key, parsed.value))
     })
-    .collect::<HashMap<_, _>>();
+    .collect::<crate::Result<HashMap<_, _>>>()?;
 
   let mut headers = HashMap::new();
 
