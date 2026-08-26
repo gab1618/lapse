@@ -77,7 +77,7 @@ impl<'a> InlineParamParser<'a> {
 
 #[cfg(test)]
 mod test {
-  use super::{InlineParamParser, InlineItemKind};
+  use super::{InlineItemKind, InlineParamParser};
 
   #[test]
   fn test_parses_inline_body_param() {

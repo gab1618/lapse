@@ -1,15 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{
-  request::{
-    GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
-    error::RequestError,
-    parsing::{
-      inline::body::{InlineParamParser, InlineItem, InlineItemKind},
-      url::UrlParser,
-    },
-  },
-  runner::value::Value,
+use crate::request::{
+  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
+  parsing::inline::InlineRequestParser,
 };
 
 pub mod inline;
@@ -43,14 +36,9 @@ impl From<GraphQLRequest> for ParsedRequest {
 pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<ParsedRequest> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
 
-  let request_line = lines.next().ok_or(RequestError::EmptyRequestFile)?;
-  let mut request_parts = request_line.split_whitespace();
-  let method = request_parts.next().ok_or(RequestError::MissingMethod)?;
-  let uri = request_parts.next().ok_or(RequestError::MissingUri)?;
-  let mut url_parser = UrlParser::new(uri, default_scheme);
-  let parsed_uri = url_parser.parse();
-
-  let inline_params = parse_inline_params(request_parts)?;
+  let inline_part = lines.next().ok_or(RequestError::EmptyRequestFile)?;
+  let mut inline_parser = InlineRequestParser::new(inline_part, default_scheme);
+  let parsed_inline = inline_parser.parse();
 
   let mut headers = HashMap::new();
 
@@ -64,28 +52,28 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
 
   if headers.is_empty() {
     headers.extend(
-      inline_params
+      parsed_inline
         .headers
         .into_iter()
         .map(|(key, value)| (key, value.to_string())),
     );
   }
 
-  let url = if parsed_uri.contains('?') {
-    parsed_uri
+  let url = if parsed_inline.uri.contains('?') {
+    parsed_inline.uri
   } else {
-    append_query_params(parsed_uri, inline_params.query)
+    append_query_params(parsed_inline.uri, parsed_inline.params)
   };
 
   let raw_body = lines.collect::<Vec<&str>>().join("\n");
   // Prioritize non-inline body
-  let http_body = if !raw_body.trim().is_empty() || inline_params.body.is_empty() {
+  let http_body = if !raw_body.trim().is_empty() || parsed_inline.body.is_empty() {
     raw_body
   } else {
-    serde_json::to_string(&inline_params.body).map_err(RequestError::SerializeInlineBody)?
+    serde_json::to_string(&parsed_inline.body).map_err(RequestError::SerializeInlineBody)?
   };
 
-  match method {
+  match parsed_inline.method.as_ref() {
     "MULTIPART" => Ok(
       MultipartRequest {
         url,
@@ -114,35 +102,7 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
   }
 }
 
-struct InlineParams {
-  query: HashMap<String, Value>,
-  headers: HashMap<String, Value>,
-  body: HashMap<String, Value>,
-}
-
-fn parse_inline_params<'a>(entries: impl Iterator<Item = &'a str>) -> crate::Result<InlineParams> {
-  let mut query = HashMap::new();
-  let mut headers = HashMap::new();
-  let mut body = HashMap::new();
-
-  for entry in entries {
-    let InlineItem { kind, key, value } = InlineParamParser::new(entry).parse()?;
-
-    match kind {
-      InlineItemKind::Query => query.insert(key, value),
-      InlineItemKind::Header => headers.insert(key, value),
-      InlineItemKind::Body => body.insert(key, value),
-    };
-  }
-
-  Ok(InlineParams {
-    query,
-    headers,
-    body,
-  })
-}
-
-fn append_query_params(url: String, params: HashMap<String, Value>) -> String {
+fn append_query_params(url: String, params: HashMap<String, String>) -> String {
   if params.is_empty() {
     return url;
   }

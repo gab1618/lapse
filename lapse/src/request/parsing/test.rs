@@ -1,4 +1,4 @@
-use crate::request::parsing::{MultipartRequestValue, ParsedRequest, UrlParser};
+use crate::request::parsing::{MultipartRequestValue, ParsedRequest, url::UrlParser};
 
 use super::parse_request_http;
 
