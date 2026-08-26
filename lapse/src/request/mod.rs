@@ -21,17 +21,13 @@ pub struct HttpRequest {
   pub method: String,
   pub headers: HashMap<String, String>,
   pub body: String,
+  pub form: HashMap<String, MultipartRequestValue>,
 }
 
 #[cfg_attr(test, derive(Debug, PartialEq))]
 pub enum MultipartRequestValue {
   File(String),
   Text(String),
-}
-pub struct MultipartRequest {
-  pub url: String,
-  pub headers: HashMap<String, String>,
-  pub body: HashMap<String, MultipartRequestValue>,
 }
 
 pub struct GraphQLRequest {
@@ -103,7 +99,7 @@ impl TryFrom<HttpRequest> for reqwest::Request {
   }
 }
 
-impl MultipartRequest {
+impl HttpRequest {
   pub fn headers(&self) -> crate::Result<HeaderMap> {
     let headers = self
       .headers

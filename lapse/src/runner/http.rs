@@ -7,11 +7,7 @@ use reqwest::Client;
 
 use crate::{
   env::hook::Event,
-  request::{
-    MultipartRequestValue,
-    error::RequestError,
-    parsing::{ParsedRequest, parse_request_http},
-  },
+  request::{MultipartRequestValue, error::RequestError, parsing::parse_request_http},
   runner::{ExecutionResult, Runner},
 };
 
@@ -38,42 +34,39 @@ impl Runner {
 
     let request = parse_request_http(&resolved, &self.default_scheme)?;
 
-    let response = match request {
-      ParsedRequest::Multipart(request) => {
-        let mut form = reqwest::multipart::Form::new();
+    let response = if !request.form.is_empty() {
+      let mut form = reqwest::multipart::Form::new();
 
-        let headers = request.headers()?;
+      let headers = request.headers()?;
 
-        for (field, value) in request.body {
-          match value {
-            MultipartRequestValue::File(f) => {
-              form = form
-                .file(field, f)
-                .await
-                .map_err(|_| RequestError::AddFile)?;
-            }
-            MultipartRequestValue::Text(s) => {
-              form = form.text(field, s);
-            }
+      for (field, value) in request.form {
+        match value {
+          MultipartRequestValue::File(f) => {
+            form = form
+              .file(field, f)
+              .await
+              .map_err(|_| RequestError::AddFile)?;
+          }
+          MultipartRequestValue::Text(s) => {
+            form = form.text(field, s);
           }
         }
-
-        client
-          .post(request.url)
-          .headers(headers)
-          .multipart(form)
-          .send()
-          .await
-          .map_err(RequestError::ExecuteRequest)?
       }
-      ParsedRequest::Http(http_request) => {
-        let parsed_request: reqwest::Request = http_request.try_into()?;
 
-        client
-          .execute(parsed_request)
-          .await
-          .map_err(RequestError::ExecuteRequest)?
-      }
+      client
+        .post(request.url)
+        .headers(headers)
+        .multipart(form)
+        .send()
+        .await
+        .map_err(RequestError::ExecuteRequest)?
+    } else {
+      let parsed_request: reqwest::Request = request.try_into()?;
+
+      client
+        .execute(parsed_request)
+        .await
+        .map_err(RequestError::ExecuteRequest)?
     };
 
     let log_headers = response

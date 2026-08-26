@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
   request::{
+    MultipartRequestValue,
     error::RequestError,
     parsing::{BaseParser, inline::body::InlineParamParser, url::UrlParser},
   },
@@ -38,6 +39,7 @@ pub struct InlineRequest {
   pub headers: HashMap<String, String>,
   pub body: HashMap<String, Value>,
   pub params: HashMap<String, String>,
+  pub form: HashMap<String, MultipartRequestValue>,
 }
 
 impl<'a> InlineRequestParser<'a> {
@@ -78,18 +80,24 @@ impl<'a> InlineRequestParser<'a> {
       let mut parser = InlineParamParser::new(&entry);
       let parsed = parser.parse()?;
 
-      use body::InlineItemKind;
+      use body::{InlineItem, InlineItemKind, InlineValue};
 
-      match parsed.kind {
-        InlineItemKind::Query => {
-          result.params.insert(parsed.key, parsed.value.to_string());
+      let InlineItem { kind, key, value } = parsed;
+
+      match (kind, value) {
+        (InlineItemKind::Query, InlineValue::Value(value)) => {
+          result.params.insert(key, value.to_string());
         }
-        InlineItemKind::Header => {
-          result.headers.insert(parsed.key, parsed.value.to_string());
+        (InlineItemKind::Header, InlineValue::Value(value)) => {
+          result.headers.insert(key, value.to_string());
         }
-        InlineItemKind::Body => {
-          result.body.insert(parsed.key, parsed.value);
+        (InlineItemKind::Body, InlineValue::Value(value)) => {
+          result.body.insert(key, value);
         }
+        (InlineItemKind::Form, InlineValue::Form(value)) => {
+          result.form.insert(key, value);
+        }
+        _ => unreachable!("InlineItemKind and InlineValue always pair consistently"),
       }
     }
 
@@ -122,7 +130,7 @@ impl<'a> InlineRequestParser<'a> {
   }
 
   fn starts_new_param(token: &str) -> bool {
-    match token.find(['=', ':', '?']) {
+    match token.find(['=', ':', '?', '@']) {
       Some(idx) => idx > 0,
       None => false,
     }
@@ -134,6 +142,7 @@ mod test {
   use std::collections::HashMap;
 
   use super::{InlineRequest, InlineRequestParser};
+  use crate::request::MultipartRequestValue;
 
   #[test]
   fn parses_simple_req() {
@@ -181,6 +190,32 @@ mod test {
         body: HashMap::from([
           ("name".into(), "John Doe".into()),
           ("age".into(), 30.into())
+        ]),
+        ..Default::default()
+      }
+    )
+  }
+
+  #[test]
+  fn parses_req_with_form_fields() {
+    let input = "POST example.com name@=John avatar@@./photo.png";
+    let mut parser = InlineRequestParser::new(input, "http://");
+    let parsed = parser.parse().unwrap();
+
+    assert_eq!(
+      parsed,
+      InlineRequest {
+        method: "POST".to_string(),
+        uri: "http://example.com".to_string(),
+        form: HashMap::from([
+          (
+            "name".into(),
+            MultipartRequestValue::Text("John".to_owned())
+          ),
+          (
+            "avatar".into(),
+            MultipartRequestValue::File("./photo.png".to_owned())
+          )
         ]),
         ..Default::default()
       }

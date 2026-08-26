@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::request::{
-  HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
-  parsing::inline::InlineRequestParser,
+  HttpRequest, MultipartRequestValue, error::RequestError, parsing::inline::InlineRequestParser,
 };
 
 pub mod inline;
@@ -11,23 +10,7 @@ pub mod url;
 #[cfg(test)]
 mod test;
 
-pub enum ParsedRequest {
-  Http(HttpRequest),
-  Multipart(MultipartRequest),
-}
-
-impl From<HttpRequest> for ParsedRequest {
-  fn from(value: HttpRequest) -> Self {
-    Self::Http(value)
-  }
-}
-impl From<MultipartRequest> for ParsedRequest {
-  fn from(value: MultipartRequest) -> Self {
-    Self::Multipart(value)
-  }
-}
-
-pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<ParsedRequest> {
+pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<HttpRequest> {
   let mut lines = doc.lines().skip_while(|line| line.is_empty());
 
   let inline_part = lines.next().ok_or(RequestError::EmptyRequestFile)?;
@@ -60,32 +43,34 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
   };
 
   let raw_body = lines.collect::<Vec<&str>>().join("\n");
-  // Prioritize non-inline body
-  let http_body = if !raw_body.trim().is_empty() || parsed_inline.body.is_empty() {
-    raw_body
+  let is_multipart = parsed_inline.method == "MULTIPART";
+
+  // Prioritize non-inline body/form
+  let (body, form) = if is_multipart {
+    let form = if raw_body.trim().is_empty() {
+      parsed_inline.form
+    } else {
+      parse_multipart_http_body(raw_body)?
+    };
+
+    (String::new(), form)
   } else {
-    serde_json::to_string(&parsed_inline.body).map_err(RequestError::SerializeInlineBody)?
+    let body = if !raw_body.trim().is_empty() || parsed_inline.body.is_empty() {
+      raw_body
+    } else {
+      serde_json::to_string(&parsed_inline.body).map_err(RequestError::SerializeInlineBody)?
+    };
+
+    (body, parsed_inline.form)
   };
 
-  match parsed_inline.method.as_ref() {
-    "MULTIPART" => Ok(
-      MultipartRequest {
-        url,
-        headers,
-        body: parse_multipart_http_body(http_body)?,
-      }
-      .into(),
-    ),
-    method => Ok(
-      HttpRequest {
-        url,
-        method: method.to_owned(),
-        headers,
-        body: http_body,
-      }
-      .into(),
-    ),
-  }
+  Ok(HttpRequest {
+    url,
+    method: parsed_inline.method,
+    headers,
+    body,
+    form,
+  })
 }
 
 fn append_query_params(url: String, params: HashMap<String, String>) -> String {

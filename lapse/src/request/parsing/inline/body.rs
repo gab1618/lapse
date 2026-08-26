@@ -1,4 +1,7 @@
-use crate::{request::error::RequestError, request::parsing::BaseParser, runner::value::Value};
+use crate::{
+  request::{MultipartRequestValue, error::RequestError, parsing::BaseParser},
+  runner::value::Value,
+};
 
 pub struct InlineParamParser<'a> {
   src: &'a str,
@@ -24,13 +27,20 @@ pub enum InlineItemKind {
   Query,
   Header,
   Body,
+  Form,
+}
+
+#[cfg_attr(test, derive(PartialEq, Debug))]
+pub enum InlineValue {
+  Value(Value),
+  Form(MultipartRequestValue),
 }
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct InlineItem {
   pub kind: InlineItemKind,
   pub key: String,
-  pub value: Value,
+  pub value: InlineValue,
 }
 
 impl<'a> InlineParamParser<'a> {
@@ -39,7 +49,7 @@ impl<'a> InlineParamParser<'a> {
   }
   pub fn parse(&mut self) -> crate::Result<InlineItem> {
     let param_name = self
-      .consume_until(|c| c == '=' || c == ':' || c == '?')
+      .consume_until(|c| matches!(c, '=' | ':' | '?' | '@'))
       .to_string();
 
     if param_name.is_empty() {
@@ -53,13 +63,25 @@ impl<'a> InlineParamParser<'a> {
       '=' => InlineItemKind::Body,
       '?' => InlineItemKind::Query,
       ':' => InlineItemKind::Header,
-      _ => unreachable!("consume_until only stops at '=', ':' or '?'"),
+      '@' => InlineItemKind::Form,
+      _ => unreachable!("consume_until only stops at '=', ':', '?' or '@'"),
     };
 
-    let parsed_value = if kind_char == ':' {
-      Value::String(self.src[self.pos..].to_string())
-    } else {
-      match self.src[self.pos..].chars().next() {
+    let value = match kind_char {
+      ':' => InlineValue::Value(Value::String(self.src[self.pos..].to_string())),
+      // `@` introduces a form field: a further `@` marks a file, `=` (or nothing) marks plain text
+      '@' => InlineValue::Form(match self.src[self.pos..].chars().next() {
+        Some('@') => {
+          self.bump_n(1);
+          MultipartRequestValue::File(self.src[self.pos..].to_string())
+        }
+        Some('=') => {
+          self.bump_n(1);
+          MultipartRequestValue::Text(self.src[self.pos..].to_string())
+        }
+        _ => MultipartRequestValue::Text(self.src[self.pos..].to_string()),
+      }),
+      _ => InlineValue::Value(match self.src[self.pos..].chars().next() {
         Some(':') => {
           self.bump_n(1);
           serde_json::from_str(&self.src[self.pos..]).map_err(RequestError::ParseInlineJsonValue)?
@@ -69,20 +91,21 @@ impl<'a> InlineParamParser<'a> {
           Value::String(self.src[self.pos..].to_string())
         }
         _ => Value::String(self.src[self.pos..].to_string()),
-      }
+      }),
     };
 
     Ok(InlineItem {
       kind,
       key: param_name,
-      value: parsed_value,
+      value,
     })
   }
 }
 
 #[cfg(test)]
 mod test {
-  use super::{InlineItemKind, InlineParamParser};
+  use super::{InlineItemKind, InlineParamParser, InlineValue};
+  use crate::request::MultipartRequestValue;
 
   #[test]
   fn test_parses_inline_body_param() {
@@ -90,7 +113,7 @@ mod test {
     let mut parser = InlineParamParser::new(src);
     let parsed = parser.parse().unwrap();
     assert_eq!(parsed.key, "name");
-    assert_eq!(parsed.value, "John".into());
+    assert_eq!(parsed.value, InlineValue::Value("John".into()));
     assert_eq!(parsed.kind, InlineItemKind::Body);
   }
   #[test]
@@ -100,7 +123,7 @@ mod test {
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "age");
-    assert_eq!(parsed.value, 32.into());
+    assert_eq!(parsed.value, InlineValue::Value(32.into()));
     assert_eq!(parsed.kind, InlineItemKind::Body);
   }
   #[test]
@@ -110,7 +133,7 @@ mod test {
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "id");
-    assert_eq!(parsed.value, "abc".into());
+    assert_eq!(parsed.value, InlineValue::Value("abc".into()));
     assert_eq!(parsed.kind, InlineItemKind::Query);
   }
 
@@ -121,8 +144,48 @@ mod test {
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "page");
-    assert_eq!(parsed.value, 1.into());
+    assert_eq!(parsed.value, InlineValue::Value(1.into()));
     assert_eq!(parsed.kind, InlineItemKind::Query);
+  }
+
+  #[test]
+  fn test_parses_form_text_field() {
+    let src = "name@=John";
+    let mut parser = InlineParamParser::new(src);
+    let parsed = parser.parse().unwrap();
+
+    assert_eq!(parsed.key, "name");
+    assert_eq!(
+      parsed.value,
+      InlineValue::Form(MultipartRequestValue::Text("John".to_owned()))
+    );
+    assert_eq!(parsed.kind, InlineItemKind::Form);
+  }
+
+  #[test]
+  fn test_parses_form_text_field_without_suffix() {
+    let src = "name@John";
+    let mut parser = InlineParamParser::new(src);
+    let parsed = parser.parse().unwrap();
+
+    assert_eq!(
+      parsed.value,
+      InlineValue::Form(MultipartRequestValue::Text("John".to_owned()))
+    );
+  }
+
+  #[test]
+  fn test_parses_form_file_field() {
+    let src = "avatar@@./photo.png";
+    let mut parser = InlineParamParser::new(src);
+    let parsed = parser.parse().unwrap();
+
+    assert_eq!(parsed.key, "avatar");
+    assert_eq!(
+      parsed.value,
+      InlineValue::Form(MultipartRequestValue::File("./photo.png".to_owned()))
+    );
+    assert_eq!(parsed.kind, InlineItemKind::Form);
   }
 
   #[test]
