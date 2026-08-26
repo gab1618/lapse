@@ -42,6 +42,8 @@ pub enum RequestError {
   ParseInlineParam,
   #[error("Could not parse inline JSON value: {0}")]
   ParseInlineJsonValue(#[source] serde_json::Error),
+  #[error("Could not serialize inline body params: {0}")]
+  SerializeInlineBody(#[source] serde_json::Error),
   #[error("Could not create request client: {0}")]
   CreateClient(#[source] reqwest::Error),
 }

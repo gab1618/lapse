@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
-use crate::request::{
-  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
-  error::RequestError,
-  parsing::{inline::body::InlineBodyParamParser, url::UrlParser},
+use crate::{
+  request::{
+    GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
+    error::RequestError,
+    parsing::{
+      inline::body::{InlineBodyParamParser, InlineItem, InlineItemKind},
+      url::UrlParser,
+    },
+  },
+  runner::value::Value,
 };
 
 pub mod inline;
@@ -44,20 +50,10 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
   let mut url_parser = UrlParser::new(uri, default_scheme);
   let parsed_uri = url_parser.parse();
 
-  let inline_params: Vec<_> = request_parts.collect();
-  let parsed_inline_params = inline_params
-    .into_iter()
-    .map(|entry| {
-      let mut parser = InlineBodyParamParser::new(entry);
-      let parsed = parser.parse()?;
-
-      Ok((parsed.key, parsed.value))
-    })
-    .collect::<crate::Result<HashMap<_, _>>>()?;
+  let inline_params = parse_inline_params(request_parts)?;
 
   let mut headers = HashMap::new();
 
-  // Parse headers
   for line in lines.by_ref() {
     if line.is_empty() {
       break;
@@ -66,17 +62,33 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
     headers.insert(name.trim().to_owned(), value.trim().to_owned());
   }
 
+  if headers.is_empty() {
+    headers.extend(
+      inline_params
+        .headers
+        .into_iter()
+        .map(|(key, value)| (key, value.to_string())),
+    );
+  }
+
+  let url = if parsed_uri.contains('?') {
+    parsed_uri
+  } else {
+    append_query_params(parsed_uri, inline_params.query)
+  };
+
   let raw_body = lines.collect::<Vec<&str>>().join("\n");
-  let http_body = if parsed_inline_params.is_empty() {
+  // Prioritize non-inline body
+  let http_body = if !raw_body.trim().is_empty() || inline_params.body.is_empty() {
     raw_body
   } else {
-    serde_json::to_string(&parsed_inline_params).unwrap()
+    serde_json::to_string(&inline_params.body).map_err(RequestError::SerializeInlineBody)?
   };
 
   match method {
     "MULTIPART" => Ok(
       MultipartRequest {
-        url: parsed_uri,
+        url,
         headers,
         body: parse_multipart_http_body(http_body)?,
       }
@@ -84,7 +96,7 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
     ),
     "GRAPHQL" => Ok(
       GraphQLRequest {
-        url: parsed_uri,
+        url,
         query: http_body,
         headers,
       }
@@ -92,7 +104,7 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
     ),
     method => Ok(
       HttpRequest {
-        url: parsed_uri,
+        url,
         method: method.to_owned(),
         headers,
         body: http_body,
@@ -100,6 +112,48 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
       .into(),
     ),
   }
+}
+
+struct InlineParams {
+  query: HashMap<String, Value>,
+  headers: HashMap<String, Value>,
+  body: HashMap<String, Value>,
+}
+
+fn parse_inline_params<'a>(entries: impl Iterator<Item = &'a str>) -> crate::Result<InlineParams> {
+  let mut query = HashMap::new();
+  let mut headers = HashMap::new();
+  let mut body = HashMap::new();
+
+  for entry in entries {
+    let InlineItem { kind, key, value } = InlineBodyParamParser::new(entry).parse()?;
+
+    match kind {
+      InlineItemKind::Query => query.insert(key, value),
+      InlineItemKind::Header => headers.insert(key, value),
+      InlineItemKind::Body => body.insert(key, value),
+    };
+  }
+
+  Ok(InlineParams {
+    query,
+    headers,
+    body,
+  })
+}
+
+fn append_query_params(url: String, params: HashMap<String, Value>) -> String {
+  if params.is_empty() {
+    return url;
+  }
+
+  let query_string = params
+    .into_iter()
+    .map(|(key, value)| format!("{key}={value}"))
+    .collect::<Vec<_>>()
+    .join("&");
+
+  format!("{url}?{query_string}")
 }
 
 fn parse_multipart_http_body(raw: String) -> crate::Result<HashMap<String, MultipartRequestValue>> {
