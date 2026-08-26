@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use crate::{
-  request::parsing::{BaseParser, inline::body::InlineParamParser, url::UrlParser},
+  request::{
+    error::RequestError,
+    parsing::{BaseParser, inline::body::InlineParamParser, url::UrlParser},
+  },
   runner::value::Value,
 };
 
@@ -45,10 +48,19 @@ impl<'a> InlineRequestParser<'a> {
       pos: 0,
     }
   }
-  pub fn parse(&mut self) -> InlineRequest {
+  pub fn parse(&mut self) -> crate::Result<InlineRequest> {
     let method = self.consume_until(char::is_whitespace);
+    if method.is_empty() {
+      return Err(RequestError::MissingMethod.into());
+    }
+    if self.peek().is_none() {
+      return Err(RequestError::MissingUri.into());
+    }
     self.bump_n(1);
     let uri = self.consume_until(char::is_whitespace);
+    if uri.is_empty() {
+      return Err(RequestError::MissingUri.into());
+    }
 
     let mut url_parser = UrlParser::new(uri, self.default_scheme);
     let parsed_uri = url_parser.parse();
@@ -64,7 +76,7 @@ impl<'a> InlineRequestParser<'a> {
 
     for entry in Self::split_param_entries(raw_params) {
       let mut parser = InlineParamParser::new(&entry);
-      let parsed = parser.parse().unwrap();
+      let parsed = parser.parse()?;
 
       use body::InlineItemKind;
 
@@ -81,7 +93,7 @@ impl<'a> InlineRequestParser<'a> {
       }
     }
 
-    result
+    Ok(result)
   }
 
   /// Splits raw params on whitespace, but merges a token back into the
@@ -127,7 +139,7 @@ mod test {
   fn parses_simple_req() {
     let input = "GET example.com";
     let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse();
+    let parsed = parser.parse().unwrap();
 
     assert_eq!(
       parsed,
@@ -142,7 +154,7 @@ mod test {
   fn parses_req_with_params() {
     let input = "POST example.com name==John";
     let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse();
+    let parsed = parser.parse().unwrap();
 
     assert_eq!(
       parsed,
@@ -159,7 +171,7 @@ mod test {
   fn parses_params_with_spaces() {
     let input = "POST example.com name==John Doe age=:30";
     let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse();
+    let parsed = parser.parse().unwrap();
 
     assert_eq!(
       parsed,
@@ -173,5 +185,26 @@ mod test {
         ..Default::default()
       }
     )
+  }
+
+  #[test]
+  fn errors_on_missing_method() {
+    let input = "   ";
+    let mut parser = InlineRequestParser::new(input, "http://");
+    assert!(parser.parse().is_err());
+  }
+
+  #[test]
+  fn errors_on_missing_uri() {
+    let input = "GET";
+    let mut parser = InlineRequestParser::new(input, "http://");
+    assert!(parser.parse().is_err());
+  }
+
+  #[test]
+  fn errors_on_invalid_param_entry() {
+    let input = "GET example.com name";
+    let mut parser = InlineRequestParser::new(input, "http://");
+    assert!(parser.parse().is_err());
   }
 }

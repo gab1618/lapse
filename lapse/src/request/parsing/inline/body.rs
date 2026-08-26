@@ -41,6 +41,11 @@ impl<'a> InlineParamParser<'a> {
     let param_name = self
       .consume_until(|c| c == '=' || c == ':' || c == '?')
       .to_string();
+
+    if param_name.is_empty() {
+      return Err(RequestError::ParseInlineParam.into());
+    }
+
     let kind_char = self.peek().ok_or(RequestError::ParseInlineParam)?;
     self.bump_n(1);
 
@@ -130,6 +135,13 @@ mod test {
   #[test]
   fn test_errors_on_invalid_json_value() {
     let src = "age=:not_json";
+    let mut parser = InlineParamParser::new(src);
+    assert!(parser.parse().is_err());
+  }
+
+  #[test]
+  fn test_errors_on_missing_key() {
+    let src = "=John";
     let mut parser = InlineParamParser::new(src);
     assert!(parser.parse().is_err());
   }

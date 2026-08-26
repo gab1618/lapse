@@ -38,7 +38,7 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
 
   let inline_part = lines.next().ok_or(RequestError::EmptyRequestFile)?;
   let mut inline_parser = InlineRequestParser::new(inline_part, default_scheme);
-  let parsed_inline = inline_parser.parse();
+  let parsed_inline = inline_parser.parse()?;
 
   let mut headers = HashMap::new();
 
