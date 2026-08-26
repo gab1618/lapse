@@ -5,7 +5,7 @@ use crate::{
     GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue,
     error::RequestError,
     parsing::{
-      inline::body::{InlineBodyParamParser, InlineItem, InlineItemKind},
+      inline::body::{InlineParamParser, InlineItem, InlineItemKind},
       url::UrlParser,
     },
   },
@@ -126,7 +126,7 @@ fn parse_inline_params<'a>(entries: impl Iterator<Item = &'a str>) -> crate::Res
   let mut body = HashMap::new();
 
   for entry in entries {
-    let InlineItem { kind, key, value } = InlineBodyParamParser::new(entry).parse()?;
+    let InlineItem { kind, key, value } = InlineParamParser::new(entry).parse()?;
 
     match kind {
       InlineItemKind::Query => query.insert(key, value),

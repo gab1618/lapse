@@ -1,11 +1,11 @@
 use crate::{request::error::RequestError, request::parsing::BaseParser, runner::value::Value};
 
-pub struct InlineBodyParamParser<'a> {
+pub struct InlineParamParser<'a> {
   src: &'a str,
   pos: usize,
 }
 
-impl<'a> BaseParser<'a> for InlineBodyParamParser<'a> {
+impl<'a> BaseParser<'a> for InlineParamParser<'a> {
   fn src(&self) -> &'a str {
     self.src
   }
@@ -26,13 +26,14 @@ pub enum InlineItemKind {
   Body,
 }
 
+#[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct InlineItem {
   pub kind: InlineItemKind,
   pub key: String,
   pub value: Value,
 }
 
-impl<'a> InlineBodyParamParser<'a> {
+impl<'a> InlineParamParser<'a> {
   pub fn new(src: &'a str) -> Self {
     Self { src, pos: 0 }
   }
@@ -76,12 +77,12 @@ impl<'a> InlineBodyParamParser<'a> {
 
 #[cfg(test)]
 mod test {
-  use super::{InlineBodyParamParser, InlineItemKind};
+  use super::{InlineParamParser, InlineItemKind};
 
   #[test]
   fn test_parses_inline_body_param() {
     let src = "name==John";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     let parsed = parser.parse().unwrap();
     assert_eq!(parsed.key, "name");
     assert_eq!(parsed.value, "John".into());
@@ -90,7 +91,7 @@ mod test {
   #[test]
   fn test_parses_body_number() {
     let src = "age=:32";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "age");
@@ -100,7 +101,7 @@ mod test {
   #[test]
   fn test_parses_query_param() {
     let src = "id?=abc";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "id");
@@ -111,7 +112,7 @@ mod test {
   #[test]
   fn test_parses_query_param_number() {
     let src = "page?:1";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     let parsed = parser.parse().unwrap();
 
     assert_eq!(parsed.key, "page");
@@ -122,14 +123,14 @@ mod test {
   #[test]
   fn test_errors_on_missing_separator() {
     let src = "name";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     assert!(parser.parse().is_err());
   }
 
   #[test]
   fn test_errors_on_invalid_json_value() {
     let src = "age=:not_json";
-    let mut parser = InlineBodyParamParser::new(src);
+    let mut parser = InlineParamParser::new(src);
     assert!(parser.parse().is_err());
   }
 }
