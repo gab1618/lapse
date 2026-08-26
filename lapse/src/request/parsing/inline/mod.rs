@@ -1,7 +1,8 @@
-use crate::request::parsing::{
-  BaseParser,
-  inline::body::{InlineItem, InlineParamParser},
-  url::UrlParser,
+use std::collections::HashMap;
+
+use crate::{
+  request::parsing::{BaseParser, inline::body::InlineParamParser, url::UrlParser},
+  runner::value::Value,
 };
 
 pub mod body;
@@ -27,10 +28,13 @@ impl<'a> BaseParser<'a> for InlineRequestParser<'a> {
 }
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
+#[derive(Default)]
 pub struct InlineRequest {
   pub method: String,
   pub uri: String,
-  pub params: Vec<InlineItem>,
+  pub headers: HashMap<String, String>,
+  pub body: HashMap<String, Value>,
+  pub params: HashMap<String, String>,
 }
 
 impl<'a> InlineRequestParser<'a> {
@@ -49,28 +53,41 @@ impl<'a> InlineRequestParser<'a> {
     let mut url_parser = UrlParser::new(uri, self.default_scheme);
     let parsed_uri = url_parser.parse();
 
+    let mut result = InlineRequest {
+      method: method.into(),
+      uri: parsed_uri,
+      ..Default::default()
+    };
+
     let raw_params = &self.src[self.pos..];
     self.bump_n(raw_params.len());
-    let parsed_params = raw_params
-      .split_whitespace()
-      .map(|entry| {
-        let mut parser = InlineParamParser::new(entry);
-        parser.parse()
-      })
-      .collect::<crate::Result<Vec<_>>>()
-      .unwrap();
 
-    InlineRequest {
-      method: method.to_string(),
-      uri: parsed_uri,
-      params: parsed_params,
+    for entry in raw_params.split_whitespace() {
+      let mut parser = InlineParamParser::new(entry);
+      let parsed = parser.parse().unwrap();
+
+      use body::InlineItemKind;
+
+      match parsed.kind {
+        InlineItemKind::Query => {
+          result.params.insert(parsed.key, parsed.value.to_string());
+        }
+        InlineItemKind::Header => {
+          result.headers.insert(parsed.key, parsed.value.to_string());
+        }
+        InlineItemKind::Body => {
+          result.body.insert(parsed.key, parsed.value);
+        }
+      }
     }
+
+    result
   }
 }
 
 #[cfg(test)]
 mod test {
-  use crate::request::parsing::inline::body::{InlineItem, InlineItemKind};
+  use std::collections::HashMap;
 
   use super::{InlineRequest, InlineRequestParser};
 
@@ -85,7 +102,7 @@ mod test {
       InlineRequest {
         method: "GET".to_string(),
         uri: "http://example.com".to_string(),
-        params: Default::default(),
+        ..Default::default()
       }
     )
   }
@@ -100,11 +117,8 @@ mod test {
       InlineRequest {
         method: "POST".to_string(),
         uri: "http://example.com".to_string(),
-        params: vec![InlineItem {
-          kind: InlineItemKind::Body,
-          key: "name".to_string(),
-          value: "John".into(),
-        }],
+        body: HashMap::from([("name".into(), "John".into())]),
+        ..Default::default()
       }
     )
   }
