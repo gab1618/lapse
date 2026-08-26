@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::request::{
-  GraphQLRequest, HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
+  HttpRequest, MultipartRequest, MultipartRequestValue, error::RequestError,
   parsing::inline::InlineRequestParser,
 };
 
@@ -14,7 +14,6 @@ mod test;
 pub enum ParsedRequest {
   Http(HttpRequest),
   Multipart(MultipartRequest),
-  GraphQL(GraphQLRequest),
 }
 
 impl From<HttpRequest> for ParsedRequest {
@@ -25,11 +24,6 @@ impl From<HttpRequest> for ParsedRequest {
 impl From<MultipartRequest> for ParsedRequest {
   fn from(value: MultipartRequest) -> Self {
     Self::Multipart(value)
-  }
-}
-impl From<GraphQLRequest> for ParsedRequest {
-  fn from(value: GraphQLRequest) -> Self {
-    Self::GraphQL(value)
   }
 }
 
@@ -79,14 +73,6 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Pars
         url,
         headers,
         body: parse_multipart_http_body(http_body)?,
-      }
-      .into(),
-    ),
-    "GRAPHQL" => Ok(
-      GraphQLRequest {
-        url,
-        query: http_body,
-        headers,
       }
       .into(),
     ),

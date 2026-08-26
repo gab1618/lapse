@@ -74,14 +74,6 @@ impl Runner {
           .await
           .map_err(RequestError::ExecuteRequest)?
       }
-      ParsedRequest::GraphQL(graphql_request) => {
-        let parsed_request: reqwest::Request = graphql_request.try_into()?;
-
-        client
-          .execute(parsed_request)
-          .await
-          .map_err(RequestError::ExecuteRequest)?
-      }
     };
 
     let log_headers = response
