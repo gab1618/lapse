@@ -12,6 +12,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 ### Changed
 
 - Base `env` dir now serves as default env and always applies
+- Removed GRAPHQL method to favor native graphql request
 
 ### Added
 
@@ -19,6 +20,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - See logs details
 - Lua script typings
 - Inline request
+- Inline requests params
 
 ### Fixed
 
