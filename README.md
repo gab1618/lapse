@@ -20,6 +20,7 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 - Environments and variables
 - Secrets
 - Lua scripts and interpolation
+- Inline requests
 
 ## The anatomy of a Lapse space
 
@@ -119,11 +120,29 @@ Secrets are just like env variables, but they are not supposed to be tracked by 
 
 ### Inline requests
 
-```lapse
+```bash
 lapse GET localhost:3000
 ```
 
-Every command that is not part of the CLI commands is treated as an inline request, which follows the same syntax as normal requests
+Every command that is not part of the CLI commands is treated as an inline request, which follows the same syntax as normal requests.
+
+#### Passing headers
+
+```bash
+lapse GET localhost:3000 Content-Type:application/json
+```
+
+#### Passing json body values
+
+```bash
+lapse GET localhost:3000 name==John Doe age=:32
+```
+
+#### Passing multipart/form values
+
+```bash
+lapse POST localhost:3000 name@=John Doe pic@@avatar.png
+```
 
 ### Init
 
