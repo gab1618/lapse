@@ -53,8 +53,7 @@ fn test_read_env() {
 
 #[test]
 fn test_parse_asset_env_json() {
-  let content =
-    std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/env.json")).unwrap();
+  let content = include_str!("../../assets/env.json");
 
   let parsed: HashMap<String, Value> = serde_json::from_str(&content).unwrap();
 
