@@ -68,7 +68,7 @@ After the blank like, we have our body. There is nothing special about the reque
 
 After the body, we can see a triple dash separating the request from the document. This second section is just raw text that you can use to add informations about your request. This second part is optional, so you can omit the triple dash and not include it at all.
 
-Also, we do have this interpolated value (`${env.name}`), this is an env variable
+Also, we do have this interpolated value (`${Env.name}`), this is an env variable
 
 These request files can be organized however you want, as long as they are inside of the `requests/` folder, you will be able to call them from their unique path.
 
@@ -239,7 +239,7 @@ If your env looks like this:
 You can access values like this:
 
 ```
-POST https://names.com/${env.name}
+POST https://names.com/${Env.name}
 ```
 
 ### Secrets table
@@ -255,7 +255,7 @@ If your secrets.json file looks like this
 You can access values like this:
 
 ```
-POST https://auth.com/${secret.password}
+POST https://auth.com/${Secret.password}
 ```
 
 ## Scripts API
