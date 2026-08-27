@@ -20,6 +20,7 @@ Not only this simplifies the whole proccess of using it, but it also lets you us
 - Environments and variables
 - Secrets
 - Lua scripts and interpolation
+- Inline requests
 
 ## The anatomy of a Lapse space
 
@@ -68,7 +69,7 @@ After the blank like, we have our body. There is nothing special about the reque
 
 After the body, we can see a triple dash separating the request from the document. This second section is just raw text that you can use to add informations about your request. This second part is optional, so you can omit the triple dash and not include it at all.
 
-Also, we do have this interpolated value (`${env.name}`), this is an env variable
+Also, we do have this interpolated value (`${Env.name}`), this is an env variable
 
 These request files can be organized however you want, as long as they are inside of the `requests/` folder, you will be able to call them from their unique path.
 
@@ -119,11 +120,29 @@ Secrets are just like env variables, but they are not supposed to be tracked by 
 
 ### Inline requests
 
-```lapse
+```bash
 lapse GET localhost:3000
 ```
 
-Every command that is not part of the CLI commands is treated as an inline request, which follows the same syntax as normal requests
+Every command that is not part of the CLI commands is treated as an inline request, which follows the same syntax as normal requests.
+
+#### Passing headers
+
+```bash
+lapse GET localhost:3000 Content-Type:application/json
+```
+
+#### Passing json body values
+
+```bash
+lapse GET localhost:3000 name==John Doe age=:32
+```
+
+#### Passing multipart/form values
+
+```bash
+lapse POST localhost:3000 name@=John Doe pic@@avatar.png
+```
 
 ### Init
 
@@ -239,7 +258,7 @@ If your env looks like this:
 You can access values like this:
 
 ```
-POST https://names.com/${env.name}
+POST https://names.com/${Env.name}
 ```
 
 ### Secrets table
@@ -255,7 +274,7 @@ If your secrets.json file looks like this
 You can access values like this:
 
 ```
-POST https://auth.com/${secret.password}
+POST https://auth.com/${Secret.password}
 ```
 
 ## Scripts API
