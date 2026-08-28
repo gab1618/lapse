@@ -45,6 +45,8 @@ impl std::ops::Add for Env {
       self.hooks.insert(key, hook);
     }
 
+    self.config = rhs.config;
+
     self
   }
 }
