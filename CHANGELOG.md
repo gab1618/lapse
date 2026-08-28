@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 https://github.com/gab1618/lapse/compare/latest..HEAD
 
+## [0.4.0] - 2026-08-28
+
 ### Changed
 
 - Base `env` dir now serves as default env and always applies
