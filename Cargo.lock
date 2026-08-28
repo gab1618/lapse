@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "lapse"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "http",
  "lapse-template",
@@ -1000,7 +1000,7 @@ dependencies = [
 
 [[package]]
 name = "lapse-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "clap",
@@ -1018,7 +1018,7 @@ dependencies = [
 
 [[package]]
 name = "lapse-template"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "serde_yaml",
