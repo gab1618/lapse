@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
-#[derive(serde::Deserialize, Default)]
+#[derive(serde::Deserialize, Default, Clone)]
 pub enum DefaultScheme {
   #[serde(rename = "https")]
   Https,
@@ -24,7 +24,7 @@ impl Display for DefaultScheme {
 }
 
 #[cfg_attr(test, derive(PartialEq, Debug))]
-#[derive(serde::Deserialize, Default)]
+#[derive(serde::Deserialize, Default, Clone)]
 pub struct EnvConfig {
   pub default_scheme: DefaultScheme,
 }

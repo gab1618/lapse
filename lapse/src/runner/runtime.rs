@@ -1,35 +1,36 @@
 use mlua::Lua;
 
-use crate::{Lapse, runner::Runner};
+use crate::{Lapse, env::config::EnvConfig, runner::Runner};
 
-use std::{fs, ops::Deref};
+use std::fs;
 
 use mlua::{UserData, UserDataMethods};
 
-struct LapseLuaApi(pub Lapse);
-impl Deref for LapseLuaApi {
-  type Target = Lapse;
+struct LapseLuaApi {
+  lapse: Lapse,
+  config: EnvConfig,
+}
 
-  fn deref(&self) -> &Self::Target {
-    &self.0
+impl LapseLuaApi {
+  pub fn new(lapse: Lapse, config: EnvConfig) -> Self {
+    Self { lapse, config }
   }
 }
 
 impl UserData for LapseLuaApi {
   fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-    methods.add_async_method_mut("request", |lua, this, name: String| async move {
-      let curr_env_name = this.current_env().unwrap_or_default();
-      let curr_env = this.get_env(&curr_env_name).ok().unwrap_or_default();
-
+    methods.add_method("get_request", |_, this, name: String| {
+      this
+        .lapse
+        .get_raw_request_http(&name)
+        .map_err(|_| mlua::Error::RuntimeError(format!("Could not find request {}", name)))
+    });
+    methods.add_async_method_mut("request", |lua, this, req: String| async move {
       let runner = Runner::new(
         lua,
         Default::default(),
-        curr_env.config.default_scheme.to_string(),
+        this.config.default_scheme.to_string(),
       );
-
-      let req = this
-        .get_raw_request_http(&name)
-        .map_err(|_| mlua::Error::RuntimeError(format!("Could not find request {}", name)))?;
 
       runner
         .execute(&req)
@@ -50,13 +51,17 @@ impl Runner {
   pub fn from_space(space: &Lapse) -> crate::Result<Self> {
     let runtime = Lua::new();
 
-    let lapse_api = LapseLuaApi(space.clone());
-
-    let env = space.get_env(&space.current_env().unwrap_or_default())?;
+    let mut env = space.get_env(&space.current_env().unwrap_or_default())?;
 
     runtime.globals().set("Env", env.variables)?;
     runtime.globals().set("Secret", env.secrets)?;
 
+    let default_scheme = env.config.default_scheme.to_string();
+
+    // Config is useless, now that we took the default scheme
+    let config = std::mem::take(&mut env.config);
+
+    let lapse_api = LapseLuaApi::new(space.clone(), config);
     runtime.globals().set("Lapse", lapse_api)?;
 
     let hooks = env
@@ -80,7 +85,7 @@ impl Runner {
     Ok(Self {
       runtime,
       hooks,
-      default_scheme: env.config.default_scheme.to_string(),
+      default_scheme,
     })
   }
 
