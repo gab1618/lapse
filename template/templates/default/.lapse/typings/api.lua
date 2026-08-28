@@ -12,6 +12,10 @@ local ExecutionResult = {}
 ---@class Lapse
 local Lapse = {}
 
----@param name string
+---@param request string
 ---@return ExecutionResult
-function Lapse:request(name) end
+function Lapse:request(request) end
+
+---@param name string
+---@return string
+function Lapse:get_request(name) end
