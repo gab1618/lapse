@@ -13,6 +13,7 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 
 - Base `env` dir now serves as default env and always applies
 - Removed GRAPHQL method to favor native graphql request
+- Separate script `request` method into `get_request` and `request`
 
 ### Added
 
