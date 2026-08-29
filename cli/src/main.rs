@@ -67,7 +67,6 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
   }
   Ok(())
 }
-pub async fn execute_inline() {}
 
 async fn entrypoint() -> error::Result<()> {
   use clap::error::ErrorKind;
