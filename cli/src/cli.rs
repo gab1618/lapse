@@ -37,6 +37,9 @@ pub enum Command {
     /// Prints only response body
     #[arg(long, default_value_t = false)]
     body: bool,
+    /// Only resolves the request and prints it, without actually sending it
+    #[arg(long, default_value_t = false)]
+    dry_run: bool,
   },
   /// Runs a script
   Run { script: Option<String> },
