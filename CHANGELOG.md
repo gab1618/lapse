@@ -13,6 +13,11 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 
 - Env not inheriting config
 
+### Added
+
+- Send: show only body on request with the flag `--body`
+- Send: dry run requests to see preview using `--dry-run`
+
 ## [0.4.0] - 2026-08-28
 
 ### Changed
