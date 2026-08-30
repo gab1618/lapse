@@ -53,6 +53,8 @@ pub enum Command {
   /// Script commands
   #[command(subcommand)]
   Script(ScriptCommand),
+  #[command(subcommand)]
+  Config(ConfigCommand),
 }
 
 #[derive(Subcommand)]
@@ -83,4 +85,12 @@ pub enum ScriptCommand {
     /// The base path to list from
     path: Option<String>,
   },
+}
+
+#[derive(Subcommand)]
+pub enum ConfigCommand {
+  /// Gets a config value by its key
+  Get { key: String },
+  /// Sets a config value by its key
+  Set { key: String, value: String },
 }

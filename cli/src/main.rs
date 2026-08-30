@@ -68,6 +68,10 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
       }
     },
     Command::Log { entry } => command::log::log(entry)?,
+    Command::Config(config_command) => match config_command {
+      cli::ConfigCommand::Get { key } => command::config::get(&key)?,
+      cli::ConfigCommand::Set { key, value } => command::config::set(&key, &value)?,
+    },
   }
   Ok(())
 }

@@ -1,0 +1,9 @@
+[package]
+name = "lapse-config"
+edition = "2024"
+version.workspace = true
+
+[dependencies]
+dirs = "6.0.0"
+serde = { workspace = true }
+serde_json = { workspace = true }

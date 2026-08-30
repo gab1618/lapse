@@ -14,7 +14,7 @@ http = "1.4.2"
 mlua = { version = "0.12.0", features = ["lua54", "vendored", "async"] }
 reqwest = { version = "0.13.4", features = ["multipart", "stream", "cookies"] }
 serde = { workspace = true }
-serde_json = "1.0.150"
+serde_json = { workspace = true }
 stream = "0.1.0"
 thiserror = {workspace = true}
 

@@ -5,6 +5,7 @@ use lapse::{
 
 use crate::{Error, collection::output_tree};
 
+pub mod config;
 pub mod env;
 pub mod init;
 pub mod log;
