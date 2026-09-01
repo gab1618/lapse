@@ -41,6 +41,8 @@ pub enum Command {
     #[arg(long, default_value_t = false)]
     dry_run: bool,
   },
+  /// Opens a request file in the configured editor
+  Edit { request: Option<String> },
   /// Runs a script
   Run { script: Option<String> },
   /// Logs a request's response logs history

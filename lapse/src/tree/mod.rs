@@ -1,7 +1,11 @@
 pub mod error;
 pub mod resource;
 
-use std::{fs, ops::Deref, path::Path};
+use std::{
+  fs,
+  ops::Deref,
+  path::{Path, PathBuf},
+};
 
 use crate::{
   Lapse,
@@ -163,5 +167,11 @@ impl Lapse {
     };
 
     Tree::read(&resource_path, &dir)
+  }
+  pub fn resource_path(&self, resource: Resource, name: &str) -> crate::Result<PathBuf> {
+    let resource_subpath: &str = resource.into();
+    let resource_path = self.path.join(resource_subpath).join(name);
+
+    Ok(resource_path)
   }
 }
