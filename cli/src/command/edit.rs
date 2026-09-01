@@ -13,12 +13,12 @@ pub fn edit(request: Option<String>) -> crate::Result<()> {
     .with_extension("md");
 
   let config = Config::read();
-  let editor = config.get("editor").expect("Could not edit");
+  let editor = config.get("editor").ok_or(crate::Error::NoEditor)?;
 
   let mut cmd = std::process::Command::new(editor);
   cmd.arg(&path);
 
-  cmd.status().unwrap();
+  cmd.status().map_err(crate::Error::EditCommandFail)?;
 
   Ok(())
 }

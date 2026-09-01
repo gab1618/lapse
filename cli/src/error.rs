@@ -14,6 +14,10 @@ pub enum Error {
   InvokePrompt(#[source] inquire::InquireError),
   #[error("No resource matched query: {0}")]
   NoResourceMatch(String),
+  #[error("No configured editor found")]
+  NoEditor,
+  #[error("Failed edit command: {0}")]
+  EditCommandFail(#[source] std::io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
