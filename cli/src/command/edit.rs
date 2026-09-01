@@ -9,7 +9,8 @@ pub fn edit(request: Option<String>) -> crate::Result<()> {
 
   let selected = select_tree_entry(&reqs, request, Default::default())?;
   let path = lapse
-    .resource_path(Resource::Requests, &selected)?
+    .resource_path(Resource::Requests)?
+    .join(selected)
     .with_extension("md");
 
   let config = Config::read();

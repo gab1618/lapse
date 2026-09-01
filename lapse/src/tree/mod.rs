@@ -168,10 +168,9 @@ impl Lapse {
 
     Tree::read(&resource_path, &dir)
   }
-  pub fn resource_path(&self, resource: Resource, name: &str) -> crate::Result<PathBuf> {
+  pub fn resource_path(&self, resource: Resource) -> crate::Result<PathBuf> {
     let resource_subpath: &str = resource.into();
-    let resource_path = self.path.join(resource_subpath).join(name);
 
-    Ok(resource_path)
+    Ok(self.path().join(resource_subpath))
   }
 }

@@ -58,6 +58,8 @@ impl Config {
       .unwrap_or_default()
   }
   pub fn save(&self) {
-    if let Some(p) = config_dir() { self.save_from(&p) }
+    if let Some(p) = config_dir() {
+      self.save_from(&p)
+    }
   }
 }
