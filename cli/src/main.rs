@@ -2,6 +2,7 @@ mod cli;
 mod collection;
 mod command;
 mod completion;
+mod editor;
 mod error;
 mod select;
 

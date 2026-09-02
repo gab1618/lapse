@@ -1,7 +1,6 @@
 use lapse::tree::resource::Resource;
-use lapse_config::Config;
 
-use crate::{command::open_lapse, select::select_tree_entry};
+use crate::{command::open_lapse, editor::get_editor, select::select_tree_entry};
 
 pub fn edit(request: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
@@ -13,8 +12,7 @@ pub fn edit(request: Option<String>) -> crate::Result<()> {
     .join(selected)
     .with_extension("md");
 
-  let config = Config::read();
-  let editor = config.get("editor").ok_or(crate::Error::NoEditor)?;
+  let editor = get_editor()?;
 
   let mut cmd = std::process::Command::new(editor);
   cmd.arg(&path);
