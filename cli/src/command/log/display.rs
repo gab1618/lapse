@@ -15,7 +15,7 @@ fn status_color(status: u16) -> colored::Color {
     _ => Color::Blue,
   }
 }
-fn method_color(method: &str) -> colored::Color {
+pub fn method_color(method: &str) -> colored::Color {
   match method {
     "GET" => Color::Green,
     "DELETE" => Color::Red,

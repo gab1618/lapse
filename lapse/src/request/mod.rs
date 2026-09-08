@@ -72,7 +72,32 @@ impl HttpRequest {
   }
 }
 
+pub struct RequestHead {
+  pub method: String,
+  pub url: String,
+}
+
 impl Lapse {
+  pub fn get_raw_request_head(&self, name: &str) -> crate::Result<RequestHead> {
+    let file_path = self.requests_path().join(name).with_extension("md");
+    let f = OpenOptions::new()
+      .read(true)
+      .open(file_path)
+      .map_err(RequestError::ReadRequestFile)?;
+    let r = BufReader::new(f);
+
+    let mut lines = r.lines();
+    let head_line = lines.next().unwrap().unwrap();
+
+    let mut parts = head_line.split(" ");
+    let method = parts.next().unwrap();
+    let url = parts.next().unwrap();
+
+    Ok(RequestHead {
+      method: method.to_owned(),
+      url: url.to_owned(),
+    })
+  }
   pub fn get_raw_request_http(&self, name: &str) -> crate::Result<String> {
     let file_path = self.requests_path().join(name).with_extension("md");
     let f = OpenOptions::new()

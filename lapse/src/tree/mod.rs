@@ -120,7 +120,7 @@ impl Tree {
 
     entries
   }
-  pub fn traverse<F: Fn(TraverseEntry)>(&self, parent_name: String, depth: usize, f: &F) {
+  pub fn traverse<T, F: Fn(TraverseEntry) -> T>(&self, parent_name: String, depth: usize, f: &F) {
     let prefix = if parent_name.is_empty() {
       Default::default()
     } else {
@@ -136,7 +136,7 @@ impl Tree {
             depth,
           };
 
-          f(entry)
+          f(entry);
         }
         TreeEntry::Subtree(name, tree) => {
           let entry = TraverseEntry {

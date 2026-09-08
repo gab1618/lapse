@@ -1,13 +1,41 @@
-use lapse::tree::{FlatTreeConfig, resource::Resource};
+use lapse::{
+  Lapse,
+  tree::{TraverseEntryKind, Tree, resource::Resource},
+};
 
-use crate::{collection::output_tree, command::open_lapse};
+use colored::{Color, Colorize as _};
+
+use crate::command::{log::display::method_color, open_lapse};
+
+fn output_requests_tree(lapse: &Lapse, root: &Tree) {
+  root.traverse(String::default(), 0, &|entry| {
+    let depth_spacing = " ".repeat(entry.depth);
+
+    match entry.kind {
+      TraverseEntryKind::Entry => {
+        let head = lapse.get_raw_request_head(&entry.name)?;
+        println!(
+          "{}{} {} {}",
+          depth_spacing,
+          entry.name,
+          head.method.color(method_color(&head.method)),
+          head.url.color(Color::Black)
+        );
+      }
+      TraverseEntryKind::Subtree => {
+        println!("{}{}", depth_spacing, entry.name);
+      }
+    }
+
+    crate::Result::Ok(())
+  });
+}
 
 pub fn ls(path: Option<String>) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let collection = lapse.get_resource_tree(Resource::Requests, path)?;
 
-  let flatlist_config = FlatTreeConfig::default().include_dirs(true);
-  output_tree(&collection, flatlist_config);
+  output_requests_tree(&lapse, &collection);
 
   Ok(())
 }
