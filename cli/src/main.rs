@@ -32,7 +32,7 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
       command::init::init(preset, schema)?;
     }
     Command::Ls { path } => {
-      command::ls(path)?;
+      command::ls::ls(path)?;
     }
     Command::Send {
       request,
