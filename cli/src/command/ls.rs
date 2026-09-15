@@ -13,14 +13,17 @@ fn output_requests_tree(lapse: &Lapse, root: &Tree) {
 
     match entry.kind {
       TraverseEntryKind::Entry => {
-        let head = lapse.get_raw_request_head(&entry.name)?;
-        println!(
-          "{}{} {} {}",
-          depth_spacing,
-          entry.name,
-          head.method.color(method_color(&head.method)),
-          head.url.color(Color::Black)
-        );
+        if let Ok(head) = lapse.get_raw_request_head(&entry.name) {
+          println!(
+            "{}{} {} {}",
+            depth_spacing,
+            entry.name,
+            head.method.color(method_color(&head.method)),
+            head.url.color(Color::Black)
+          );
+        } else {
+          println!("{}{}", depth_spacing, entry.name,)
+        }
       }
       TraverseEntryKind::Subtree => {
         println!("{}{}", depth_spacing, entry.name);

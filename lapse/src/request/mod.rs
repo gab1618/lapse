@@ -87,11 +87,14 @@ impl Lapse {
     let r = BufReader::new(f);
 
     let mut lines = r.lines();
-    let head_line = lines.next().unwrap().unwrap();
+    let head_line = lines
+      .next()
+      .and_then(Result::ok)
+      .ok_or(RequestError::EmptyRequestFile)?;
 
     let mut parts = head_line.split(" ");
-    let method = parts.next().unwrap();
-    let url = parts.next().unwrap();
+    let method = parts.next().ok_or(RequestError::MissingMethod)?;
+    let url = parts.next().ok_or(RequestError::MissingUri)?;
 
     Ok(RequestHead {
       method: method.to_owned(),
