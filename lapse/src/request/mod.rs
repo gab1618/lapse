@@ -78,7 +78,7 @@ pub struct RequestHead {
 }
 
 impl Lapse {
-  pub fn get_raw_request_head(&self, name: &str) -> crate::Result<RequestHead> {
+  pub fn get_request_head(&self, name: &str) -> crate::Result<RequestHead> {
     let file_path = self.requests_path().join(name).with_extension("md");
     let f = OpenOptions::new()
       .read(true)

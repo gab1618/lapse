@@ -13,7 +13,7 @@ fn output_requests_tree(lapse: &Lapse, root: &Tree) {
 
     match entry.kind {
       TraverseEntryKind::Entry => {
-        if let Ok(head) = lapse.get_raw_request_head(&entry.name) {
+        if let Ok(head) = lapse.get_request_head(&entry.name) {
           println!(
             "{}{} {} {}",
             depth_spacing,
