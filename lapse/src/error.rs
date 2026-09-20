@@ -1,6 +1,7 @@
 use crate::{
   env::error::EnvError, log::error::LogError, request::error::RequestError,
-  script::error::ScriptError, state::error::StateError, tree::error::TreeError,
+  runner::eval::ParseErrorSummary, script::error::ScriptError, state::error::StateError,
+  tree::error::TreeError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -27,6 +28,8 @@ pub enum Error {
   Tree(#[from] TreeError),
   #[error(transparent)]
   Script(#[from] ScriptError),
+  #[error(transparent)]
+  Parse(#[from] ParseErrorSummary),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

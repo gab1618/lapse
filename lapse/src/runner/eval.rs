@@ -7,7 +7,19 @@ pub enum DocumentToken {
   Expr(String),
 }
 
-pub fn interpolated_parser<'a>() -> impl Parser<'a, &'a str, String> {
+#[derive(Debug, thiserror::Error)]
+pub enum ParseErrorSummary {
+  #[error("Syntax error")]
+  Syntax(Vec<ParsingError>),
+}
+
+#[derive(Debug)]
+pub struct ParsingError {
+  pub message: String,
+  pub span: std::ops::Range<usize>,
+}
+
+pub fn interpolated_parser<'a>() -> impl Parser<'a, &'a str, String, extra::Err<Rich<'a, char>>> {
   just("${")
     .ignore_then(recursive(|this| {
       let text = none_of("{}").repeated().at_least(1).collect::<String>();
@@ -22,7 +34,8 @@ pub fn interpolated_parser<'a>() -> impl Parser<'a, &'a str, String> {
     .then_ignore(just('}'))
 }
 
-pub fn document_parser<'a>() -> impl Parser<'a, &'a str, Vec<DocumentToken>> {
+pub fn document_parser<'a>()
+-> impl Parser<'a, &'a str, Vec<DocumentToken>, extra::Err<Rich<'a, char>>> {
   let interpolated = interpolated_parser().map(DocumentToken::Expr);
 
   let literal = none_of("$")
@@ -37,7 +50,17 @@ pub fn document_parser<'a>() -> impl Parser<'a, &'a str, Vec<DocumentToken>> {
 impl Runner {
   pub fn eval(&self, doc: &str) -> crate::Result<String> {
     let parser = document_parser();
-    let tokens = parser.parse(doc).unwrap();
+    let tokens = parser.parse(doc).into_result().map_err(|err| {
+      ParseErrorSummary::Syntax(
+        err
+          .into_iter()
+          .map(|e| ParsingError {
+            message: e.to_string(),
+            span: e.span().into_range(),
+          })
+          .collect(),
+      )
+    })?;
     let mut result = String::new();
 
     for token in tokens {
@@ -80,5 +103,14 @@ mod test {
     let parsed = parser.parse("name: ${name}").unwrap();
     assert_eq!(parsed[0], DocumentToken::String("name: ".to_owned()));
     assert_eq!(parsed[1], DocumentToken::Expr("name".to_owned()));
+  }
+
+  #[test]
+  fn test_recover_invalid_expr() {
+    let parser = document_parser();
+
+    let parsed = parser.parse("name: ${name");
+
+    assert!(parsed.has_errors());
   }
 }
