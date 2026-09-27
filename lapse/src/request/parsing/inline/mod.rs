@@ -65,36 +65,4 @@ impl<'a> InlineRequestParser<'a> {
 
     Ok(result)
   }
-
-  /// Splits raw params on whitespace, but merges a token back into the
-  /// previous entry when it doesn't start a new `key<sep>value` pair, so
-  /// that values containing spaces stay together (e.g. `name==John Doe`).
-  ///
-  /// ```
-  /// # use lapse::request::parsing::inline::InlineRequestParser;
-  /// let entries = InlineRequestParser::split_param_entries("name==John Doe age=:30");
-  /// assert_eq!(entries, vec!["name==John Doe", "age=:30"]);
-  /// ```
-  pub fn split_param_entries(raw_params: &str) -> Vec<String> {
-    let mut entries: Vec<String> = Vec::new();
-
-    for token in raw_params.split_whitespace() {
-      if Self::starts_new_param(token) || entries.is_empty() {
-        entries.push(token.to_string());
-      } else {
-        let last = entries.last_mut().expect("checked non-empty above");
-        last.push(' ');
-        last.push_str(token);
-      }
-    }
-
-    entries
-  }
-
-  fn starts_new_param(token: &str) -> bool {
-    match token.find(['=', ':', '?', '@']) {
-      Some(idx) => idx > 0,
-      None => false,
-    }
-  }
 }
