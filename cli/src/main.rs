@@ -6,7 +6,6 @@ mod error;
 mod select;
 
 pub use error::{Error, Result};
-use lapse::{log::ResponseLog, runner::Runner};
 
 use std::io::stdout;
 
@@ -15,7 +14,6 @@ use cli::Cli;
 
 use crate::{
   cli::{Command, ScriptCommand},
-  command::{log::display::DetailedLogEntry, open_lapse},
   completion::generate_completion,
 };
 
@@ -73,35 +71,9 @@ pub async fn execute_cli(args: Cli) -> error::Result<()> {
 }
 
 async fn entrypoint() -> error::Result<()> {
-  use clap::error::ErrorKind;
+  let args = Cli::parse();
 
-  match Cli::try_parse() {
-    Ok(args) => execute_cli(args).await?,
-    Err(err) => {
-      if err.kind() != ErrorKind::InvalidSubcommand {
-        err.print().unwrap();
-        return Ok(());
-      }
-
-      let args_iter = std::env::args().skip(1);
-      let args: Vec<_> = args_iter.collect();
-      let request = args.join(" ");
-
-      let runner = Runner::standalone();
-      let result = runner.execute(&request).await?;
-
-      let log = ResponseLog {
-        request: None,
-        result,
-      };
-
-      if let Ok(lapse) = open_lapse() {
-        lapse.save_log(&log)?;
-      }
-      let detailed_log = DetailedLogEntry(log);
-      print!("{detailed_log}");
-    }
-  }
+  execute_cli(args).await?;
 
   Ok(())
 }
