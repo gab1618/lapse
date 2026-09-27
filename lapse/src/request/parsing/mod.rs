@@ -27,41 +27,20 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Http
     headers.insert(name.trim().to_owned(), value.trim().to_owned());
   }
 
-  if headers.is_empty() {
-    headers.extend(
-      parsed_inline
-        .headers
-        .into_iter()
-        .map(|(key, value)| (key, value.to_string())),
-    );
-  }
-
-  let url = if parsed_inline.uri.contains('?') {
-    parsed_inline.uri
-  } else {
-    append_query_params(parsed_inline.uri, parsed_inline.params)
-  };
+  let url = parsed_inline.uri;
 
   let raw_body = lines.collect::<Vec<&str>>().join("\n");
   let is_multipart = parsed_inline.method == "MULTIPART";
 
   // Prioritize non-inline body/form
   let (body, form) = if is_multipart {
-    let form = if raw_body.trim().is_empty() {
-      parsed_inline.form
-    } else {
-      parse_multipart_http_body(raw_body)?
-    };
+    let form = parse_multipart_http_body(raw_body)?;
 
     (String::new(), form)
   } else {
-    let body = if !raw_body.trim().is_empty() || parsed_inline.body.is_empty() {
-      raw_body
-    } else {
-      serde_json::to_string(&parsed_inline.body).map_err(RequestError::SerializeInlineBody)?
-    };
+    let body = raw_body;
 
-    (body, parsed_inline.form)
+    (body, Default::default())
   };
 
   Ok(HttpRequest {
@@ -71,20 +50,6 @@ pub fn parse_request_http(doc: &str, default_scheme: &str) -> crate::Result<Http
     body,
     form,
   })
-}
-
-fn append_query_params(url: String, params: HashMap<String, String>) -> String {
-  if params.is_empty() {
-    return url;
-  }
-
-  let query_string = params
-    .into_iter()
-    .map(|(key, value)| format!("{key}={value}"))
-    .collect::<Vec<_>>()
-    .join("&");
-
-  format!("{url}?{query_string}")
 }
 
 fn parse_multipart_http_body(raw: String) -> crate::Result<HashMap<String, MultipartRequestValue>> {
