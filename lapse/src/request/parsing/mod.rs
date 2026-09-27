@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use crate::request::{
-  HttpRequest, MultipartRequestValue, error::RequestError, parsing::inline::InlineRequestParser,
+  HttpRequest, MultipartRequestValue, error::RequestError, parsing::head::InlineRequestParser,
 };
 
-pub mod inline;
+pub mod head;
 pub mod url;
 
 #[cfg(test)]
