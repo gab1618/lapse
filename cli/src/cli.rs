@@ -44,7 +44,13 @@ pub enum Command {
   /// Runs a script
   Run { script: Option<String> },
   /// Logs a request's response logs history
-  Log { entry: Option<usize> },
+  Log {
+    /// Shows specific entry by index
+    entry: Option<usize>,
+    /// Prints only response body
+    #[arg(long, default_value_t = false)]
+    body: bool,
+  },
   /// Outputs a completion script
   Completion { shell: CliCompletionShell },
   /// Environment commands

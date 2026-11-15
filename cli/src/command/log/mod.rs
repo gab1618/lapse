@@ -43,9 +43,9 @@ fn append_to_log_until_fills(
   Ok(())
 }
 
-pub fn log(entry: Option<usize>) -> crate::Result<()> {
+pub fn log(entry: Option<usize>, body: bool) -> crate::Result<()> {
   match entry {
-    Some(entry) => log_details(entry),
+    Some(entry) => log_details(entry, body),
     None => log_list(),
   }
 }
@@ -106,14 +106,18 @@ fn log_list() -> crate::Result<()> {
   Ok(())
 }
 
-fn log_details(entry: usize) -> crate::Result<()> {
+fn log_details(entry: usize, body: bool) -> crate::Result<()> {
   let lapse = Arc::new(open_lapse()?);
   let mut logs = lapse.logs_iter().into_parsed();
   let target_log = logs.nth(entry);
 
   if let Some(log) = target_log {
-    let detailed = DetailedLogEntry(log);
-    print!("{detailed}");
+    if body {
+      print!("{}", log.result.text);
+    } else {
+      let detailed = DetailedLogEntry(log);
+      print!("{detailed}");
+    }
   }
   Ok(())
 }
