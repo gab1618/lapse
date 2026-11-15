@@ -5,6 +5,8 @@ use crate::{
   select::select_tree_entry,
 };
 
+use colored::Colorize;
+
 pub async fn send(request: Option<String>, body_only: bool, dry_run: bool) -> crate::Result<()> {
   let lapse = open_lapse()?;
   let tree = lapse.get_resource_tree(Resource::Requests, None)?;
@@ -17,6 +19,18 @@ pub async fn send(request: Option<String>, body_only: bool, dry_run: bool) -> cr
   if dry_run {
     let resolved = runner.eval(&raw_req)?;
     print!("{resolved}");
+    return Ok(());
+  }
+
+  println!("{}", selected_request.blue());
+  println!("{raw_req}");
+
+  let confirmed = inquire::Confirm::new("Send request?")
+    .with_default(true)
+    .prompt()
+    .unwrap_or(false);
+
+  if !confirmed {
     return Ok(());
   }
 
