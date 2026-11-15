@@ -1,12 +1,6 @@
-use std::collections::HashMap;
-
-use crate::{
-  request::{
-    MultipartRequestValue,
-    error::RequestError,
-    parsing::{BaseParser, inline::body::InlineParamParser, url::UrlParser},
-  },
-  runner::value::Value,
+use crate::request::{
+  error::RequestError,
+  parsing::{BaseParser, url::UrlParser},
 };
 
 pub mod body;
@@ -36,10 +30,6 @@ impl<'a> BaseParser<'a> for InlineRequestParser<'a> {
 pub struct InlineRequest {
   pub method: String,
   pub uri: String,
-  pub headers: HashMap<String, String>,
-  pub body: HashMap<String, Value>,
-  pub params: HashMap<String, String>,
-  pub form: HashMap<String, MultipartRequestValue>,
 }
 
 impl<'a> InlineRequestParser<'a> {
@@ -67,39 +57,13 @@ impl<'a> InlineRequestParser<'a> {
     let mut url_parser = UrlParser::new(uri, self.default_scheme);
     let parsed_uri = url_parser.parse();
 
-    let mut result = InlineRequest {
+    let result = InlineRequest {
       method: method.into(),
       uri: parsed_uri,
-      ..Default::default()
     };
 
     let raw_params = &self.src[self.pos..];
     self.bump_n(raw_params.len());
-
-    for entry in Self::split_param_entries(raw_params) {
-      let mut parser = InlineParamParser::new(&entry);
-      let parsed = parser.parse()?;
-
-      use body::{InlineItem, InlineItemKind, InlineValue};
-
-      let InlineItem { kind, key, value } = parsed;
-
-      match (kind, value) {
-        (InlineItemKind::Query, InlineValue::Value(value)) => {
-          result.params.insert(key, value.to_string());
-        }
-        (InlineItemKind::Header, InlineValue::Value(value)) => {
-          result.headers.insert(key, value.to_string());
-        }
-        (InlineItemKind::Body, InlineValue::Value(value)) => {
-          result.body.insert(key, value);
-        }
-        (InlineItemKind::Form, InlineValue::Form(value)) => {
-          result.form.insert(key, value);
-        }
-        _ => unreachable!("InlineItemKind and InlineValue always pair consistently"),
-      }
-    }
 
     Ok(result)
   }
@@ -139,10 +103,7 @@ impl<'a> InlineRequestParser<'a> {
 
 #[cfg(test)]
 mod test {
-  use std::collections::HashMap;
-
   use super::{InlineRequest, InlineRequestParser};
-  use crate::request::MultipartRequestValue;
 
   #[test]
   fn parses_simple_req() {
@@ -159,68 +120,6 @@ mod test {
       }
     )
   }
-  #[test]
-  fn parses_req_with_params() {
-    let input = "POST example.com name==John";
-    let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse().unwrap();
-
-    assert_eq!(
-      parsed,
-      InlineRequest {
-        method: "POST".to_string(),
-        uri: "http://example.com".to_string(),
-        body: HashMap::from([("name".into(), "John".into())]),
-        ..Default::default()
-      }
-    )
-  }
-
-  #[test]
-  fn parses_params_with_spaces() {
-    let input = "POST example.com name==John Doe age=:30";
-    let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse().unwrap();
-
-    assert_eq!(
-      parsed,
-      InlineRequest {
-        method: "POST".to_string(),
-        uri: "http://example.com".to_string(),
-        body: HashMap::from([
-          ("name".into(), "John Doe".into()),
-          ("age".into(), 30.into())
-        ]),
-        ..Default::default()
-      }
-    )
-  }
-
-  #[test]
-  fn parses_req_with_form_fields() {
-    let input = "POST example.com name@=John avatar@@./photo.png";
-    let mut parser = InlineRequestParser::new(input, "http://");
-    let parsed = parser.parse().unwrap();
-
-    assert_eq!(
-      parsed,
-      InlineRequest {
-        method: "POST".to_string(),
-        uri: "http://example.com".to_string(),
-        form: HashMap::from([
-          (
-            "name".into(),
-            MultipartRequestValue::Text("John".to_owned())
-          ),
-          (
-            "avatar".into(),
-            MultipartRequestValue::File("./photo.png".to_owned())
-          )
-        ]),
-        ..Default::default()
-      }
-    )
-  }
 
   #[test]
   fn errors_on_missing_method() {
@@ -232,13 +131,6 @@ mod test {
   #[test]
   fn errors_on_missing_uri() {
     let input = "GET";
-    let mut parser = InlineRequestParser::new(input, "http://");
-    assert!(parser.parse().is_err());
-  }
-
-  #[test]
-  fn errors_on_invalid_param_entry() {
-    let input = "GET example.com name";
     let mut parser = InlineRequestParser::new(input, "http://");
     assert!(parser.parse().is_err());
   }
