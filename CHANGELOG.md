@@ -18,6 +18,13 @@ https://github.com/gab1618/lapse/compare/latest..HEAD
 - Send: show only body on request with the flag `--body`
 - Send: dry run requests to see preview using `--dry-run`
 - Ls: show method and url for endpoints
+- Log: show only body on details command with the flag `--body`
+- Send: require confirmation before actualy sending the request
+
+### Removed
+
+- Inline params
+- Inline requests
 
 ## [0.4.0] - 2026-08-28
 
